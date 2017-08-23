@@ -18,7 +18,7 @@ namespace bd.swrm.entidades.Negocio
 
         //Propiedades Virtuales Referencias a otras clases
 
-        public virtual ICollection<ItinerarioViatico> ItinerarioViatico { get; set; }
+       
 
         public virtual ICollection<Provincia> Provincia { get; set; }
     }

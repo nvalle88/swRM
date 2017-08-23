@@ -29,7 +29,7 @@ namespace bd.swrm.entidades.Negocio
 
         public virtual ICollection<Parroquia> Parroquia { get; set; }
 
-        public virtual ICollection<ItinerarioViatico> ItinerarioViatico { get; set; }
+        
 
         public virtual ICollection<Empleado> Empleado { get; set; }
 
