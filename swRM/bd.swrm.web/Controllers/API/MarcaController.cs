@@ -7,6 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 using bd.swrm.datos;
 using bd.swrm.entidades.Negocio;
 using Microsoft.EntityFrameworkCore;
+using bd.log.guardar.Servicios;
+using bd.log.guardar.ObjectTranfer;
+using bd.swrm.entidades.Enumeradores;
+using bd.log.guardar.Enumeradores;
+using bd.log.guardar.Utiles;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -14,123 +19,292 @@ namespace bd.swrm.web.Controllers.API
     [Route("api/Marca")]
     public class MarcaController : Controller
     {
-        private readonly SwRMDbContext _context;
+        private readonly SwRMDbContext db;
 
-        public MarcaController(SwRMDbContext _context)
+        public MarcaController(SwRMDbContext db)
         {
-            this._context = _context;
+            this.db = db;
         }
 
         // GET: api/Marca
         [HttpGet]
-        public IEnumerable<Marca> GetMarca()
+        [Route("ListarMarca")]
+        public async Task<List<Marca>> GetMarca()
         {
-            return _context.Marca;
+            try
+            {
+                return await db.Marca.OrderBy(x => x.Nombre).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepción",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new List<Marca>();
+            }
         }
 
         // GET: api/Marca/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetMarca([FromRoute]int id)
+        public async Task<Response> GetMarca([FromRoute]int id)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "Módelo no válido",
+                    };
+                }
 
-            var _entidad = await _context.Marca.SingleOrDefaultAsync(m => m.IdMarca == id);
+                var _marca = await db.Marca.SingleOrDefaultAsync(m => m.IdMarca == id);
 
-            if (_entidad == null)
-                return NotFound();
+                if (_marca == null)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "No encontrado",
+                    };
+                }
 
-            return Ok(_entidad);
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = "Ok",
+                    Resultado = _marca,
+                };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepción",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
+            }
         }
         
         // POST: api/Marca
         [HttpPost]
-        public async Task<IActionResult> PostMarca([FromBody]Marca _entidad)
+        [Route("InsertarMarca")]
+        public async Task<Response> PostMarca([FromBody]Marca _marca)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            _context.Marca.Add(_entidad);
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (EntidadExists(_entidad.IdMarca))
+                if (!ModelState.IsValid)
                 {
-                    return new StatusCodeResult(StatusCodes.Status409Conflict);
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "Módelo inválido"
+                    };
                 }
-                else
-                {
-                    throw;
-                }
-            }
 
-            return CreatedAtAction("GetMarca", new { id = _entidad.IdMarca }, _entidad);
+                var respuesta = Existe(_marca);
+                if (!respuesta.IsSuccess)
+                {
+                    db.Marca.Add(_marca);
+                    await db.SaveChangesAsync();
+                    return new Response
+                    {
+                        IsSuccess = true,
+                        Message = "OK"
+                    };
+                }
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "OK"
+                };
+
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepción",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
+            }
         }
         
         // PUT: api/Marca/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutMarca([FromRoute] int id, [FromBody]Marca _entidad)
+        public async Task<Response> PutMarca([FromRoute] int id, [FromBody]Marca _marca)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (id != _entidad.IdMarca)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(_entidad).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EntidadExists(id))
+                if (!ModelState.IsValid)
                 {
-                    return NotFound();
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "Módelo inválido"
+                    };
                 }
-                else
-                {
-                    throw;
-                }
-            }
 
-            return NoContent();
+                var _marcaActualizar = await db.Marca.Where(x => x.IdMarca == id).FirstOrDefaultAsync();
+                if (_marcaActualizar != null)
+                {
+                    try
+                    {
+                        _marcaActualizar.Nombre = _marca.Nombre;
+                        
+                        db.Marca.Update(_marcaActualizar);
+                        await db.SaveChangesAsync();
+
+                        return new Response
+                        {
+                            IsSuccess = true,
+                            Message = "Ok",
+                        };
+
+                    }
+                    catch (Exception ex)
+                    {
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                        {
+                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                            ExceptionTrace = ex,
+                            Message = "Se ha producido una exepción",
+                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                            UserName = "",
+
+                        });
+                        return new Response
+                        {
+                            IsSuccess = false,
+                            Message = "Error ",
+                        };
+                    }
+                }
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Existe"
+                };
+            }
+            catch (Exception)
+            {
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Excepción"
+                };
+            }
         }
         
         // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMarca([FromRoute] int id)
+        public async Task<Response> DeleteMarca([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
-            }
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "Módelo no válido ",
+                    };
+                }
 
-            var _entidad = await _context.Marca.SingleOrDefaultAsync(m => m.IdMarca == id);
-            if (_entidad == null)
+                var respuesta = await db.Marca.SingleOrDefaultAsync(m => m.IdMarca == id);
+                if (respuesta == null)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "No existe ",
+                    };
+                }
+                db.Marca.Remove(respuesta);
+                await db.SaveChangesAsync();
+
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = "Eliminado ",
+                };
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepción",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
             }
-
-            _context.Marca.Remove(_entidad);
-            await _context.SaveChangesAsync();
-
-            return Ok(_entidad);
         }
 
-        private bool EntidadExists(int id)
+        private bool MarcaExists(int id)
         {
-            return _context.Marca.Any(e => e.IdMarca == id);
+            return db.Marca.Any(e => e.IdMarca == id);
+        }
+
+        public Response Existe(Marca _marca)
+        {
+            var bdd = _marca.Nombre.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.Marca.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            
+            if (loglevelrespuesta != null)
+            {
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = String.Format("Ya existe una Marca con el nombre {0}", _marca.Nombre),
+                    Resultado = null,
+                };
+            }
+
+            return new Response
+            {
+                IsSuccess = false,
+                Resultado = loglevelrespuesta,
+            };
         }
     }
 }
