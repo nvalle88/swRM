@@ -19,7 +19,7 @@ namespace bd.swrm.web.Controllers.API
     [Route("api/CatalogoCuenta")]
     public class CatalogoCuentaController : Controller
     {
-        private readonly SwRMDbContext db;
+        private readonly SwRMDbContext db; 
 
         public CatalogoCuentaController(SwRMDbContext db)
         {

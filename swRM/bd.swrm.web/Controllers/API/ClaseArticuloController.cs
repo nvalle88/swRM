@@ -19,7 +19,7 @@ namespace bd.swrm.web.Controllers.API
     [Route("api/ClaseArticulo")]
     public class ClaseArticuloController : Controller
     {
-        private readonly SwRMDbContext db;
+        private readonly SwRMDbContext db; 
 
         public ClaseArticuloController(SwRMDbContext db)
         {

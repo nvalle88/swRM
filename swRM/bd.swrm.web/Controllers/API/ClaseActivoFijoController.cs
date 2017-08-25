@@ -19,7 +19,7 @@ namespace bd.swrm.web.Controllers.API
     [Route("api/ClaseActivoFijo")]
     public class ClaseActivoFijoController : Controller
     {
-        private readonly SwRMDbContext db;
+        private readonly SwRMDbContext db; 
 
         public ClaseActivoFijoController(SwRMDbContext db)
         {

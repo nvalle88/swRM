@@ -23,7 +23,7 @@ namespace bd.swrm.web.Controllers.API
 
         public ArticuloController(SwRMDbContext db)
         {
-            this.db = db;
+            this.db = db; 
         }
 
         // GET: api/ListarArticulos

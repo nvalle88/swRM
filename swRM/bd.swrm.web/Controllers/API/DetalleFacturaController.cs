@@ -19,7 +19,7 @@ namespace bd.swrm.web.Controllers.API
     [Route("api/DetalleFactura")]
     public class DetalleFacturaController : Controller
     {
-        private readonly SwRMDbContext db;
+        private readonly SwRMDbContext db; 
 
         public DetalleFacturaController(SwRMDbContext db)
         {
