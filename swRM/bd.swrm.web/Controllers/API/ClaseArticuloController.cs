@@ -6,6 +6,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using bd.swrm.datos;
 using bd.swrm.entidades.Negocio;
+using bd.log.guardar.Servicios;
+using bd.log.guardar.Enumeradores;
+using Microsoft.EntityFrameworkCore;
+using bd.log.guardar.ObjectTranfer;
+using bd.swrm.entidades.Enumeradores;
+using bd.log.guardar.Utiles;
 using Microsoft.EntityFrameworkCore;
 
 namespace bd.swrm.web.Controllers.API
@@ -14,123 +20,295 @@ namespace bd.swrm.web.Controllers.API
     [Route("api/ClaseArticulo")]
     public class ClaseArticuloController : Controller
     {
-        private readonly SwRMDbContext _context;
+        private readonly SwRMDbContext db;
 
-        public ClaseArticuloController(SwRMDbContext _context)
+        public ClaseArticuloController(SwRMDbContext db)
         {
-            this._context = _context;
+            this.db = db;
         }
 
-        // GET: api/ClaseArticulo
+        // GET: api/ListarClaseArticulo
         [HttpGet]
-        public IEnumerable<ClaseArticulo> GetClaseArticulo()
+        [Route("ListarClaseArticulo")]
+        public async Task<List<ClaseArticulo>> GetClaseArticulo()
         {
-            return _context.ClaseArticulo;
-        }
+            try
+            {
+                return await db.ClaseArticulo.OrderBy(x => x.Nombre).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una excepci�n",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new List<ClaseArticulo>();
+            }
 
         // GET: api/ClaseArticulo/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetClaseArticulo([FromRoute] int id)
+
+        public async Task<Response> GetClaseArticulo([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var _entidad = await _context.ClaseArticulo.SingleOrDefaultAsync(m => m.IdClaseArticulo == id);
-
-            if (_entidad == null)
-                return NotFound();
-
-            return Ok(_entidad);
-        }
-
-        // POST: api/ClaseArticulo
-        [HttpPost]
-        public async Task<IActionResult> PostClaseArticulo([FromBody] ClaseArticulo _entidad)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            _context.ClaseArticulo.Add(_entidad);
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (EntidadExists(_entidad.IdClaseArticulo))
+                if (!ModelState.IsValid)
                 {
-                    return new StatusCodeResult(StatusCodes.Status409Conflict);
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "M�delo no v�lido",
+                    };
                 }
-                else
-                {
-                    throw;
-                }
-            }
 
-            return CreatedAtAction("GetClaseArticulo", new { id = _entidad.IdClaseArticulo }, _entidad);
+                var claseArticulo = await db.ClaseArticulo.SingleOrDefaultAsync(m => m.IdClaseArticulo == id);
+
+                if (claseArticulo == null)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "No encontrado",
+                    };
+                }
+
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = "Ok",
+                    Resultado = claseArticulo,
+                };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepci�n",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
+            }
         }
 
         // PUT: api/ClaseArticulo/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutClaseArticulo([FromRoute] int id, [FromBody] ClaseArticulo _entidad)
+        public async Task<Response> PutClaseArticulo([FromRoute] int id, [FromBody] ClaseArticulo claseArticulo)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (id != _entidad.IdClaseArticulo)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(_entidad).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EntidadExists(id))
+                if (!ModelState.IsValid)
                 {
-                    return NotFound();
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "M�delo inv�lido"
+                    };
                 }
-                else
-                {
-                    throw;
-                }
-            }
 
-            return NoContent();
+                var claseArticuloActualizar = await db.ClaseArticulo.Where(x => x.IdClaseArticulo == id).FirstOrDefaultAsync();
+                if (claseArticuloActualizar != null)
+                {
+                    try
+                    {
+                        claseArticuloActualizar.Nombre = claseArticulo.Nombre;
+                        claseArticuloActualizar.IdTipoArticulo = claseArticulo.IdTipoArticulo;
+
+                        db.ClaseArticulo.Update(claseArticuloActualizar);
+                        await db.SaveChangesAsync();
+
+                        return new Response
+                        {
+                            IsSuccess = true,
+                            Message = "Ok",
+                        };
+
+                    }
+                    catch (Exception ex)
+                    {
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                        {
+                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                            ExceptionTrace = ex,
+                            Message = "Se ha producido una exepci�n",
+                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                            UserName = "",
+
+                        });
+                        return new Response
+                        {
+                            IsSuccess = false,
+                            Message = "Error ",
+                        };
+                    }
+                }
+
+
+
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Existe"
+                };
+            }
+            catch (Exception)
+            {
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Excepci�n"
+                };
+            }
         }
 
-        // DELETE: api/ApiWithActions/5
+        // POST: api/ClaseArticulo
+        [HttpPost]
+        [Route("InsertarClaseArticulo")]
+        public async Task<Response> PostArticulo([FromBody] ClaseArticulo claseArticulo)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "M�delo inv�lido"
+                    };
+                }
+
+                var respuesta = Existe(claseArticulo);
+                if (!respuesta.IsSuccess)
+                {
+                    db.ClaseArticulo.Add(claseArticulo);
+                    await db.SaveChangesAsync();
+                    return new Response
+                    {
+                        IsSuccess = true,
+                        Message = "OK"
+                    };
+                }
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "OK"
+                };
+
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepci�n",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
+            }
+        }
+
+        // DELETE: api/ClaseArticulo/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteClaseArticulo([FromRoute] int id)
+        public async Task<Response> DeleteClaseArticulo([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
-            }
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "M�delo no v�lido ",
+                    };
+                }
 
-            var _entidad = await _context.ClaseArticulo.SingleOrDefaultAsync(m => m.IdClaseArticulo == id);
-            if (_entidad == null)
+                var respuesta = await db.ClaseArticulo.SingleOrDefaultAsync(m => m.IdClaseArticulo == id);
+                if (respuesta == null)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "No existe ",
+                    };
+                }
+                db.ClaseArticulo.Remove(respuesta);
+                await db.SaveChangesAsync();
+
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = "Eliminado ",
+                };
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepci�n",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
             }
-
-            _context.ClaseArticulo.Remove(_entidad);
-            await _context.SaveChangesAsync();
-
-            return Ok(_entidad);
         }
 
-        private bool EntidadExists(int id)
+        private bool ClaseArticuloExists(string nombre)
         {
-            return _context.ClaseArticulo.Any(e => e.IdClaseArticulo == id);
+            return db.ClaseArticulo.Any(e => e.Nombre == nombre);
         }
+
+        public Response Existe(ClaseArticulo claseArticulo)
+        {
+            var bdd = claseArticulo.Nombre.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.ClaseArticulo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            if (loglevelrespuesta != null)
+            {
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = "Existe una clase de art�culo de igual nombre",
+                    Resultado = null,
+                };
+
+            }
+
+            return new Response
+            {
+                IsSuccess = false,
+                Resultado = loglevelrespuesta,
+            };
     }
 }

@@ -6,7 +6,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using bd.swrm.datos;
 using bd.swrm.entidades.Negocio;
+using bd.log.guardar.Servicios;
+using bd.log.guardar.Enumeradores;
 using Microsoft.EntityFrameworkCore;
+using bd.log.guardar.ObjectTranfer;
+using bd.swrm.entidades.Enumeradores;
+using bd.log.guardar.Utiles;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -14,123 +19,295 @@ namespace bd.swrm.web.Controllers.API
     [Route("api/ClaseActivoFijo")]
     public class ClaseActivoFijoController : Controller
     {
-        private readonly SwRMDbContext _context;
 
-        public ClaseActivoFijoController(SwRMDbContext _context)
+        private readonly SwRMDbContext db;
+
+        public ClaseActivoFijoController(SwRMDbContext db)
         {
-            this._context = _context;
+            this.db = db;
         }
 
-        // GET: api/ClaseActivoFijo
+        // GET: api/ListarClaseActivoFijo
         [HttpGet]
-        public IEnumerable<ClaseActivoFijo> GetClaseActivoFijo()
+        [Route("ListarClaseActivoFijo")]
+        public async Task<List<ClaseActivoFijo>> GetClaseActivoFijo()
         {
-            return _context.ClaseActivoFijo;
-        }
+            try
+            {
+                return await db.ClaseActivoFijo.OrderBy(x => x.Nombre).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepci�n",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new List<ClaseActivoFijo>();
+            }
 
         // GET: api/ClaseActivoFijo/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetClaseActivoFijo([FromRoute] int id)
+        public async Task<Response> GetClaseActivoFijo([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var _entidad = await _context.ClaseActivoFijo.SingleOrDefaultAsync(m => m.IdClaseActivoFijo == id);
-
-            if (_entidad == null)
-                return NotFound();
-
-            return Ok(_entidad);
-        }
-
-        // POST: api/ClaseActivoFijo
-        [HttpPost]
-        public async Task<IActionResult> PostClaseActivoFijo([FromBody] ClaseActivoFijo _entidad)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            _context.ClaseActivoFijo.Add(_entidad);
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (EntidadExists(_entidad.IdClaseActivoFijo))
+                if (!ModelState.IsValid)
                 {
-                    return new StatusCodeResult(StatusCodes.Status409Conflict);
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "M�delo no v�lido",
+                    };
                 }
-                else
-                {
-                    throw;
-                }
-            }
 
-            return CreatedAtAction("GetClaseActivoFijo", new { id = _entidad.IdClaseActivoFijo }, _entidad);
+      var claseActivoFijo = await db.ClaseActivoFijo.SingleOrDefaultAsync(m => m.IdClaseActivoFijo == id);
+
+                if (claseActivoFijo == null)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "No encontrado",
+                    };
+                }
+
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = "Ok",
+                    Resultado = claseActivoFijo,
+                };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepci�n",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
+            }
         }
 
         // PUT: api/ClaseActivoFijo/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutClaseActivoFijo([FromRoute] int id, [FromBody] ClaseActivoFijo _entidad)
+        public async Task<Response> PutClaseActivoFijo([FromRoute] int id, [FromBody] ClaseActivoFijo claseActivoFijo)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (id != _entidad.IdClaseActivoFijo)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(_entidad).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EntidadExists(id))
+                if (!ModelState.IsValid)
                 {
-                    return NotFound();
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "M�delo inv�lido"
+                    };
                 }
-                else
-                {
-                    throw;
-                }
-            }
 
-            return NoContent();
+                var claseActivoFijoActualizar = await db.ClaseActivoFijo.Where(x => x.IdClaseActivoFijo == id).FirstOrDefaultAsync();
+                if (claseActivoFijoActualizar != null)
+                {
+                    try
+                    {
+                        claseActivoFijoActualizar.Nombre = claseActivoFijo.Nombre;
+                        claseActivoFijoActualizar.IdTipoActivoFijo = claseActivoFijo.IdTipoActivoFijo;
+                        claseActivoFijoActualizar.IdTablaDepreciacion = claseActivoFijo.IdTablaDepreciacion;
+                        db.ClaseActivoFijo.Update(claseActivoFijoActualizar);
+                        await db.SaveChangesAsync();
+
+                        return new Response
+                        {
+                            IsSuccess = true,
+                            Message = "Ok",
+                        };
+
+                    }
+                    catch (Exception ex)
+                    {
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                        {
+                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                            ExceptionTrace = ex,
+                            Message = "Se ha producido una exepci�n",
+                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                            UserName = "",
+
+                        });
+                        return new Response
+                        {
+                            IsSuccess = false,
+                            Message = "Error ",
+                        };
+                    }
+                }
+
+
+
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Existe"
+                };
+            }
+            catch (Exception)
+            {
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Excepci�n"
+                };
+            }
         }
 
-        // DELETE: api/ApiWithActions/5
+        // POST: api/ClaseActivoFijo
+        [HttpPost]
+        [Route("InsertarClaseActivoFijo")]
+        public async Task<Response> PostClaseActivoFijo([FromBody] ClaseActivoFijo claseActivoFijo)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "M�delo inv�lido"
+                    };
+                }
+
+                var respuesta = Existe(claseActivoFijo);
+                if (!respuesta.IsSuccess)
+                {
+                    db.ClaseActivoFijo.Add(claseActivoFijo);
+                    await db.SaveChangesAsync();
+                    return new Response
+                    {
+                        IsSuccess = true,
+                        Message = "OK"
+                    };
+                }
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "OK"
+                };
+
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepci�n",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
+            }
+        }
+
+        // DELETE: api/ClaseActivoFijo/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteClaseActivoFijo([FromRoute] int id)
+        public async Task<Response> DeleteClaseActivoFijo([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
-            }
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "M�delo no v�lido ",
+                    };
+                }
 
-            var _entidad = await _context.ClaseActivoFijo.SingleOrDefaultAsync(m => m.IdClaseActivoFijo == id);
-            if (_entidad == null)
+                var respuesta = await db.ClaseActivoFijo.SingleOrDefaultAsync(m => m.IdClaseActivoFijo == id);
+                if (respuesta == null)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "No existe ",
+                    };
+                }
+                db.ClaseActivoFijo.Remove(respuesta);
+                await db.SaveChangesAsync();
+
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = "Eliminado ",
+                };
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepci�n",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
             }
-
-            _context.ClaseActivoFijo.Remove(_entidad);
-            await _context.SaveChangesAsync();
-
-            return Ok(_entidad);
         }
 
-        private bool EntidadExists(int id)
+        private bool ClaseActivoFijoExists(string nombre)
         {
-            return _context.ClaseActivoFijo.Any(e => e.IdClaseActivoFijo == id);
+            return db.ClaseActivoFijo.Any(e => e.Nombre == nombre);
         }
+
+        public Response Existe(ClaseActivoFijo claseActivoFijo)
+        {
+            var bdd = claseActivoFijo.Nombre.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.ClaseActivoFijo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            if (loglevelrespuesta != null)
+            {
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = "Existe una clase de activo fijo de igual nombre",
+                    Resultado = null,
+                };
+
+            }
+
+            return new Response
+            {
+                IsSuccess = false,
+                Resultado = loglevelrespuesta,
+            };
     }
 }

@@ -6,6 +6,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using bd.swrm.datos;
 using bd.swrm.entidades.Negocio;
+using bd.log.guardar.Servicios;
+using bd.log.guardar.Enumeradores;
+using Microsoft.EntityFrameworkCore;
+using bd.log.guardar.ObjectTranfer;
+using bd.swrm.entidades.Enumeradores;
+using bd.log.guardar.Utiles;
 using Microsoft.EntityFrameworkCore;
 
 namespace bd.swrm.web.Controllers.API
@@ -14,124 +20,294 @@ namespace bd.swrm.web.Controllers.API
     [Route("api/DetalleFactura")]
     public class DetalleFacturaController : Controller
     {
-        private readonly SwRMDbContext _context;
+        private readonly SwRMDbContext db;
 
-        public DetalleFacturaController(SwRMDbContext _context)
+        public DetalleFacturaController(SwRMDbContext db)
         {
-            this._context = _context;
+            this.db = db;
         }
 
-        // GET: api/DetalleFactura
+        // GET: api/ListarDetallesFactura
         [HttpGet]
-        [HttpGet]
-        public IEnumerable<DetalleFactura> GetDetalleFactura()
+        [Route("ListarDetallesFactura")]
+        public async Task<List<DetalleFactura>> GetDetalleFactura()
         {
-            return _context.DetalleFactura;
-        }
+            try
+            {
+                return await db.DetalleFactura.OrderBy(x => x.IdDetalleFactura).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepci�n",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new List<DetalleFactura>();
+            }
 
         // GET: api/DetalleFactura/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetDetalleFactura([FromRoute] int id)
+        public async Task<Response> GetDetalleFactura([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var _entidad = await _context.DetalleFactura.SingleOrDefaultAsync(m => m.IdDetalleFactura == id);
-
-            if (_entidad == null)
-                return NotFound();
-
-            return Ok(_entidad);
-        }
-
-        // POST: api/DetalleFactura
-        [HttpPost]
-        public async Task<IActionResult> PostDetalleFactura([FromBody] DetalleFactura _entidad)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            _context.DetalleFactura.Add(_entidad);
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (EntidadExists(_entidad.IdDetalleFactura))
+                if (!ModelState.IsValid)
                 {
-                    return new StatusCodeResult(StatusCodes.Status409Conflict);
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "M�delo no v�lido",
+                    };
                 }
-                else
-                {
-                    throw;
-                }
-            }
 
-            return CreatedAtAction("GetDetalleFactura", new { id = _entidad.IdDetalleFactura }, _entidad);
+                var detalleFactura = await db.DetalleFactura.SingleOrDefaultAsync(m => m.IdDetalleFactura == id);
+
+                if (detalleFactura == null)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "No encontrado",
+                    };
+                }
+
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = "Ok",
+                    Resultado = detalleFactura,
+                };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepci�n",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
+            }
         }
 
         // PUT: api/DetalleFactura/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutDetalleFactura([FromRoute] int id, [FromBody] DetalleFactura _entidad)
+        public async Task<Response> PutDetalleFactura([FromRoute] int id, [FromBody] DetalleFactura detallefactura)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (id != _entidad.IdDetalleFactura)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(_entidad).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EntidadExists(id))
+                if (!ModelState.IsValid)
                 {
-                    return NotFound();
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "M�delo inv�lido"
+                    };
                 }
-                else
-                {
-                    throw;
-                }
-            }
 
-            return NoContent();
+                var detallefacturaActualizar = await db.DetalleFactura.Where(x => x.IdDetalleFactura == id).FirstOrDefaultAsync();
+                if (detallefacturaActualizar != null)
+                {
+                    try
+                    {
+                        detallefacturaActualizar.Precio = detallefactura.Precio;
+                        detallefacturaActualizar.Cantidad = detallefactura.Cantidad;
+                        detallefacturaActualizar.IdFactura = detallefactura.IdFactura;
+                        detallefacturaActualizar.IdArticulo = detallefactura.IdArticulo;
+                        db.DetalleFactura.Update(detallefacturaActualizar);
+                        await db.SaveChangesAsync();
+
+                        return new Response
+                        {
+                            IsSuccess = true,
+                            Message = "Ok",
+                        };
+
+                    }
+                    catch (Exception ex)
+                    {
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                        {
+                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                            ExceptionTrace = ex,
+                            Message = "Se ha producido una exepci�n",
+                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                            UserName = "",
+
+                        });
+                        return new Response
+                        {
+                            IsSuccess = false,
+                            Message = "Error ",
+                        };
+                    }
+                }
+
+
+
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Existe"
+                };
+            }
+            catch (Exception)
+            {
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Excepci�n"
+                };
+            }
         }
 
-        // DELETE: api/ApiWithActions/5
+        // POST: api/DetalleFactura
+        [HttpPost]
+        [Route("InsertarDetalleFactura")]
+        public async Task<Response> PostDetalleFactura([FromBody] DetalleFactura detalleFactura)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "M�delo inv�lido"
+                    };
+                }
+
+                var respuesta = Existe(detalleFactura);
+                if (!respuesta.IsSuccess)
+                {
+                    db.DetalleFactura.Add(detalleFactura);
+                    await db.SaveChangesAsync();
+                    return new Response
+                    {
+                        IsSuccess = true,
+                        Message = "OK"
+                    };
+                }
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "OK"
+                };
+
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepci�n",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
+            }
+        }
+
+        // DELETE: api/DetalleFactura/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteDetalleFactura([FromRoute] int id)
+        public async Task<Response> DeleteDetalleFactura([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
-            }
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "M�delo no v�lido ",
+                    };
+                }
 
-            var _entidad = await _context.DetalleFactura.SingleOrDefaultAsync(m => m.IdDetalleFactura == id);
-            if (_entidad == null)
+                var respuesta = await db.DetalleFactura.SingleOrDefaultAsync(m => m.IdDetalleFactura == id);
+                if (respuesta == null)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "No existe ",
+                    };
+                }
+                db.DetalleFactura.Remove(respuesta);
+                await db.SaveChangesAsync();
+
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = "Eliminado ",
+                };
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepci�n",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
             }
-
-            _context.DetalleFactura.Remove(_entidad);
-            await _context.SaveChangesAsync();
-
-            return Ok(_entidad);
         }
 
-        private bool EntidadExists(int id)
+        private bool DetalleFacturaExists(int idArticulo, int idFactura)
         {
-            return _context.DetalleFactura.Any(e => e.IdDetalleFactura == id);
+            return db.DetalleFactura.Any(e => e.IdArticulo == idArticulo && e.IdFactura == idFactura);
         }
+
+        public Response Existe(DetalleFactura detalleFactura)
+        {
+            var loglevelrespuesta = db.DetalleFactura.Where(p => p.IdFactura == detalleFactura.IdFactura && p.IdArticulo == detalleFactura.IdArticulo).FirstOrDefault();
+            if (loglevelrespuesta != null)
+            {
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = String.Format("Existe un detalle de factura para el art�culo {0} y la factura {1}", detalleFactura?.IdArticuloNavigation?.Nombre ?? "<Sin nombre>", detalleFactura?.IdFacturaNavigation?.Numerro ?? "<Sin nombre>"),
+                    Resultado = null,
+                };
+
+            }
+
+            return new Response
+            {
+                IsSuccess = false,
+                Resultado = loglevelrespuesta,
+            };
     }
 }
