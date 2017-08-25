@@ -16,24 +16,24 @@ using bd.log.guardar.Utiles;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/Articulo")]
-    public class ArticuloController : Controller
+    [Route("api/CatalogoCuenta")]
+    public class CatalogoCuentaController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ArticuloController(SwRMDbContext db)
+        public CatalogoCuentaController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/ListarArticulos
+        // GET: api/ListarCatalogosCuenta
         [HttpGet]
-        [Route("ListarArticulos")]
-        public async Task<List<Articulo>> GetArticulo()
+        [Route("ListarCatalogosCuenta")]
+        public async Task<List<CatalogoCuenta>> GetCatalogoCuenta()
         {
             try
             {
-                return await db.Articulo.OrderBy(x => x.Nombre).ToListAsync();
+                return await db.CatalogoCuenta.OrderBy(x => x.Codigo).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -47,13 +47,13 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<Articulo>();
+                return new List<CatalogoCuenta>();
             }
         }
 
-        // GET: api/Articulo/5
+        // GET: api/CatalogosCuenta/5
         [HttpGet("{id}")]
-        public async Task<Response> GetArticulo([FromRoute] int id)
+        public async Task<Response> GetCatalogosCuenta([FromRoute] int id)
         {
             try
             {
@@ -66,9 +66,9 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var articulo = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var catalogoCuenta = await db.CatalogoCuenta.SingleOrDefaultAsync(m => m.IdCatalogoCuenta == id);
 
-                if (articulo == null)
+                if (catalogoCuenta == null)
                 {
                     return new Response
                     {
@@ -81,7 +81,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = "Ok",
-                    Resultado = articulo,
+                    Resultado = catalogoCuenta,
                 };
             }
             catch (Exception ex)
@@ -104,9 +104,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // PUT: api/Articulo/5
+        // PUT: api/CatalogoCuenta/5
         [HttpPut("{id}")]
-        public async Task<Response> PutArticulo([FromRoute] int id, [FromBody] Articulo articulo)
+        public async Task<Response> PutCatalogoCuenta([FromRoute] int id, [FromBody] CatalogoCuenta catalogoCuenta)
         {
             try
             {
@@ -119,13 +119,14 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var articuloActualizar = await db.Articulo.Where(x => x.IdArticulo == id).FirstOrDefaultAsync();
-                if (articuloActualizar != null)
+                var catalogoCuentaActualizar = await db.CatalogoCuenta.Where(x => x.IdCatalogoCuenta == id).FirstOrDefaultAsync();
+                if (catalogoCuentaActualizar != null)
                 {
                     try
                     {
-                        articuloActualizar.Nombre = articulo.Nombre;
-                        db.Articulo.Update(articuloActualizar);
+                        catalogoCuentaActualizar.Codigo = catalogoCuenta.Codigo;
+                        catalogoCuentaActualizar.IdCatalogoCuentaHijo = catalogoCuenta.IdCatalogoCuentaHijo;
+                        db.CatalogoCuenta.Update(catalogoCuentaActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
@@ -174,10 +175,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // POST: api/Articulo
+        // POST: api/CatalogoCuenta
         [HttpPost]
-        [Route("InsertarArticulo")]
-        public async Task<Response> PostArticulo([FromBody] Articulo articulo)
+        [Route("InsertarCatalogoCuenta")]
+        public async Task<Response> PostCatalogoCuenta([FromBody] CatalogoCuenta catalogoCuenta)
         {
             try
             {
@@ -190,10 +191,10 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = Existe(articulo);
+                var respuesta = Existe(catalogoCuenta);
                 if (!respuesta.IsSuccess)
                 {
-                    db.Articulo.Add(articulo);
+                    db.CatalogoCuenta.Add(catalogoCuenta);
                     await db.SaveChangesAsync();
                     return new Response
                     {
@@ -229,9 +230,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // DELETE: api/Articulo/5
+        // DELETE: api/CatalogoCuenta/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteArticulo([FromRoute] int id)
+        public async Task<Response> DeleteCatalogoCuenta([FromRoute] int id)
         {
             try
             {
@@ -244,7 +245,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var respuesta = await db.CatalogoCuenta.SingleOrDefaultAsync(m => m.IdCatalogoCuenta == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -253,7 +254,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = "No existe ",
                     };
                 }
-                db.Articulo.Remove(respuesta);
+                db.CatalogoCuenta.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -282,21 +283,16 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        private bool ArticuloExists(string nombre)
+        public Response Existe(CatalogoCuenta catalogoCuenta)
         {
-            return db.Articulo.Any(e => e.Nombre == nombre);
-        }
-
-        public Response Existe(Articulo articulo)
-        {
-            var bdd = articulo.Nombre.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.Articulo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            var bdd = catalogoCuenta.Codigo.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.CatalogoCuenta.Where(p => p.Codigo.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
             if (loglevelrespuesta != null)
             {
                 return new Response
                 {
                     IsSuccess = true,
-                    Message = "Existe un artículo de igual nombre",
+                    Message = "Existe un catálogo de cuenta de igual nombre",
                     Resultado = null,
                 };
 
