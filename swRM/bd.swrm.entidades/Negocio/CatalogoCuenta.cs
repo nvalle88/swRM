@@ -22,8 +22,5 @@ namespace bd.swrm.entidades.Negocio
 
         public virtual ICollection<CatalogoCuenta> CatalogoCuentas { get; set; }
 
-        public virtual ICollection<ConfiguracionContabilidad> ConfiguracionContabilidad { get; set; }
-
-        public virtual ICollection<ConfiguracionContabilidad> ConfiguracionContabilidad1 { get; set; }
     }
 }

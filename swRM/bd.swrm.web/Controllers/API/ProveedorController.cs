@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,28 +13,27 @@ using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
 using bd.log.guardar.Utiles;
 
-
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/Articulo")]
-    public class ArticuloController : Controller
+    [Route("api/Proveedor")]
+    public class ProveedorController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ArticuloController(SwRMDbContext db)
+        public ProveedorController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/ListarArticulos
+        // GET: api/ListarProveedors
         [HttpGet]
-        [Route("ListarArticulos")]
-        public async Task<List<Articulo>> GetArticulo()
+        [Route("ListarProveedores")]
+        public async Task<List<Proveedor>> GetProveedor()
         {
             try
             {
-                return await db.Articulo.OrderBy(x => x.Nombre).ToListAsync();
+                return await db.Proveedor.OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -42,19 +41,19 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepci�n",
+                    Message = "Se ha producido una exepción",
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
 
                 });
-                return new List<Articulo>();
+                return new List<Proveedor>();
             }
+        }
 
-
-        // GET: api/Articulo/5
+        // GET: api/Proveedor/5
         [HttpGet("{id}")]
-        public async Task<Response> GetArticulo([FromRoute] int id)
+        public async Task<Response> GetProveedor([FromRoute] int id)
         {
             try
             {
@@ -63,13 +62,13 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "M�delo no v�lido",
+                        Message = "Módelo no válido",
                     };
                 }
 
-                var articulo = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var Proveedor = await db.Proveedor.SingleOrDefaultAsync(m => m.IdProveedor == id);
 
-                if (articulo == null)
+                if (Proveedor == null)
                 {
                     return new Response
                     {
@@ -82,7 +81,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = "Ok",
-                    Resultado = articulo,
+                    Resultado = Proveedor,
                 };
             }
             catch (Exception ex)
@@ -91,7 +90,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepci�n",
+                    Message = "Se ha producido una exepción",
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -105,9 +104,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // PUT: api/Articulo/5
+        // PUT: api/Proveedor/5
         [HttpPut("{id}")]
-        public async Task<Response> PutArticulo([FromRoute] int id, [FromBody] Articulo articulo)
+        public async Task<Response> PutProveedor([FromRoute] int id, [FromBody] Proveedor Proveedor)
         {
             try
             {
@@ -116,17 +115,17 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "M�delo inv�lido"
+                        Message = "Módelo inválido"
                     };
                 }
 
-                var articuloActualizar = await db.Articulo.Where(x => x.IdArticulo == id).FirstOrDefaultAsync();
-                if (articuloActualizar != null)
+                var ProveedorActualizar = await db.Proveedor.Where(x => x.IdProveedor == id).FirstOrDefaultAsync();
+                if (ProveedorActualizar != null)
                 {
                     try
                     {
-                        articuloActualizar.Nombre = articulo.Nombre;
-                        db.Articulo.Update(articuloActualizar);
+                        ProveedorActualizar.Nombre = Proveedor.Nombre;
+                        db.Proveedor.Update(ProveedorActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
@@ -142,7 +141,7 @@ namespace bd.swrm.web.Controllers.API
                         {
                             ApplicationName = Convert.ToString(Aplicacion.SwRm),
                             ExceptionTrace = ex,
-                            Message = "Se ha producido una exepci�n",
+                            Message = "Se ha producido una exepción",
                             LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                             LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                             UserName = "",
@@ -170,15 +169,15 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Excepci�n"
+                    Message = "Excepción"
                 };
             }
         }
 
-        // POST: api/Articulo
+        // POST: api/Proveedor
         [HttpPost]
-        [Route("InsertarArticulo")]
-        public async Task<Response> PostArticulo([FromBody] Articulo articulo)
+        [Route("InsertarProveedor")]
+        public async Task<Response> PostProveedor([FromBody] Proveedor Proveedor)
         {
             try
             {
@@ -187,14 +186,14 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "M�delo inv�lido"
+                        Message = "Módelo inválido"
                     };
                 }
 
-                var respuesta = Existe(articulo);
+                var respuesta = Existe(Proveedor);
                 if (!respuesta.IsSuccess)
                 {
-                    db.Articulo.Add(articulo);
+                    db.Proveedor.Add(Proveedor);
                     await db.SaveChangesAsync();
                     return new Response
                     {
@@ -216,7 +215,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepci�n",
+                    Message = "Se ha producido una exepción",
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -230,9 +229,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // DELETE: api/Articulo/5
+        // DELETE: api/Proveedor/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteArticulo([FromRoute] int id)
+        public async Task<Response> DeleteProveedor([FromRoute] int id)
         {
             try
             {
@@ -241,11 +240,11 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "M�delo no v�lido ",
+                        Message = "Módelo no válido ",
                     };
                 }
 
-                var respuesta = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var respuesta = await db.Proveedor.SingleOrDefaultAsync(m => m.IdProveedor == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -254,7 +253,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = "No existe ",
                     };
                 }
-                db.Articulo.Remove(respuesta);
+                db.Proveedor.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -269,7 +268,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepci�n",
+                    Message = "Se ha producido una exepción",
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -283,21 +282,21 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        private bool ArticuloExists(string nombre)
+        private bool ProveedorExists(string nombre)
         {
-            return db.Articulo.Any(e => e.Nombre == nombre);
+            return db.Proveedor.Any(e => e.Nombre == nombre);
         }
 
-        public Response Existe(Articulo articulo)
+        public Response Existe(Proveedor Proveedor)
         {
-            var bdd = articulo.Nombre.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.Articulo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            var bdd = Proveedor.Nombre.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.Proveedor.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
             if (loglevelrespuesta != null)
             {
                 return new Response
                 {
                     IsSuccess = true,
-                    Message = "Existe un art�culo de igual nombre",
+                    Message = "Existe un artículo de igual nombre",
                     Resultado = null,
                 };
 
@@ -308,5 +307,6 @@ namespace bd.swrm.web.Controllers.API
                 IsSuccess = false,
                 Resultado = loglevelrespuesta,
             };
+        }
     }
 }

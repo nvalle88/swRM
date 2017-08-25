@@ -6,35 +6,34 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using bd.swrm.datos;
 using bd.swrm.entidades.Negocio;
-using bd.log.guardar.Servicios;
-using bd.log.guardar.Enumeradores;
 using Microsoft.EntityFrameworkCore;
+using bd.log.guardar.Servicios;
 using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
+using bd.log.guardar.Enumeradores;
 using bd.log.guardar.Utiles;
-
 
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/Articulo")]
-    public class ArticuloController : Controller
+    [Route("api/Marca")]
+    public class MarcaController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ArticuloController(SwRMDbContext db)
+        public MarcaController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/ListarArticulos
+        // GET: api/Marca
         [HttpGet]
-        [Route("ListarArticulos")]
-        public async Task<List<Articulo>> GetArticulo()
+        [Route("ListarMarca")]
+        public async Task<List<Marca>> GetMarca()
         {
             try
             {
-                return await db.Articulo.OrderBy(x => x.Nombre).ToListAsync();
+                return await db.Marca.OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -42,19 +41,19 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepciï¿½n",
+                    Message = "Se ha producido una exepción",
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
 
                 });
-                return new List<Articulo>();
+                return new List<Marca>();
             }
+        }
 
-
-        // GET: api/Articulo/5
+        // GET: api/Marca/5
         [HttpGet("{id}")]
-        public async Task<Response> GetArticulo([FromRoute] int id)
+        public async Task<Response> GetMarca([FromRoute]int id)
         {
             try
             {
@@ -63,13 +62,13 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "Mï¿½delo no vï¿½lido",
+                        Message = "Módelo no válido",
                     };
                 }
 
-                var articulo = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var _marca = await db.Marca.SingleOrDefaultAsync(m => m.IdMarca == id);
 
-                if (articulo == null)
+                if (_marca == null)
                 {
                     return new Response
                     {
@@ -82,7 +81,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = "Ok",
-                    Resultado = articulo,
+                    Resultado = _marca,
                 };
             }
             catch (Exception ex)
@@ -91,7 +90,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepciï¿½n",
+                    Message = "Se ha producido una exepción",
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -104,81 +103,11 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
         }
-
-        // PUT: api/Articulo/5
-        [HttpPut("{id}")]
-        public async Task<Response> PutArticulo([FromRoute] int id, [FromBody] Articulo articulo)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = "Mï¿½delo invï¿½lido"
-                    };
-                }
-
-                var articuloActualizar = await db.Articulo.Where(x => x.IdArticulo == id).FirstOrDefaultAsync();
-                if (articuloActualizar != null)
-                {
-                    try
-                    {
-                        articuloActualizar.Nombre = articulo.Nombre;
-                        db.Articulo.Update(articuloActualizar);
-                        await db.SaveChangesAsync();
-
-                        return new Response
-                        {
-                            IsSuccess = true,
-                            Message = "Ok",
-                        };
-
-                    }
-                    catch (Exception ex)
-                    {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                        {
-                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                            ExceptionTrace = ex,
-                            Message = "Se ha producido una exepciï¿½n",
-                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                            UserName = "",
-
-                        });
-                        return new Response
-                        {
-                            IsSuccess = false,
-                            Message = "Error ",
-                        };
-                    }
-                }
-
-
-
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = "Existe"
-                };
-            }
-            catch (Exception)
-            {
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = "Excepciï¿½n"
-                };
-            }
-        }
-
-        // POST: api/Articulo
+        
+        // POST: api/Marca
         [HttpPost]
-        [Route("InsertarArticulo")]
-        public async Task<Response> PostArticulo([FromBody] Articulo articulo)
+        [Route("InsertarMarca")]
+        public async Task<Response> PostMarca([FromBody]Marca _marca)
         {
             try
             {
@@ -187,14 +116,14 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "Mï¿½delo invï¿½lido"
+                        Message = "Módelo inválido"
                     };
                 }
 
-                var respuesta = Existe(articulo);
+                var respuesta = Existe(_marca);
                 if (!respuesta.IsSuccess)
                 {
-                    db.Articulo.Add(articulo);
+                    db.Marca.Add(_marca);
                     await db.SaveChangesAsync();
                     return new Response
                     {
@@ -216,7 +145,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepciï¿½n",
+                    Message = "Se ha producido una exepción",
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -229,10 +158,10 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
         }
-
-        // DELETE: api/Articulo/5
-        [HttpDelete("{id}")]
-        public async Task<Response> DeleteArticulo([FromRoute] int id)
+        
+        // PUT: api/Marca/5
+        [HttpPut("{id}")]
+        public async Task<Response> PutMarca([FromRoute] int id, [FromBody]Marca _marca)
         {
             try
             {
@@ -241,11 +170,79 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "Mï¿½delo no vï¿½lido ",
+                        Message = "Módelo inválido"
                     };
                 }
 
-                var respuesta = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var _marcaActualizar = await db.Marca.Where(x => x.IdMarca == id).FirstOrDefaultAsync();
+                if (_marcaActualizar != null)
+                {
+                    try
+                    {
+                        _marcaActualizar.Nombre = _marca.Nombre;
+                        
+                        db.Marca.Update(_marcaActualizar);
+                        await db.SaveChangesAsync();
+
+                        return new Response
+                        {
+                            IsSuccess = true,
+                            Message = "Ok",
+                        };
+
+                    }
+                    catch (Exception ex)
+                    {
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                        {
+                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                            ExceptionTrace = ex,
+                            Message = "Se ha producido una exepción",
+                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                            UserName = "",
+
+                        });
+                        return new Response
+                        {
+                            IsSuccess = false,
+                            Message = "Error ",
+                        };
+                    }
+                }
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Existe"
+                };
+            }
+            catch (Exception)
+            {
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Excepción"
+                };
+            }
+        }
+        
+        // DELETE: api/ApiWithActions/5
+        [HttpDelete("{id}")]
+        public async Task<Response> DeleteMarca([FromRoute] int id)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "Módelo no válido ",
+                    };
+                }
+
+                var respuesta = await db.Marca.SingleOrDefaultAsync(m => m.IdMarca == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -254,7 +251,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = "No existe ",
                     };
                 }
-                db.Articulo.Remove(respuesta);
+                db.Marca.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -269,7 +266,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepciï¿½n",
+                    Message = "Se ha producido una exepción",
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -283,24 +280,24 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        private bool ArticuloExists(string nombre)
+        private bool MarcaExists(int id)
         {
-            return db.Articulo.Any(e => e.Nombre == nombre);
+            return db.Marca.Any(e => e.IdMarca == id);
         }
 
-        public Response Existe(Articulo articulo)
+        public Response Existe(Marca _marca)
         {
-            var bdd = articulo.Nombre.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.Articulo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            var bdd = _marca.Nombre.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.Marca.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            
             if (loglevelrespuesta != null)
             {
                 return new Response
                 {
                     IsSuccess = true,
-                    Message = "Existe un artï¿½culo de igual nombre",
+                    Message = String.Format("Ya existe una Marca con el nombre {0}", _marca.Nombre),
                     Resultado = null,
                 };
-
             }
 
             return new Response
@@ -308,5 +305,6 @@ namespace bd.swrm.web.Controllers.API
                 IsSuccess = false,
                 Resultado = loglevelrespuesta,
             };
+        }
     }
 }
