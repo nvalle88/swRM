@@ -7,6 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 using bd.swrm.datos;
 using bd.swrm.entidades.Negocio;
 using Microsoft.EntityFrameworkCore;
+using bd.log.guardar.Servicios;
+using bd.log.guardar.ObjectTranfer;
+using bd.swrm.entidades.Enumeradores;
+using bd.log.guardar.Enumeradores;
+using bd.log.guardar.Utiles;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -14,123 +19,295 @@ namespace bd.swrm.web.Controllers.API
     [Route("api/Modelo")]
     public class ModeloController : Controller
     {
-        private readonly SwRMDbContext _context;
+        private readonly SwRMDbContext db;
 
-        public ModeloController(SwRMDbContext _context)
+        public ModeloController(SwRMDbContext db)
         {
-            this._context = _context;
+            this.db = db;
         }
 
         // GET: api/Modelo
         [HttpGet]
-        public IEnumerable<Modelo> GetModelo()
+        [Route("ListarModelos")]
+        public async Task<List<Modelo>> GetModelo()
         {
-            return _context.Modelo;
+            try
+            {
+                return await db.Modelo.OrderBy(x => x.Nombre).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepción",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new List<Modelo>();
+            }
         }
 
         // GET: api/Modelo/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetModelo([FromRoute] int id)
+        public async Task<Response> GetModelo([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "Módelo no válido",
+                    };
+                }
 
-            var _entidad = await _context.Modelo.SingleOrDefaultAsync(m => m.IdModelo == id);
+                var _modelo = await db.Modelo.SingleOrDefaultAsync(m => m.IdModelo == id);
 
-            if (_entidad == null)
-                return NotFound();
+                if (_modelo == null)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "No encontrado",
+                    };
+                }
 
-            return Ok(_entidad);
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = "Ok",
+                    Resultado = _modelo,
+                };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepción",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
+            }
         }
         
         // POST: api/Modelo
         [HttpPost]
-        public async Task<IActionResult> PostModelo([FromBody]Modelo _entidad)
+        [Route("InsertarModelo")]
+        public async Task<Response> PostModelo([FromBody]Modelo _modelo)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            _context.Modelo.Add(_entidad);
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (EntidadExists(_entidad.IdModelo))
+                if (!ModelState.IsValid)
                 {
-                    return new StatusCodeResult(StatusCodes.Status409Conflict);
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "Módelo inválido"
+                    };
                 }
-                else
-                {
-                    throw;
-                }
-            }
 
-            return CreatedAtAction("GetModelo", new { id = _entidad.IdModelo }, _entidad);
+                var respuesta = Existe(_modelo);
+                if (!respuesta.IsSuccess)
+                {
+                    db.Modelo.Add(_modelo);
+                    await db.SaveChangesAsync();
+                    return new Response
+                    {
+                        IsSuccess = true,
+                        Message = "OK"
+                    };
+                }
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "OK"
+                };
+
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepción",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
+            }
         }
         
         // PUT: api/Modelo/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutModelo([FromRoute] int id, [FromBody]Modelo _entidad)
+        public async Task<Response> PutModelo([FromRoute] int id, [FromBody]Modelo _modelo)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (id != _entidad.IdModelo)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(_entidad).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EntidadExists(id))
+                if (!ModelState.IsValid)
                 {
-                    return NotFound();
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "Módelo inválido"
+                    };
                 }
-                else
-                {
-                    throw;
-                }
-            }
 
-            return NoContent();
+                var _modeloActualizar = await db.Modelo.Where(x => x.IdModelo == id).FirstOrDefaultAsync();
+                if (_modeloActualizar != null)
+                {
+                    try
+                    {
+                        _modeloActualizar.Nombre = _modelo.Nombre;
+                        _modeloActualizar.IdMarca = _modelo.IdMarca;
+                        _modeloActualizar.ActivoFijo = _modelo.ActivoFijo;
+                        _modelo.Articulo = _modelo.Articulo;
+
+                        db.Modelo.Update(_modeloActualizar);
+                        await db.SaveChangesAsync();
+
+                        return new Response
+                        {
+                            IsSuccess = true,
+                            Message = "Ok",
+                        };
+
+                    }
+                    catch (Exception ex)
+                    {
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                        {
+                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                            ExceptionTrace = ex,
+                            Message = "Se ha producido una exepción",
+                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                            UserName = "",
+
+                        });
+                        return new Response
+                        {
+                            IsSuccess = false,
+                            Message = "Error ",
+                        };
+                    }
+                }
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Existe"
+                };
+            }
+            catch (Exception)
+            {
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Excepción"
+                };
+            }
         }
         
         // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteModelo([FromRoute] int id)
+        public async Task<Response> DeleteModelo([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
-            }
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "Módelo no válido ",
+                    };
+                }
 
-            var _entidad = await _context.Modelo.SingleOrDefaultAsync(m => m.IdModelo == id);
-            if (_entidad == null)
+                var respuesta = await db.Modelo.SingleOrDefaultAsync(m => m.IdModelo == id);
+                if (respuesta == null)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "No existe ",
+                    };
+                }
+                db.Modelo.Remove(respuesta);
+                await db.SaveChangesAsync();
+
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = "Eliminado ",
+                };
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = "Se ha producido una exepción",
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = "Error ",
+                };
             }
-
-            _context.Modelo.Remove(_entidad);
-            await _context.SaveChangesAsync();
-
-            return Ok(_entidad);
         }
 
-        private bool EntidadExists(int id)
+        private bool ModeloExists(int id)
         {
-            return _context.Modelo.Any(e => e.IdModelo == id);
+            return db.Modelo.Any(e => e.IdModelo == id);
+        }
+
+        public Response Existe(Modelo _modelo)
+        {
+            var bdd = _modelo.Nombre.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.Modelo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+
+            if (loglevelrespuesta != null)
+            {
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = String.Format("Ya existe un Modelo con el nombre {0}", _modelo?.Nombre ?? "<Sin nombre>"),
+                    Resultado = null,
+                };
+            }
+
+            return new Response
+            {
+                IsSuccess = false,
+                Resultado = loglevelrespuesta,
+            };
         }
     }
 }
