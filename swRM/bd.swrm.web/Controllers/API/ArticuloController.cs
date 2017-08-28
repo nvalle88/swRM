@@ -50,6 +50,7 @@ namespace bd.swrm.web.Controllers.API
                 });
                 return new List<Articulo>();
             }
+        }
 
 
         // GET: api/Articulo/5
@@ -308,5 +309,6 @@ namespace bd.swrm.web.Controllers.API
                 IsSuccess = false,
                 Resultado = loglevelrespuesta,
             };
+        }
     }
 }

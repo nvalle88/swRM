@@ -26,7 +26,8 @@ namespace bd.swrm.datos
         public virtual DbSet<Factura> Factura { get; set; }
         public virtual DbSet<FondoFinanciamiento> FondoFinanciamiento { get; set; }
         public virtual DbSet<LibroActivoFijo> LibroActivoFijo { get; set; }
-       
+        public virtual DbSet<CatalogoCuenta> CatalogoCuenta { get; set; }
+        public virtual DbSet<MotivoAsiento> MotivoAsiento { get; set; }
         public virtual DbSet<MaestroArticuloSucursal> MaestroArticuloSucursal { get; set; }
         public virtual DbSet<MaestroDetalleArticulo> MaestroDetalleArticulo { get; set; }
         public virtual DbSet<MantenimientoActivoFijo> MantenimientoActivoFijo { get; set; }

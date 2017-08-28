@@ -284,7 +284,7 @@ namespace bd.swrm.web.Controllers.API
 
         private bool MaestroDetalleArticuloExists(int IdArticulo, int IdMaestroArticuloSucursal)
         {
-            return db.MaestroDetalleArticulo.Any(e => e.IdMaestroDetalleArticulo == id);
+            return db.MaestroDetalleArticulo.Any(e => e.IdMaestroDetalleArticulo == IdArticulo);
         }
 
         public Response Existe(MaestroDetalleArticulo _maestroDetalleArticulo)
@@ -295,7 +295,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = true,
-                    Message = String.Format("Ya existe una cantidad insertada para el Artículo {0} y el Maestro de artículo de Sucursal {1}", _maestroDetalleArticulo?.IdArticuloNavigation?.Nombre ?? "<Sin nombre>", _maestroDetalleArticulo?.IdMaestroArticuloSucursalNavigation?.IdSucursalNavigation?.Nombre ?? "<Sin nombre>"),
+                    Message = String.Format("Ya existe una cantidad insertada para el Artículo {0} y el Maestro de artículo de Sucursal {1}", _maestroDetalleArticulo?.Articulo?.Nombre ?? "<Sin nombre>", _maestroDetalleArticulo?.MaestroArticuloSucursal?.Sucursal?.Nombre ?? "<Sin nombre>"),
                     Resultado = null,
                 };
             }

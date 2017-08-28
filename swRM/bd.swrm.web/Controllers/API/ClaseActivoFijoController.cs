@@ -50,6 +50,7 @@ namespace bd.swrm.web.Controllers.API
                 });
                 return new List<ClaseActivoFijo>();
             }
+        }
 
         // GET: api/ClaseActivoFijo/5
         [HttpGet("{id}")]
@@ -66,7 +67,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-      var claseActivoFijo = await db.ClaseActivoFijo.SingleOrDefaultAsync(m => m.IdClaseActivoFijo == id);
+                var claseActivoFijo = await db.ClaseActivoFijo.SingleOrDefaultAsync(m => m.IdClaseActivoFijo == id);
 
                 if (claseActivoFijo == null)
                 {
@@ -309,5 +310,6 @@ namespace bd.swrm.web.Controllers.API
                 IsSuccess = false,
                 Resultado = loglevelrespuesta,
             };
+        }
     }
 }

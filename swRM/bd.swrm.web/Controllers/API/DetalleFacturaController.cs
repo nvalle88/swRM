@@ -50,6 +50,7 @@ namespace bd.swrm.web.Controllers.API
                 });
                 return new List<DetalleFactura>();
             }
+        }
 
         // GET: api/DetalleFactura/5
         [HttpGet("{id}")]
@@ -298,7 +299,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = true,
-                    Message = String.Format("Existe un detalle de factura para el art�culo {0} y la factura {1}", detalleFactura?.IdArticuloNavigation?.Nombre ?? "<Sin nombre>", detalleFactura?.IdFacturaNavigation?.Numerro ?? "<Sin nombre>"),
+                    Message = String.Format("Existe un detalle de factura para el art�culo {0} y la factura {1}", detalleFactura?.Articulo?.Nombre ?? "<Sin nombre>", detalleFactura?.Factura?.Numero ?? "<Sin nombre>"),
                     Resultado = null,
                 };
 
@@ -309,5 +310,6 @@ namespace bd.swrm.web.Controllers.API
                 IsSuccess = false,
                 Resultado = loglevelrespuesta,
             };
+        }
     }
 }

@@ -50,6 +50,7 @@ namespace bd.swrm.web.Controllers.API
                 });
                 return new List<ClaseArticulo>();
             }
+        }
 
         // GET: api/ClaseArticulo/5
         [HttpGet("{id}")]
@@ -310,5 +311,6 @@ namespace bd.swrm.web.Controllers.API
                 IsSuccess = false,
                 Resultado = loglevelrespuesta,
             };
+        }
     }
 }
