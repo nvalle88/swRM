@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
 using bd.log.guardar.Utiles;
+using bd.swrm.entidades.Utils;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -42,7 +43,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepci�n",
+                    Message = Mensaje.Excepcion,
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -63,7 +64,7 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "M�delo no v�lido",
+                        Message = Mensaje.ModeloInvalido,
                     };
                 }
 
@@ -74,14 +75,14 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "No encontrado",
+                        Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
 
                 return new Response
                 {
                     IsSuccess = true,
-                    Message = "Ok",
+                    Message = Mensaje.Satisfactorio,
                     Resultado = claseActivoFijo,
                 };
             }
@@ -91,7 +92,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepci�n",
+                    Message = Mensaje.Excepcion,
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -100,7 +101,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Error ",
+                    Message = Mensaje.Error,
                 };
             }
         }
@@ -116,7 +117,7 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "M�delo inv�lido"
+                        Message = Mensaje.ModeloInvalido,
                     };
                 }
 
@@ -134,7 +135,7 @@ namespace bd.swrm.web.Controllers.API
                         return new Response
                         {
                             IsSuccess = true,
-                            Message = "Ok",
+                            Message = Mensaje.Satisfactorio,
                         };
 
                     }
@@ -144,7 +145,7 @@ namespace bd.swrm.web.Controllers.API
                         {
                             ApplicationName = Convert.ToString(Aplicacion.SwRm),
                             ExceptionTrace = ex,
-                            Message = "Se ha producido una exepci�n",
+                            Message = Mensaje.Excepcion,
                             LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                             LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                             UserName = "",
@@ -153,7 +154,7 @@ namespace bd.swrm.web.Controllers.API
                         return new Response
                         {
                             IsSuccess = false,
-                            Message = "Error ",
+                            Message = Mensaje.Error,
                         };
                     }
                 }
@@ -164,7 +165,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Existe"
+                    Message = Mensaje.ExisteRegistro
                 };
             }
             catch (Exception)
@@ -172,7 +173,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Excepci�n"
+                    Message = Mensaje.Excepcion
                 };
             }
         }
@@ -189,7 +190,7 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "M�delo inv�lido"
+                        Message = Mensaje.ModeloInvalido
                     };
                 }
 
@@ -201,14 +202,14 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = true,
-                        Message = "OK"
+                        Message = Mensaje.Satisfactorio
                     };
                 }
 
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "OK"
+                    Message = Mensaje.Satisfactorio
                 };
 
             }
@@ -218,7 +219,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepci�n",
+                    Message = Mensaje.Excepcion,
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -227,7 +228,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Error ",
+                    Message = Mensaje.Error,
                 };
             }
         }
@@ -243,7 +244,7 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "M�delo no v�lido ",
+                        Message = Mensaje.ModeloInvalido,
                     };
                 }
 
@@ -253,7 +254,7 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "No existe ",
+                        Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
                 db.ClaseActivoFijo.Remove(respuesta);
@@ -262,7 +263,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = true,
-                    Message = "Eliminado ",
+                    Message = Mensaje.Satisfactorio,
                 };
             }
             catch (Exception ex)
@@ -271,7 +272,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepci�n",
+                    Message = Mensaje.Excepcion,
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -280,7 +281,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Error ",
+                    Message = Mensaje.Error,
                 };
             }
         }
@@ -299,7 +300,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = true,
-                    Message = "Existe una clase de activo fijo de igual nombre",
+                    Message = Mensaje.ExisteRegistro,
                     Resultado = null,
                 };
 
