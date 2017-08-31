@@ -12,28 +12,29 @@ using Microsoft.EntityFrameworkCore;
 using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
 using bd.log.guardar.Utiles;
+using bd.swrm.entidades.Utils;
 
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/TipoActivoFijo")]
-    public class TipoActivoFijoController : Controller
+    [Route("api/TablaDepreciacion")]
+    public class TablaDepreciacionController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public TipoActivoFijoController(SwRMDbContext db)
+        public TablaDepreciacionController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/ListarTipoActivoFijos
+        // GET: api/ListarTablaDepreciacion
         [HttpGet]
-        [Route("ListarTipoActivoFijos")]
-        public async Task<List<TipoActivoFijo>> GetTipoActivoFijo()
+        [Route("ListarTablaDepreciacion")]
+        public async Task<List<TablaDepreciacion>> GetTablaDepreciacion()
         {
             try
             {
-                return await db.TipoActivoFijo.OrderBy(x => x.Nombre).ToListAsync();
+                return await db.TablaDepreciacion.OrderBy(x => x.IdTablaDepreciacion).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -41,19 +42,19 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepción",
+                    Message = Mensaje.Excepcion,
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
 
                 });
-                return new List<TipoActivoFijo>();
+                return new List<TablaDepreciacion>();
             }
         }
 
-        // GET: api/TipoActivoFijo/5
+        // GET: api/TablaDepreciacion/5
         [HttpGet("{id}")]
-        public async Task<Response> GetTipoActivoFijo([FromRoute] int id)
+        public async Task<Response> GetTablaDepreciacion([FromRoute] int id)
         {
             try
             {
@@ -62,26 +63,26 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "Módelo no válido",
+                        Message = Mensaje.ModeloInvalido,
                     };
                 }
 
-                var TipoActivoFijo = await db.TipoActivoFijo.SingleOrDefaultAsync(m => m.IdTipoActivoFijo == id);
+                var TablaDepreciacion = await db.TablaDepreciacion.SingleOrDefaultAsync(m => m.IdTablaDepreciacion == id);
 
-                if (TipoActivoFijo == null)
+                if (TablaDepreciacion == null)
                 {
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "No encontrado",
+                        Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
 
                 return new Response
                 {
                     IsSuccess = true,
-                    Message = "Ok",
-                    Resultado = TipoActivoFijo,
+                    Message = Mensaje.Satisfactorio,
+                    Resultado = TablaDepreciacion,
                 };
             }
             catch (Exception ex)
@@ -90,7 +91,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepción",
+                    Message = Mensaje.Excepcion,
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -99,14 +100,14 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Error ",
+                    Message = Mensaje.Error,
                 };
             }
         }
 
-        // PUT: api/TipoActivoFijo/5
+        // PUT: api/TablaDepreciacion/5
         [HttpPut("{id}")]
-        public async Task<Response> PutTipoActivoFijo([FromRoute] int id, [FromBody] TipoActivoFijo TipoActivoFijo)
+        public async Task<Response> PutTablaDepreciacion([FromRoute] int id, [FromBody] TablaDepreciacion TablaDepreciacion)
         {
             try
             {
@@ -115,23 +116,23 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "Módelo inválido"
+                        Message = Mensaje.ModeloInvalido,
                     };
                 }
 
-                var TipoActivoFijoActualizar = await db.TipoActivoFijo.Where(x => x.IdTipoActivoFijo == id).FirstOrDefaultAsync();
-                if (TipoActivoFijoActualizar != null)
+                var TablaDepreciacionActualizar = await db.TablaDepreciacion.Where(x => x.IdTablaDepreciacion == id).FirstOrDefaultAsync();
+                if (TablaDepreciacionActualizar != null)
                 {
                     try
                     {
-                        TipoActivoFijoActualizar.Nombre = TipoActivoFijo.Nombre;
-                        db.TipoActivoFijo.Update(TipoActivoFijoActualizar);
+                        TablaDepreciacionActualizar.IdTablaDepreciacion = TablaDepreciacion.IdTablaDepreciacion;
+                        db.TablaDepreciacion.Update(TablaDepreciacionActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
                         {
                             IsSuccess = true,
-                            Message = "Ok",
+                            Message = Mensaje.ModeloInvalido,
                         };
 
                     }
@@ -141,7 +142,7 @@ namespace bd.swrm.web.Controllers.API
                         {
                             ApplicationName = Convert.ToString(Aplicacion.SwRm),
                             ExceptionTrace = ex,
-                            Message = "Se ha producido una exepción",
+                            Message = Mensaje.Excepcion,
                             LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                             LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                             UserName = "",
@@ -150,7 +151,7 @@ namespace bd.swrm.web.Controllers.API
                         return new Response
                         {
                             IsSuccess = false,
-                            Message = "Error ",
+                            Message = Mensaje.Error,
                         };
                     }
                 }
@@ -161,7 +162,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Existe"
+                    Message = Mensaje.ExisteRegistro
                 };
             }
             catch (Exception)
@@ -169,15 +170,15 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Excepción"
+                    Message = Mensaje.Excepcion
                 };
             }
         }
 
-        // POST: api/TipoActivoFijo
+        // POST: api/TablaDepreciacion
         [HttpPost]
-        [Route("InsertarTipoActivoFijo")]
-        public async Task<Response> PostTipoActivoFijo([FromBody] TipoActivoFijo TipoActivoFijo)
+        [Route("InsertarTablaDepreciacion")]
+        public async Task<Response> PostTablaDepreciacion([FromBody] TablaDepreciacion TablaDepreciacion)
         {
             try
             {
@@ -186,26 +187,26 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "Módelo inválido"
+                        Message = Mensaje.ModeloInvalido
                     };
                 }
 
-                var respuesta = Existe(TipoActivoFijo);
+                var respuesta = Existe(TablaDepreciacion);
                 if (!respuesta.IsSuccess)
                 {
-                    db.TipoActivoFijo.Add(TipoActivoFijo);
+                    db.TablaDepreciacion.Add(TablaDepreciacion);
                     await db.SaveChangesAsync();
                     return new Response
                     {
                         IsSuccess = true,
-                        Message = "OK"
+                        Message = Mensaje.Satisfactorio
                     };
                 }
 
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "OK"
+                    Message = Mensaje.Satisfactorio
                 };
 
             }
@@ -215,7 +216,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepción",
+                    Message = Mensaje.Excepcion,
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -224,14 +225,14 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Error ",
+                    Message = Mensaje.Error,
                 };
             }
         }
 
-        // DELETE: api/TipoActivoFijo/5
+        // DELETE: api/TablaDepreciacion/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteTipoActivoFijo([FromRoute] int id)
+        public async Task<Response> DeleteTablaDepreciacion([FromRoute] int id)
         {
             try
             {
@@ -240,26 +241,26 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "Módelo no válido ",
+                        Message = Mensaje.ModeloInvalido,
                     };
                 }
 
-                var respuesta = await db.TipoActivoFijo.SingleOrDefaultAsync(m => m.IdTipoActivoFijo == id);
+                var respuesta = await db.TablaDepreciacion.SingleOrDefaultAsync(m => m.IdTablaDepreciacion == id);
                 if (respuesta == null)
                 {
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "No existe ",
+                        Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.TipoActivoFijo.Remove(respuesta);
+                db.TablaDepreciacion.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
                 {
                     IsSuccess = true,
-                    Message = "Eliminado ",
+                    Message = Mensaje.Satisfactorio,
                 };
             }
             catch (Exception ex)
@@ -268,7 +269,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepción",
+                    Message = Mensaje.Excepcion,
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -277,26 +278,26 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Error ",
+                    Message = Mensaje.Error,
                 };
             }
         }
 
-        private bool TipoActivoFijoExists(string nombre)
+        private bool TablaDepreciacionExists(int id)
         {
-            return db.TipoActivoFijo.Any(e => e.Nombre == nombre);
+            return db.TablaDepreciacion.Any(e => e.IdTablaDepreciacion == id);
         }
 
-        public Response Existe(TipoActivoFijo TipoActivoFijo)
+        public Response Existe(TablaDepreciacion TablaDepreciacion)
         {
-            var bdd = TipoActivoFijo.Nombre.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.TipoActivoFijo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
-            if (loglevelrespuesta != null)
+            var bdd = TablaDepreciacion.IdTablaDepreciacion;
+            var TablaDepreciacionRespuesta = db.TablaDepreciacion.Where(p => p.IdTablaDepreciacion == bdd).FirstOrDefault();
+            if (TablaDepreciacionRespuesta != null)
             {
                 return new Response
                 {
                     IsSuccess = true,
-                    Message = "Existe un artículo de igual nombre",
+                    Message = Mensaje.ExisteRegistro,
                     Resultado = null,
                 };
 
@@ -305,7 +306,7 @@ namespace bd.swrm.web.Controllers.API
             return new Response
             {
                 IsSuccess = false,
-                Resultado = loglevelrespuesta,
+                Resultado = TablaDepreciacionRespuesta,
             };
         }
     }
