@@ -12,28 +12,29 @@ using Microsoft.EntityFrameworkCore;
 using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
 using bd.log.guardar.Utiles;
+using bd.swrm.entidades.Utils;
 
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/TablaDepreciacion")]
-    public class TablaDepreciacionController : Controller
+    [Route("api/SubClaseArticulo")]
+    public class SubClaseArticuloController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public TablaDepreciacionController(SwRMDbContext db)
+        public SubClaseArticuloController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/ListarTablaDepreciacion
+        // GET: api/ListarSubClaseArticulos
         [HttpGet]
-        [Route("ListarTablaDepreciacion")]
-        public async Task<List<TablaDepreciacion>> GetTablaDepreciacion()
+        [Route("ListarSubClaseArticulos")]
+        public async Task<List<SubClaseArticulo>> GetSubClaseArticulo()
         {
             try
             {
-                return await db.TablaDepreciacion.OrderBy(x => x.IdTablaDepreciacion).ToListAsync();
+                return await db.SubClaseArticulo.OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -41,19 +42,19 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepción",
+                    Message = Mensaje.Excepcion,
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
 
                 });
-                return new List<TablaDepreciacion>();
+                return new List<SubClaseArticulo>();
             }
         }
 
-        // GET: api/TablaDepreciacion/5
+        // GET: api/SubClaseArticulo/5
         [HttpGet("{id}")]
-        public async Task<Response> GetTablaDepreciacion([FromRoute] int id)
+        public async Task<Response> GetSubClaseArticulo([FromRoute] int id)
         {
             try
             {
@@ -62,26 +63,26 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "Módelo no válido",
+                        Message = Mensaje.ModeloInvalido,
                     };
                 }
 
-                var TablaDepreciacion = await db.TablaDepreciacion.SingleOrDefaultAsync(m => m.IdTablaDepreciacion == id);
+                var SubClaseArticulo = await db.SubClaseArticulo.SingleOrDefaultAsync(m => m.IdSubClaseArticulo == id);
 
-                if (TablaDepreciacion == null)
+                if (SubClaseArticulo == null)
                 {
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "No encontrado",
+                        Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
 
                 return new Response
                 {
                     IsSuccess = true,
-                    Message = "Ok",
-                    Resultado = TablaDepreciacion,
+                    Message = Mensaje.Satisfactorio,
+                    Resultado = SubClaseArticulo,
                 };
             }
             catch (Exception ex)
@@ -90,7 +91,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepción",
+                    Message = Mensaje.Excepcion,
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -99,14 +100,14 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Error ",
+                    Message = Mensaje.Error,
                 };
             }
         }
 
-        // PUT: api/TablaDepreciacion/5
+        // PUT: api/SubClaseArticulo/5
         [HttpPut("{id}")]
-        public async Task<Response> PutTablaDepreciacion([FromRoute] int id, [FromBody] TablaDepreciacion TablaDepreciacion)
+        public async Task<Response> PutSubClaseArticulo([FromRoute] int id, [FromBody] SubClaseArticulo SubClaseArticulo)
         {
             try
             {
@@ -115,23 +116,23 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "Módelo inválido"
+                        Message = Mensaje.ModeloInvalido,
                     };
                 }
 
-                var TablaDepreciacionActualizar = await db.TablaDepreciacion.Where(x => x.IdTablaDepreciacion == id).FirstOrDefaultAsync();
-                if (TablaDepreciacionActualizar != null)
+                var SubClaseArticuloActualizar = await db.SubClaseArticulo.Where(x => x.IdSubClaseArticulo == id).FirstOrDefaultAsync();
+                if (SubClaseArticuloActualizar != null)
                 {
                     try
                     {
-                        TablaDepreciacionActualizar.IdTablaDepreciacion = TablaDepreciacion.IdTablaDepreciacion;
-                        db.TablaDepreciacion.Update(TablaDepreciacionActualizar);
+                        SubClaseArticuloActualizar.Nombre = SubClaseArticulo.Nombre;
+                        db.SubClaseArticulo.Update(SubClaseArticuloActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
                         {
                             IsSuccess = true,
-                            Message = "Ok",
+                            Message = Mensaje.ModeloInvalido,
                         };
 
                     }
@@ -141,7 +142,7 @@ namespace bd.swrm.web.Controllers.API
                         {
                             ApplicationName = Convert.ToString(Aplicacion.SwRm),
                             ExceptionTrace = ex,
-                            Message = "Se ha producido una exepción",
+                            Message = Mensaje.Excepcion,
                             LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                             LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                             UserName = "",
@@ -150,7 +151,7 @@ namespace bd.swrm.web.Controllers.API
                         return new Response
                         {
                             IsSuccess = false,
-                            Message = "Error ",
+                            Message = Mensaje.Error,
                         };
                     }
                 }
@@ -161,7 +162,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Existe"
+                    Message = Mensaje.ExisteRegistro
                 };
             }
             catch (Exception)
@@ -169,15 +170,15 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Excepción"
+                    Message = Mensaje.Excepcion
                 };
             }
         }
 
-        // POST: api/TablaDepreciacion
+        // POST: api/SubClaseArticulo
         [HttpPost]
-        [Route("InsertarTablaDepreciacion")]
-        public async Task<Response> PostTablaDepreciacion([FromBody] TablaDepreciacion TablaDepreciacion)
+        [Route("InsertarSubClaseArticulo")]
+        public async Task<Response> PostSubClaseArticulo([FromBody] SubClaseArticulo SubClaseArticulo)
         {
             try
             {
@@ -186,26 +187,26 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "Módelo inválido"
+                        Message = Mensaje.ModeloInvalido
                     };
                 }
 
-                var respuesta = Existe(TablaDepreciacion);
+                var respuesta = Existe(SubClaseArticulo);
                 if (!respuesta.IsSuccess)
                 {
-                    db.TablaDepreciacion.Add(TablaDepreciacion);
+                    db.SubClaseArticulo.Add(SubClaseArticulo);
                     await db.SaveChangesAsync();
                     return new Response
                     {
                         IsSuccess = true,
-                        Message = "OK"
+                        Message = Mensaje.Satisfactorio
                     };
                 }
 
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "OK"
+                    Message = Mensaje.Satisfactorio
                 };
 
             }
@@ -215,7 +216,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepción",
+                    Message = Mensaje.Excepcion,
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -224,14 +225,14 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Error ",
+                    Message = Mensaje.Error,
                 };
             }
         }
 
-        // DELETE: api/TablaDepreciacion/5
+        // DELETE: api/SubClaseArticulo/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteTablaDepreciacion([FromRoute] int id)
+        public async Task<Response> DeleteSubClaseArticulo([FromRoute] int id)
         {
             try
             {
@@ -240,26 +241,26 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "Módelo no válido ",
+                        Message = Mensaje.ModeloInvalido,
                     };
                 }
 
-                var respuesta = await db.TablaDepreciacion.SingleOrDefaultAsync(m => m.IdTablaDepreciacion == id);
+                var respuesta = await db.SubClaseArticulo.SingleOrDefaultAsync(m => m.IdSubClaseArticulo == id);
                 if (respuesta == null)
                 {
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "No existe ",
+                        Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.TablaDepreciacion.Remove(respuesta);
+                db.SubClaseArticulo.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
                 {
                     IsSuccess = true,
-                    Message = "Eliminado ",
+                    Message = Mensaje.Satisfactorio,
                 };
             }
             catch (Exception ex)
@@ -268,7 +269,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     ApplicationName = Convert.ToString(Aplicacion.SwRm),
                     ExceptionTrace = ex,
-                    Message = "Se ha producido una exepción",
+                    Message = Mensaje.Excepcion,
                     LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
                     LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
                     UserName = "",
@@ -277,26 +278,26 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = "Error ",
+                    Message = Mensaje.Error,
                 };
             }
         }
 
-        private bool TablaDepreciacionExists(int id)
+        private bool SubClaseArticuloExists(string nombre)
         {
-            return db.TablaDepreciacion.Any(e => e.IdTablaDepreciacion == id);
+            return db.SubClaseArticulo.Any(e => e.Nombre == nombre);
         }
 
-        public Response Existe(TablaDepreciacion TablaDepreciacion)
+        public Response Existe(SubClaseArticulo SubClaseArticulo)
         {
-            var bdd = TablaDepreciacion.IdTablaDepreciacion;
-            var loglevelrespuesta = db.TablaDepreciacion.Where(p => p.IdTablaDepreciacion == bdd).FirstOrDefault();
-            if (loglevelrespuesta != null)
+            var bdd = SubClaseArticulo.Nombre.ToUpper().TrimEnd().TrimStart();
+            var SubClaseArticuloRespuesta = db.SubClaseArticulo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            if (SubClaseArticuloRespuesta != null)
             {
                 return new Response
                 {
                     IsSuccess = true,
-                    Message = "Existe un artículo de igual nombre",
+                    Message = Mensaje.ExisteRegistro,
                     Resultado = null,
                 };
 
@@ -305,7 +306,7 @@ namespace bd.swrm.web.Controllers.API
             return new Response
             {
                 IsSuccess = false,
-                Resultado = loglevelrespuesta,
+                Resultado = SubClaseArticuloRespuesta,
             };
         }
     }
