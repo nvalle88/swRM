@@ -34,7 +34,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.ClaseArticulo.OrderBy(x => x.Nombre).ToListAsync();
+                return await db.ClaseArticulo.OrderBy(x => x.Nombre).Include(c=> c.TipoArticulo).ToListAsync();
             }
             catch (Exception ex)
             {

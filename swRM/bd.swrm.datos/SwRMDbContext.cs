@@ -340,7 +340,8 @@ namespace bd.swrm.datos
 
                 entity.Property(e => e.Numero)
                     .IsRequired()
-                    .HasMaxLength(30);
+                    .HasMaxLength(30)
+                    .HasColumnName("Numerro");
 
                 entity.HasOne(d => d.MaestroArticuloSucursal)
                     .WithMany(p => p.Factura)
@@ -376,6 +377,19 @@ namespace bd.swrm.datos
                     .WithMany(p => p.LibroActivoFijo)
                     .HasForeignKey(d => d.IdSucursal);
             });
+
+            //modelBuilder.Entity<CatalogoCuenta>(entity =>
+            //{
+            //    entity.HasKey(e => e.IdCatalogoCuenta)
+            //        .HasName("PK_LibroActivoFijo");
+
+            //    entity.HasIndex(e => e.IdSucursal)
+            //        .HasName("IX_LibroActivoFijo_IdSucursal");
+
+            //    entity.HasOne(d => d.Sucursal)
+            //        .WithMany(p => p.LibroActivoFijo)
+            //        .HasForeignKey(d => d.IdSucursal);
+            //});
 
             modelBuilder.Entity<MaestroArticuloSucursal>(entity =>
             {
