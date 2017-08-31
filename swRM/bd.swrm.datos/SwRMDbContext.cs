@@ -378,19 +378,6 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdSucursal);
             });
 
-            //modelBuilder.Entity<CatalogoCuenta>(entity =>
-            //{
-            //    entity.HasKey(e => e.IdCatalogoCuenta)
-            //        .HasName("PK_LibroActivoFijo");
-
-            //    entity.HasIndex(e => e.IdSucursal)
-            //        .HasName("IX_LibroActivoFijo_IdSucursal");
-
-            //    entity.HasOne(d => d.Sucursal)
-            //        .WithMany(p => p.LibroActivoFijo)
-            //        .HasForeignKey(d => d.IdSucursal);
-            //});
-
             modelBuilder.Entity<MaestroArticuloSucursal>(entity =>
             {
                 entity.HasKey(e => e.IdMaestroArticuloSucursal)
