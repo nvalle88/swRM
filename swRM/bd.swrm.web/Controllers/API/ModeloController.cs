@@ -34,7 +34,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.Modelo.OrderBy(x => x.Nombre).ToListAsync();
+                return await db.Modelo.OrderBy(x => x.Nombre).Include(x => x.Marca).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -182,9 +182,7 @@ namespace bd.swrm.web.Controllers.API
                     {
                         _modeloActualizar.Nombre = _modelo.Nombre;
                         _modeloActualizar.IdMarca = _modelo.IdMarca;
-                        _modeloActualizar.ActivoFijo = _modelo.ActivoFijo;
-                        _modelo.Articulo = _modelo.Articulo;
-
+                        
                         db.Modelo.Update(_modeloActualizar);
                         await db.SaveChangesAsync();
 
