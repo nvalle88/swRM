@@ -34,7 +34,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.CatalogoCuenta.OrderBy(x => x.Codigo).Include(c=> c.IdCatalogoCuentaHijoNavigation).ToListAsync();
+                return await db.CatalogoCuenta.OrderBy(x => x.Codigo).ToListAsync();
             }
             catch (Exception ex)
             {
