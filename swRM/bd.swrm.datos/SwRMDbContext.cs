@@ -21,6 +21,7 @@ namespace bd.swrm.datos
         public virtual DbSet<ClaseArticulo> ClaseArticulo { get; set; }
         public virtual DbSet<CodigoActivoFijo> CodigoActivoFijo { get; set; }
         public virtual DbSet<DepreciacionActivoFijo> DepreciacionActivoFijo { get; set; }
+        public virtual DbSet<ConfiguracionContabilidad> ConfiguracionContabilidad { get; set; }
         public virtual DbSet<DetalleFactura> DetalleFactura { get; set; }
         public virtual DbSet<EmpleadoActivoFijo> EmpleadoActivoFijo { get; set; }
         public virtual DbSet<Factura> Factura { get; set; }
@@ -126,6 +127,38 @@ namespace bd.swrm.datos
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            modelBuilder.Entity<ConfiguracionContabilidad>(entity =>
+            {
+                entity.HasKey(e => e.IdConfiguracionContabilidad)
+                    .HasName("PK162");
+
+                entity.HasIndex(e => e.IdCatalogoCuentaD)
+                    .HasName("Ref310467");
+
+                entity.HasIndex(e => e.IdCatalogoCuentaH)
+                    .HasName("Ref310468");
+
+                entity.Property(e => e.IdConfiguracionContabilidad).HasColumnName("idConfiguracionContabilidad");
+
+                entity.Property(e => e.IdCatalogoCuentaD).HasColumnName("idCatalogoCuentaD");
+
+                entity.Property(e => e.IdCatalogoCuentaH).HasColumnName("idCatalogoCuentaH");
+
+                entity.Property(e => e.ValorD).HasColumnType("decimal");
+
+                entity.Property(e => e.ValorH).HasColumnType("decimal");
+
+                entity.HasOne(d => d.IdCatalogoCuentaDNavigation)
+                    .WithMany(p => p.ConfiguracionContabilidadIdCatalogoCuentaDNavigation)
+                    .HasForeignKey(d => d.IdCatalogoCuentaD)
+                    .HasConstraintName("RefCatalogoCuenta467");
+
+                entity.HasOne(d => d.IdCatalogoCuentaHNavigation)
+                    .WithMany(p => p.ConfiguracionContabilidadIdCatalogoCuentaHNavigation)
+                    .HasForeignKey(d => d.IdCatalogoCuentaH)
+                    .HasConstraintName("RefCatalogoCuenta468");
+            });
+
 
             modelBuilder.Entity<Articulo>(entity =>
             {
@@ -179,6 +212,29 @@ namespace bd.swrm.datos
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            modelBuilder.Entity<MotivoAsiento>(entity =>
+            {
+                entity.HasKey(e => e.IdMotivoAsiento)
+                    .HasName("PK165");
+
+                entity.HasIndex(e => e.IdConfiguracionContabilidad)
+                    .HasName("Ref309469");
+
+                entity.Property(e => e.IdMotivoAsiento).HasColumnName("idMotivoAsiento");
+
+                entity.Property(e => e.Descripcion)
+                    .IsRequired()
+                    .HasColumnType("varchar(20)");
+
+                entity.Property(e => e.IdConfiguracionContabilidad).HasColumnName("idConfiguracionContabilidad");
+
+                entity.HasOne(d => d.IdConfiguracionContabilidadNavigation)
+                    .WithMany(p => p.MotivoAsiento)
+                    .HasForeignKey(d => d.IdConfiguracionContabilidad)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("RefConfiguracionContabilidad469");
+            });
+
             modelBuilder.Entity<ClaseActivoFijo>(entity =>
             {
                 entity.HasKey(e => e.IdClaseActivoFijo)
@@ -203,6 +259,29 @@ namespace bd.swrm.datos
                     .WithMany(p => p.ClaseActivoFijo)
                     .HasForeignKey(d => d.IdTipoActivoFijo)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<CatalogoCuenta>(entity =>
+            {
+                entity.HasKey(e => e.IdCatalogoCuenta)
+                    .HasName("PK163");
+
+                entity.HasIndex(e => e.IdCatalogoCuentaHijo)
+                    .HasName("Ref310466");
+
+                entity.Property(e => e.IdCatalogoCuenta).HasColumnName("idCatalogoCuenta");
+
+                entity.Property(e => e.Codigo)
+                    .IsRequired()
+                    .HasColumnType("char(10)");
+
+                entity.Property(e => e.IdCatalogoCuentaHijo).HasColumnName("idCatalogoCuentaHijo");
+
+                entity.HasOne(d => d.IdCatalogoCuentaHijoNavigation)
+                    .WithMany(p => p.InverseIdCatalogoCuentaHijoNavigation)
+                    .HasForeignKey(d => d.IdCatalogoCuentaHijo)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("RefCatalogoCuenta466");
             });
 
             modelBuilder.Entity<ClaseArticulo>(entity =>
