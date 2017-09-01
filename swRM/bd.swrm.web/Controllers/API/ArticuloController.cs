@@ -34,7 +34,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.Articulo.OrderBy(x => x.Nombre).ToListAsync();
+                return await db.Articulo.OrderBy(x => x.Nombre).Include(c=> c.SubClaseArticulo).Include(c=> c.UnidadMedida).Include(c=> c.Modelo).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -127,6 +127,9 @@ namespace bd.swrm.web.Controllers.API
                     try
                     {
                         articuloActualizar.Nombre = articulo.Nombre;
+                        articuloActualizar.IdSubClaseArticulo = articulo.IdSubClaseArticulo;
+                        articuloActualizar.IdUnidadMedida = articulo.IdUnidadMedida;
+                        articuloActualizar.IdModelo = articulo.IdModelo;
                         db.Articulo.Update(articuloActualizar);
                         await db.SaveChangesAsync();
 

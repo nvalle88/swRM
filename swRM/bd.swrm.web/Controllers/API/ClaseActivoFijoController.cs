@@ -35,7 +35,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.ClaseActivoFijo.OrderBy(x => x.Nombre).ToListAsync();
+                return await db.ClaseActivoFijo.OrderBy(x => x.Nombre).Include(c=> c.TipoActivoFijo).Include(c=> c.TablaDepreciacion).ToListAsync();
             }
             catch (Exception ex)
             {
