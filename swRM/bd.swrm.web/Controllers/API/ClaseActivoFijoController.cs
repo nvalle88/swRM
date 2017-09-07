@@ -294,7 +294,7 @@ namespace bd.swrm.web.Controllers.API
         public Response Existe(ClaseActivoFijo claseActivoFijo)
         {
             var bdd = claseActivoFijo.Nombre.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.ClaseActivoFijo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            var loglevelrespuesta = db.ClaseActivoFijo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd && p.IdTablaDepreciacion == claseActivoFijo.IdTablaDepreciacion && p.IdTipoActivoFijo == claseActivoFijo.IdTipoActivoFijo).FirstOrDefault();
             if (loglevelrespuesta != null)
             {
                 return new Response
@@ -303,7 +303,6 @@ namespace bd.swrm.web.Controllers.API
                     Message = Mensaje.ExisteRegistro,
                     Resultado = null,
                 };
-
             }
 
             return new Response
