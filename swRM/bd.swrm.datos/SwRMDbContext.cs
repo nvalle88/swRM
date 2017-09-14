@@ -419,8 +419,7 @@ namespace bd.swrm.datos
 
                 entity.Property(e => e.Numero)
                     .IsRequired()
-                    .HasMaxLength(30)
-                    .HasColumnName("Numerro");
+                    .HasMaxLength(30);
 
                 entity.HasOne(d => d.MaestroArticuloSucursal)
                     .WithMany(p => p.Factura)
