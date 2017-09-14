@@ -35,7 +35,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.SubClaseActivoFijo.OrderBy(x => x.Nombre).Include(c => c.ClaseActivoFijo).ToListAsync();
+                return await db.SubClaseActivoFijo.OrderBy(x => x.Nombre).Include(c => c.ClaseActivoFijo).ThenInclude(c=> c.TipoActivoFijo).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -69,6 +69,8 @@ namespace bd.swrm.web.Controllers.API
                 }
 
                 var subClaseActivoFijo = await db.SubClaseActivoFijo.SingleOrDefaultAsync(m => m.IdSubClaseActivoFijo == id);
+                subClaseActivoFijo.ClaseActivoFijo = await db.ClaseActivoFijo.SingleOrDefaultAsync(c => c.IdClaseActivoFijo == subClaseActivoFijo.IdClaseActivoFijo);
+                subClaseActivoFijo.ClaseActivoFijo.TipoActivoFijo = await db.TipoActivoFijo.SingleOrDefaultAsync(c => c.IdTipoActivoFijo == subClaseActivoFijo.ClaseActivoFijo.IdTipoActivoFijo);
 
                 if (subClaseActivoFijo == null)
                 {
@@ -193,10 +195,11 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.ModeloInvalido
                     };
                 }
-
+                
                 var respuesta = Existe(subClaseActivoFijo);
                 if (!respuesta.IsSuccess)
                 {
+                    db.Entry(subClaseActivoFijo.ClaseActivoFijo).State = EntityState.Unchanged;
                     db.SubClaseActivoFijo.Add(subClaseActivoFijo);
                     await db.SaveChangesAsync();
                     return new Response
@@ -209,7 +212,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = Mensaje.Satisfactorio
+                    Message = Mensaje.ExisteRegistro
                 };
 
             }
