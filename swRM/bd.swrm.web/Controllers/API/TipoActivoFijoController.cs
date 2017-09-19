@@ -206,7 +206,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro;
+                    Message = Mensaje.ExisteRegistro
                 };
 
             }
