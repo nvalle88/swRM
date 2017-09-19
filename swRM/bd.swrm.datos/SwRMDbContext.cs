@@ -20,6 +20,7 @@ namespace bd.swrm.datos
         public virtual DbSet<ClaseActivoFijo> ClaseActivoFijo { get; set; }
         public virtual DbSet<ClaseArticulo> ClaseArticulo { get; set; }
         public virtual DbSet<CodigoActivoFijo> CodigoActivoFijo { get; set; }
+        public virtual DbSet<Estado> Estado { get; set; }
         public virtual DbSet<DepreciacionActivoFijo> DepreciacionActivoFijo { get; set; }
         public virtual DbSet<ConfiguracionContabilidad> ConfiguracionContabilidad { get; set; }
         public virtual DbSet<DetalleFactura> DetalleFactura { get; set; }
@@ -975,6 +976,16 @@ namespace bd.swrm.datos
                     .HasMaxLength(20);
 
                 entity.Property(e => e.TelefonoPrivado)
+                    .IsRequired()
+                    .HasMaxLength(20);
+            });
+
+            modelBuilder.Entity<Estado>(entity =>
+            {
+                entity.HasKey(e => e.IdEstado)
+                    .HasName("PK_Estado");
+
+                entity.Property(e => e.Nombre)
                     .IsRequired()
                     .HasMaxLength(20);
             });
