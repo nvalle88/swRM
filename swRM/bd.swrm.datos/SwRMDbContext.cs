@@ -15,7 +15,7 @@ namespace bd.swrm.datos
         }
 
         public virtual DbSet<Articulo> Articulo { get; set; }
-    
+        public virtual DbSet<ActivoFijo> ActivoFijo { get; set; }
         public virtual DbSet<Ciudad> Ciudad { get; set; }
         public virtual DbSet<ClaseActivoFijo> ClaseActivoFijo { get; set; }
         public virtual DbSet<ClaseArticulo> ClaseArticulo { get; set; }
@@ -54,6 +54,8 @@ namespace bd.swrm.datos
         public virtual DbSet<TransferenciaActivoFijo> TransferenciaActivoFijo { get; set; }
         public virtual DbSet<TransferenciaActivoFijoDetalle> TransferenciaActivoFijoDetalle { get; set; }
         public virtual DbSet<UnidadMedida> UnidadMedida { get; set; }
+        public virtual DbSet<Persona> Persona { get; set; }
+        public virtual DbSet<Empleado> Empleado { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -943,6 +945,38 @@ namespace bd.swrm.datos
                     .WithMany(p => p.TransferenciaActivoFijoDetalle)
                     .HasForeignKey(d => d.IdTransferenciaActivoFijo)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Persona>(entity =>
+            {
+                entity.HasKey(e => e.IdPersona)
+                    .HasName("PK_Persona");
+
+                entity.Property(e => e.Apellidos)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.CorreoPrivado).IsRequired();
+
+                entity.Property(e => e.Identificacion)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.LugarTrabajo)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.Nombres)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.TelefonoCasa)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(e => e.TelefonoPrivado)
+                    .IsRequired()
+                    .HasMaxLength(20);
             });
 
 

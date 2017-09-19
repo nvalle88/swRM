@@ -36,7 +36,7 @@ namespace bd.swrm.web.Controllers.API
             {
                 return await db.RecepcionActivoFijoDetalle
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c=> c.Proveedor)
-                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Empleado)
+                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Empleado).ThenInclude(c=> c.Persona)
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c=> c.MotivoRecepcion)
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c=> c.SubClaseActivoFijo).ThenInclude(c=> c.ClaseActivoFijo).ThenInclude(c=> c.TipoActivoFijo)
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c=> c.LibroActivoFijo).ThenInclude(c=> c.Sucursal).ThenInclude(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais)
