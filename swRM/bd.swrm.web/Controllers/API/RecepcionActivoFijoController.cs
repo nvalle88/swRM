@@ -46,6 +46,7 @@ namespace bd.swrm.web.Controllers.API
                     .Include(c => c.ActivoFijo).ThenInclude(c=> c.UnidadMedida)
                     .Include(c => c.ActivoFijo).ThenInclude(c=> c.Modelo).ThenInclude(c=> c.Marca)
                     .Include(c=> c.ActivoFijo).ThenInclude(c=> c.CodigoActivoFijo)
+                    .Include(c=> c.Estado)
                     .ToListAsync();
             }
             catch (Exception ex)
