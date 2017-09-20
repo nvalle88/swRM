@@ -72,6 +72,10 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
+                ModelState.Remove("IdActivoFijo");
+                ModelState.Remove("IdRecepcionActivoFijo");
+                ModelState.Remove("ActivoFijo.IdCodigoActivoFijo");
+
                 if (!ModelState.IsValid)
                 {
                     return new Response
@@ -84,8 +88,24 @@ namespace bd.swrm.web.Controllers.API
                 var respuesta = Existe(recepcionActivoFijoDetalle);
                 if (!respuesta.IsSuccess)
                 {
+                    db.Entry(recepcionActivoFijoDetalle.RecepcionActivoFijo.SubClaseActivoFijo).State = EntityState.Unchanged;
+                    db.Entry(recepcionActivoFijoDetalle.RecepcionActivoFijo.LibroActivoFijo).State = EntityState.Unchanged;
+                    await db.RecepcionActivoFijo.AddAsync(recepcionActivoFijoDetalle.RecepcionActivoFijo);
+                    await db.SaveChangesAsync();
+
+                    db.Entry(recepcionActivoFijoDetalle.ActivoFijo.Modelo).State = EntityState.Unchanged;
+                    db.Entry(recepcionActivoFijoDetalle.ActivoFijo.Ciudad).State = EntityState.Unchanged;
+                    db.Entry(recepcionActivoFijoDetalle.ActivoFijo.UnidadMedida).State = EntityState.Unchanged;
+                    await db.ActivoFijo.AddAsync(recepcionActivoFijoDetalle.ActivoFijo);
+                    await db.SaveChangesAsync();
+
+                    db.Entry(recepcionActivoFijoDetalle.ActivoFijo).State = EntityState.Unchanged;                    
+                    db.Entry(recepcionActivoFijoDetalle.RecepcionActivoFijo).State = EntityState.Unchanged;
+                    db.Entry(recepcionActivoFijoDetalle.Estado).State = EntityState.Unchanged;
+
                     db.RecepcionActivoFijoDetalle.Add(recepcionActivoFijoDetalle);
                     await db.SaveChangesAsync();
+
                     return new Response
                     {
                         IsSuccess = true,
