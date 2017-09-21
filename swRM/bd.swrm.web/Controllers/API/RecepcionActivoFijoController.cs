@@ -66,6 +66,59 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
+        // GET: api/RecepcionActivoFijo/5
+        [HttpGet("{id}")]
+        public async Task<Response> GetRecepcionActivoFijoDetalle([FromRoute] int id)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = Mensaje.ModeloInvalido,
+                    };
+                }
+
+                var recepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle.SingleOrDefaultAsync(m => m.IdRecepcionActivoFijoDetalle == id);
+
+                if (recepcionActivoFijoDetalle == null)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = Mensaje.RegistroNoEncontrado,
+                    };
+                }
+
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = Mensaje.Satisfactorio,
+                    Resultado = recepcionActivoFijoDetalle,
+                };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = Mensaje.Excepcion,
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.Error,
+                };
+            }
+        }
+
         [HttpPost]
         [Route("ValidarModeloRecepcionActivoFijo")]
         public Response PostValidacionModeloRecepcionActivoFijo([FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
