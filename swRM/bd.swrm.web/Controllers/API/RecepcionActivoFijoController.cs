@@ -65,10 +65,24 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // POST: api/Articulo
+        [HttpPost]
+        [Route("ValidarModeloRecepcionActivoFijo")]
+        public Response PostValidacionModeloRecepcionActivoFijo([FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
+        {
+            ModelState.Remove("IdActivoFijo");
+            ModelState.Remove("IdRecepcionActivoFijo");
+            ModelState.Remove("ActivoFijo.IdCodigoActivoFijo");
+
+            return new Response {
+                IsSuccess = ModelState.IsValid,
+                Message = ModelState.IsValid ? Mensaje.Satisfactorio : Mensaje.ModeloInvalido
+            };
+        }
+
+        // POST: api/RecepcionActivoFijo
         [HttpPost]
         [Route("InsertarRecepcionActivoFijo")]
-        public async Task<Response> PostArticulo([FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
+        public async Task<Response> PostRecepcionActivoFijo([FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
         {
             try
             {
@@ -109,7 +123,8 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = true,
-                        Message = Mensaje.Satisfactorio
+                        Message = Mensaje.Satisfactorio,
+                        Resultado = recepcionActivoFijoDetalle
                     };
                 }
 
