@@ -138,6 +138,111 @@ namespace bd.swrm.web.Controllers.API
             };
         }
 
+        [HttpPut("EstadoActivoFijo/{id}")]
+        public async Task<Response> PutModificarEstadoActivoFijo([FromRoute] int id, [FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
+        {
+            try
+            {
+                var recepcionActivoFijoDetalleActualizar = await db.RecepcionActivoFijoDetalle.Where(x => x.IdRecepcionActivoFijoDetalle == id).FirstOrDefaultAsync();
+                if (recepcionActivoFijoDetalleActualizar != null)
+                {
+                    try
+                    {
+                        recepcionActivoFijoDetalleActualizar.Estado = await db.Estado.SingleOrDefaultAsync(c => c.Nombre == "Recepcionado");
+                        recepcionActivoFijoDetalleActualizar.IdEstado = recepcionActivoFijoDetalleActualizar.Estado.IdEstado;
+                        db.RecepcionActivoFijoDetalle.Update(recepcionActivoFijoDetalleActualizar);
+                        await db.SaveChangesAsync();
+
+                        return new Response
+                        {
+                            IsSuccess = true,
+                            Message = Mensaje.ModeloInvalido,
+                        };
+
+                    }
+                    catch (Exception ex)
+                    {
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                        {
+                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                            ExceptionTrace = ex,
+                            Message = Mensaje.Excepcion,
+                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                            UserName = "",
+
+                        });
+                        return new Response
+                        {
+                            IsSuccess = false,
+                            Message = Mensaje.Error,
+                        };
+                    }
+                }
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.ExisteRegistro
+                };
+            }
+            catch (Exception)
+            {
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.Excepcion
+                };
+            }
+        }
+
+        [HttpPost]
+        [Route("DesaprobarActivoFijo")]
+        public async Task<Response> PostDesaprobacionActivoFijo([FromBody] int idRecepcionActivoFijoDetalle)
+        {
+            try
+            {
+                var recepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle.SingleOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle);
+                if (recepcionActivoFijoDetalle != null)
+                {
+                    recepcionActivoFijoDetalle.Estado = await db.Estado.SingleOrDefaultAsync(c => c.Nombre == "Desaprobado");
+                    recepcionActivoFijoDetalle.IdEstado = recepcionActivoFijoDetalle.Estado.IdEstado;
+
+                    db.RecepcionActivoFijoDetalle.Update(recepcionActivoFijoDetalle);
+                    await db.SaveChangesAsync();
+
+                    return new Response
+                    {
+                        IsSuccess = true,
+                        Message = Mensaje.Satisfactorio
+                    };
+                }
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.RegistroNoEncontrado
+                };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = Mensaje.Excepcion,
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.Error,
+                };
+            }
+        }
+
         // POST: api/RecepcionActivoFijo
         [HttpPost]
         [Route("InsertarRecepcionActivoFijo")]
