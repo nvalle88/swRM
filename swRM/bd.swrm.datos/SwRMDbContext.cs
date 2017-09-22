@@ -58,6 +58,8 @@ namespace bd.swrm.datos
         public virtual DbSet<Persona> Persona { get; set; }
         public virtual DbSet<Empleado> Empleado { get; set; }
 
+        public virtual DbSet<ActivosFijosAlta> ActivosFijosAlta { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -997,8 +999,22 @@ namespace bd.swrm.datos
                     .HasName("PK_UnidadMedida");
             });
 
+            modelBuilder.Entity<ActivosFijosAlta>(entity =>
+            {
+                entity.HasKey(e => e.IdActivoFijo)
+                    .HasName("PK_ActivoFijo");
 
-            foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
+                entity.Property(e => e.FechaAlta)
+                    .IsRequired();
+
+                entity.HasOne(a => a.ActivoFijo)
+                    .WithOne(b => b.ActivosFijosAlta)
+                    .HasForeignKey<ActivosFijosAlta>(b => b.IdActivoFijo);
+                
+             });
+
+
+                foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             {
                 relationship.DeleteBehavior = DeleteBehavior.Restrict;
             }

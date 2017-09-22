@@ -7,6 +7,7 @@ namespace bd.swrm.entidades.Negocio
     {
         [Key]
         public int IdActivoFijo { get; set; }
+        public virtual ActivosFijosAlta ActivosFijosAlta { get; set; }
 
         [Required(ErrorMessage = "Debe introducir {0}")]
         [Display(Name = "Activo fijo:")]
@@ -60,16 +61,15 @@ namespace bd.swrm.entidades.Negocio
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int IdModelo { get; set; }
         public virtual Modelo Modelo { get; set; }
-
-
-
-
-
-
-
-
-
         
+
+
+
+
+
+
+
+
 
 
 
