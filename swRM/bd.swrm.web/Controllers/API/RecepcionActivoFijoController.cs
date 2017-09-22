@@ -36,16 +36,8 @@ namespace bd.swrm.web.Controllers.API
             {
                 return await db.RecepcionActivoFijoDetalle
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c=> c.Proveedor)
-                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Empleado).ThenInclude(c=> c.Persona)
-                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c=> c.MotivoRecepcion)
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c=> c.SubClaseActivoFijo).ThenInclude(c=> c.ClaseActivoFijo).ThenInclude(c=> c.TipoActivoFijo)
-                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c=> c.LibroActivoFijo).ThenInclude(c=> c.Sucursal).ThenInclude(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais)
-                    .Include(c=> c.ActivoFijo).ThenInclude(c => c.SubClaseActivoFijo).ThenInclude(c => c.ClaseActivoFijo).ThenInclude(c => c.TipoActivoFijo)
-                    .Include(c => c.ActivoFijo).ThenInclude(c => c.LibroActivoFijo).ThenInclude(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais)
-                    .Include(c => c.ActivoFijo).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais)
-                    .Include(c => c.ActivoFijo).ThenInclude(c=> c.UnidadMedida)
-                    .Include(c => c.ActivoFijo).ThenInclude(c=> c.Modelo).ThenInclude(c=> c.Marca)
-                    .Include(c=> c.ActivoFijo).ThenInclude(c=> c.CodigoActivoFijo)
+                    .Include(c=> c.ActivoFijo)
                     .Include(c=> c.Estado)
                     .ToListAsync();
             }
@@ -65,13 +57,98 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // POST: api/Articulo
-        [HttpPost]
-        [Route("InsertarRecepcionActivoFijo")]
-        public async Task<Response> PostArticulo([FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
+        // GET: api/RecepcionActivoFijo/5
+        [HttpGet("{id}")]
+        public async Task<Response> GetRecepcionActivoFijoDetalle([FromRoute] int id)
         {
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = Mensaje.ModeloInvalido,
+                    };
+                }
+
+                var recepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle
+                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Proveedor)
+                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Empleado).ThenInclude(c=> c.Persona)
+                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c=> c.MotivoRecepcion)
+                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.SubClaseActivoFijo).ThenInclude(c => c.ClaseActivoFijo).ThenInclude(c => c.TipoActivoFijo)
+                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c=> c.LibroActivoFijo).ThenInclude(c=> c.Sucursal).ThenInclude(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais)
+                    .Include(c=> c.ActivoFijo).ThenInclude(c => c.SubClaseActivoFijo).ThenInclude(c => c.ClaseActivoFijo).ThenInclude(c => c.TipoActivoFijo)
+                    .Include(c => c.ActivoFijo).ThenInclude(c => c.LibroActivoFijo).ThenInclude(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais)
+                    .Include(c => c.ActivoFijo).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais)
+                    .Include(c => c.ActivoFijo).ThenInclude(c=> c.UnidadMedida)
+                    .Include(c => c.ActivoFijo).ThenInclude(c=> c.Modelo).ThenInclude(c=> c.Marca)
+                    .Include(c=> c.ActivoFijo).ThenInclude(c=> c.CodigoActivoFijo)
+                    .Include(c => c.ActivoFijo)
+                    .Include(c => c.Estado)
+                    .Where(c=> c.IdRecepcionActivoFijoDetalle == id).SingleOrDefaultAsync();
+
+                if (recepcionActivoFijoDetalle == null)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = Mensaje.RegistroNoEncontrado,
+                    };
+                }
+
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = Mensaje.Satisfactorio,
+                    Resultado = recepcionActivoFijoDetalle,
+                };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = Mensaje.Excepcion,
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.Error,
+                };
+            }
+        }
+
+        [HttpPost]
+        [Route("ValidarModeloRecepcionActivoFijo")]
+        public Response PostValidacionModeloRecepcionActivoFijo([FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
+        {
+            ModelState.Remove("IdActivoFijo");
+            ModelState.Remove("IdRecepcionActivoFijo");
+            ModelState.Remove("ActivoFijo.IdCodigoActivoFijo");
+
+            return new Response {
+                IsSuccess = ModelState.IsValid,
+                Message = ModelState.IsValid ? Mensaje.Satisfactorio : Mensaje.ModeloInvalido
+            };
+        }
+
+        // POST: api/RecepcionActivoFijo
+        [HttpPost]
+        [Route("InsertarRecepcionActivoFijo")]
+        public async Task<Response> PostRecepcionActivoFijo([FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
+        {
+            try
+            {
+                ModelState.Remove("IdActivoFijo");
+                ModelState.Remove("IdRecepcionActivoFijo");
+                ModelState.Remove("ActivoFijo.IdCodigoActivoFijo");
+
                 if (!ModelState.IsValid)
                 {
                     return new Response
@@ -84,12 +161,29 @@ namespace bd.swrm.web.Controllers.API
                 var respuesta = Existe(recepcionActivoFijoDetalle);
                 if (!respuesta.IsSuccess)
                 {
+                    db.Entry(recepcionActivoFijoDetalle.RecepcionActivoFijo.SubClaseActivoFijo).State = EntityState.Unchanged;
+                    db.Entry(recepcionActivoFijoDetalle.RecepcionActivoFijo.LibroActivoFijo).State = EntityState.Unchanged;
+                    await db.RecepcionActivoFijo.AddAsync(recepcionActivoFijoDetalle.RecepcionActivoFijo);
+                    await db.SaveChangesAsync();
+
+                    db.Entry(recepcionActivoFijoDetalle.ActivoFijo.Modelo).State = EntityState.Unchanged;
+                    db.Entry(recepcionActivoFijoDetalle.ActivoFijo.Ciudad).State = EntityState.Unchanged;
+                    db.Entry(recepcionActivoFijoDetalle.ActivoFijo.UnidadMedida).State = EntityState.Unchanged;
+                    await db.ActivoFijo.AddAsync(recepcionActivoFijoDetalle.ActivoFijo);
+                    await db.SaveChangesAsync();
+
+                    db.Entry(recepcionActivoFijoDetalle.ActivoFijo).State = EntityState.Unchanged;                    
+                    db.Entry(recepcionActivoFijoDetalle.RecepcionActivoFijo).State = EntityState.Unchanged;
+                    db.Entry(recepcionActivoFijoDetalle.Estado).State = EntityState.Unchanged;
+
                     db.RecepcionActivoFijoDetalle.Add(recepcionActivoFijoDetalle);
                     await db.SaveChangesAsync();
+
                     return new Response
                     {
                         IsSuccess = true,
-                        Message = Mensaje.Satisfactorio
+                        Message = Mensaje.Satisfactorio,
+                        Resultado = recepcionActivoFijoDetalle
                     };
                 }
 
