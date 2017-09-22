@@ -214,6 +214,65 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
+        // PUT: api/AsignarPoliza/5
+        [HttpPost]
+        [Route("AsignarPoliza")]
+        public async Task<Response> AsignarPoliza([FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
+        {
+            try
+            {
+                var ActualizarActivoFijoDetalle = await db.RecepcionActivoFijoDetalle.Where(x => x.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle).FirstOrDefaultAsync();
+                if (ActualizarActivoFijoDetalle != null)
+                {
+                    try
+                    {
+                        ActualizarActivoFijoDetalle.NumeroPoliza = recepcionActivoFijoDetalle.NumeroPoliza;
+                        db.RecepcionActivoFijoDetalle.Update(ActualizarActivoFijoDetalle);
+                        await db.SaveChangesAsync();
+
+                        return new Response
+                        {
+                            IsSuccess = true,
+                            Message = Mensaje.ModeloInvalido,
+                        };
+
+                    }
+                    catch (Exception ex)
+                    {
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                        {
+                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                            ExceptionTrace = ex,
+                            Message = Mensaje.Excepcion,
+                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                            UserName = "",
+
+                        });
+                        return new Response
+                        {
+                            IsSuccess = false,
+                            Message = Mensaje.Error,
+                        };
+                    }
+                }
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.ExisteRegistro
+                };
+            }
+            catch (Exception)
+            {
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.Excepcion
+                };
+            }
+        }
+
         public Response Existe(RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
         {
             var nombreActivoFijo = recepcionActivoFijoDetalle.ActivoFijo.Nombre.ToUpper().TrimEnd().TrimStart();
@@ -248,5 +307,6 @@ namespace bd.swrm.web.Controllers.API
                 Resultado = loglevelrespuesta,
             };
         }
+                
     }
 }
