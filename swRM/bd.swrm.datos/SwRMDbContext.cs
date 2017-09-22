@@ -57,7 +57,8 @@ namespace bd.swrm.datos
         public virtual DbSet<UnidadMedida> UnidadMedida { get; set; }
         public virtual DbSet<Persona> Persona { get; set; }
         public virtual DbSet<Empleado> Empleado { get; set; }
-
+        public virtual DbSet<ActivoFijoMotivoBaja> ActivoFijoMotivoBaja { get; set; }
+        public virtual DbSet<ActivosFijosBaja> ActivosFijosBaja { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -995,6 +996,31 @@ namespace bd.swrm.datos
             {
                 entity.HasKey(e => e.IdUnidadMedida)
                     .HasName("PK_UnidadMedida");
+            });
+
+            modelBuilder.Entity<ActivoFijoMotivoBaja>(entity =>
+            {
+                entity.HasKey(e => e.IdActivoFijoMotivoBaja)
+                    .HasName("PK_ActivoFijoMotivoBaja");
+
+                entity.Property(e => e.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(100);                
+            });
+
+            modelBuilder.Entity<ActivosFijosBaja>(entity =>
+            {
+                entity.HasKey(e => e.IdBaja)
+                    .HasName("PK_ActivosFijosBaja");
+
+                entity.Property(e => e.FechaBaja)
+                    .IsRequired();
+
+                entity.HasOne(d => d.ActivoFijoMotivoBaja)
+                    .WithMany(p => p.ActivosFijosBaja)
+                    .HasForeignKey(d => d.IdMotivoBaja)
+                    .OnDelete(DeleteBehavior.Restrict);
+
             });
 
 
