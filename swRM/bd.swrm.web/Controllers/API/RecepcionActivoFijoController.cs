@@ -34,12 +34,24 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.RecepcionActivoFijoDetalle
-                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c=> c.Proveedor)
-                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c=> c.SubClaseActivoFijo).ThenInclude(c=> c.ClaseActivoFijo).ThenInclude(c=> c.TipoActivoFijo)
-                    .Include(c=> c.ActivoFijo)
-                    .Include(c=> c.Estado)
-                    .ToListAsync();
+                return await (from recAFD in db.RecepcionActivoFijoDetalle
+                                  join recAF in db.RecepcionActivoFijo on recAFD.IdRecepcionActivoFijo equals recAF.IdRecepcionActivoFijo
+                                  join af in db.ActivoFijo on recAFD.IdActivoFijo equals af.IdActivoFijo
+                                  join est in db.Estado on recAFD.IdEstado equals est.IdEstado
+                                  join subCAf in db.SubClaseActivoFijo on recAF.IdSubClaseActivoFijo equals subCAf.IdSubClaseActivoFijo
+                                  join cAF in db.ClaseActivoFijo on subCAf.IdClaseActivoFijo equals cAF.IdClaseActivoFijo
+                                  join tAF in db.TipoActivoFijo on cAF.IdTipoActivoFijo equals tAF.IdTipoActivoFijo
+                                  join prov in db.Proveedor on recAF.IdProveedor equals prov.IdProveedor
+                                  select new RecepcionActivoFijoDetalle {
+                                      IdRecepcionActivoFijoDetalle = recAFD.IdRecepcionActivoFijoDetalle,
+                                      IdActivoFijo = recAFD.IdActivoFijo,
+                                      IdEstado = recAFD.IdEstado,
+                                      IdRecepcionActivoFijo = recAFD.IdRecepcionActivoFijo,
+                                      NumeroPoliza = recAFD.NumeroPoliza,
+                                      RecepcionActivoFijo = new RecepcionActivoFijo { FechaRecepcion = recAF.FechaRecepcion, SubClaseActivoFijo = new SubClaseActivoFijo { IdSubClaseActivoFijo = subCAf.IdSubClaseActivoFijo, Nombre = subCAf.Nombre, ClaseActivoFijo = new ClaseActivoFijo { IdClaseActivoFijo = cAF.IdClaseActivoFijo, Nombre = cAF.Nombre, TipoActivoFijo = new TipoActivoFijo { IdTipoActivoFijo = tAF.IdTipoActivoFijo, Nombre = tAF.Nombre } } }, Proveedor = new Proveedor { IdProveedor = prov.IdProveedor, Nombre = prov.Nombre, Apellidos = prov.Apellidos } },
+                                      ActivoFijo = new ActivoFijo { Nombre = af.Nombre },
+                                      Estado = new Estado { Nombre = est.Nombre }
+                                  }).ToListAsync();
             }
             catch (Exception ex)
             {
