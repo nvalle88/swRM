@@ -132,9 +132,29 @@ namespace bd.swrm.web.Controllers.API
             ModelState.Remove("IdRecepcionActivoFijo");
             ModelState.Remove("ActivoFijo.IdCodigoActivoFijo");
 
-            return new Response {
-                IsSuccess = ModelState.IsValid,
-                Message = ModelState.IsValid ? Mensaje.Satisfactorio : Mensaje.ModeloInvalido
+            if (!ModelState.IsValid)
+            {
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.ModeloInvalido
+                };
+            }
+
+            var respuesta = Existe(recepcionActivoFijoDetalle);
+            if (!respuesta.IsSuccess)
+            {
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = Mensaje.Satisfactorio
+                };
+            }
+
+            return new Response
+            {
+                IsSuccess = false,
+                Message = Mensaje.ExisteRegistro
             };
         }
 
