@@ -42,14 +42,23 @@ namespace bd.swrm.web.Controllers.API
                                   join cAF in db.ClaseActivoFijo on subCAf.IdClaseActivoFijo equals cAF.IdClaseActivoFijo
                                   join tAF in db.TipoActivoFijo on cAF.IdTipoActivoFijo equals tAF.IdTipoActivoFijo
                                   join prov in db.Proveedor on recAF.IdProveedor equals prov.IdProveedor
+                                  join libAF in db.LibroActivoFijo on af.IdLibroActivoFijo equals libAF.IdLibroActivoFijo
+                                  join suc in db.Sucursal on libAF.IdSucursal equals suc.IdSucursal
+                                  join ciud in db.Ciudad on suc.IdCiudad equals ciud.IdCiudad
+                                  join provin in db.Provincia on ciud.IdProvincia equals provin.IdProvincia
+                                  join pais in db.Pais on provin.IdPais equals pais.IdPais
+                                  join emp in db.Empleado on recAF.IdEmpleado equals emp.IdEmpleado
+                                  join pers in db.Persona on emp.IdPersona equals pers.IdPersona
+                                  join codAF in db.CodigoActivoFijo on af.IdCodigoActivoFijo equals codAF.IdCodigoActivoFijo
+                                  join motRec in db.MotivoRecepcion on recAF.IdMotivoRecepcion equals motRec.IdMotivoRecepcion
                                   select new RecepcionActivoFijoDetalle {
                                       IdRecepcionActivoFijoDetalle = recAFD.IdRecepcionActivoFijoDetalle,
                                       IdActivoFijo = recAFD.IdActivoFijo,
                                       IdEstado = recAFD.IdEstado,
                                       IdRecepcionActivoFijo = recAFD.IdRecepcionActivoFijo,
                                       NumeroPoliza = recAFD.NumeroPoliza,
-                                      RecepcionActivoFijo = new RecepcionActivoFijo { FechaRecepcion = recAF.FechaRecepcion, SubClaseActivoFijo = new SubClaseActivoFijo { IdSubClaseActivoFijo = subCAf.IdSubClaseActivoFijo, Nombre = subCAf.Nombre, ClaseActivoFijo = new ClaseActivoFijo { IdClaseActivoFijo = cAF.IdClaseActivoFijo, Nombre = cAF.Nombre, TipoActivoFijo = new TipoActivoFijo { IdTipoActivoFijo = tAF.IdTipoActivoFijo, Nombre = tAF.Nombre } } }, Proveedor = new Proveedor { IdProveedor = prov.IdProveedor, Nombre = prov.Nombre, Apellidos = prov.Apellidos } },
-                                      ActivoFijo = new ActivoFijo { Nombre = af.Nombre },
+                                      RecepcionActivoFijo = new RecepcionActivoFijo { FechaRecepcion = recAF.FechaRecepcion, IdSubClaseActivoFijo = recAF.IdSubClaseActivoFijo, SubClaseActivoFijo = new SubClaseActivoFijo { IdSubClaseActivoFijo = subCAf.IdSubClaseActivoFijo, Nombre = subCAf.Nombre, IdClaseActivoFijo = subCAf.IdClaseActivoFijo, ClaseActivoFijo = new ClaseActivoFijo { IdClaseActivoFijo = cAF.IdClaseActivoFijo, Nombre = cAF.Nombre, IdTipoActivoFijo = cAF.IdTipoActivoFijo, TipoActivoFijo = new TipoActivoFijo { IdTipoActivoFijo = tAF.IdTipoActivoFijo, Nombre = tAF.Nombre } } }, IdProveedor = recAF.IdProveedor, Proveedor = new Proveedor { IdProveedor = prov.IdProveedor, Nombre = prov.Nombre, Apellidos = prov.Apellidos }, Empleado = new Empleado { IdEmpleado = emp.IdEmpleado, IdPersona = emp.IdPersona, Persona = new Persona { IdPersona = pers.IdPersona, Nombres = pers.Nombres, Apellidos = pers.Apellidos, Identificacion = pers.Identificacion, CorreoPrivado = pers.CorreoPrivado, FechaNacimiento = pers.FechaNacimiento, LugarTrabajo = pers.LugarTrabajo, TelefonoCasa = pers.TelefonoCasa, TelefonoPrivado = pers.TelefonoPrivado } }, IdMotivoRecepcion = recAF.IdMotivoRecepcion, MotivoRecepcion = new MotivoRecepcion { IdMotivoRecepcion = motRec.IdMotivoRecepcion, Descripcion = motRec.Descripcion } },
+                                      ActivoFijo = new ActivoFijo { Nombre = af.Nombre, LibroActivoFijo = new LibroActivoFijo { IdLibroActivoFijo = libAF.IdLibroActivoFijo, IdSucursal = libAF.IdSucursal, Sucursal = new Sucursal { IdSucursal = suc.IdSucursal, IdCiudad = suc.IdCiudad, Nombre = suc.Nombre, Ciudad = new Ciudad { IdCiudad = ciud.IdCiudad, Nombre = ciud.Nombre, IdProvincia = ciud.IdProvincia, Provincia = new Provincia { IdProvincia = provin.IdProvincia, Nombre = provin.Nombre, IdPais = provin.IdPais, Pais = new Pais { IdPais = pais.IdPais, Nombre = pais.Nombre } } } } }, IdCodigoActivoFijo = af.IdCodigoActivoFijo, CodigoActivoFijo = new CodigoActivoFijo { IdCodigoActivoFijo = codAF.IdCodigoActivoFijo, Codigosecuencial = codAF.Codigosecuencial, CodigoBarras = codAF.CodigoBarras } },
                                       Estado = new Estado { Nombre = est.Nombre }
                                   }).ToListAsync();
             }
