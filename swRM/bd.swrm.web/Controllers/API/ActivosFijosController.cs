@@ -6,35 +6,35 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using bd.swrm.datos;
 using bd.swrm.entidades.Negocio;
-using bd.log.guardar.Servicios;
-using bd.log.guardar.Enumeradores;
 using Microsoft.EntityFrameworkCore;
+using bd.log.guardar.Servicios;
 using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
+using bd.log.guardar.Enumeradores;
 using bd.log.guardar.Utiles;
 using bd.swrm.entidades.Utils;
 
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/Provincia")]
-    public class ProvinciaController : Controller
+    [Route("api/ActivosFijos")]
+    public class ActivosFijosController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ProvinciaController(SwRMDbContext db)
+        public ActivosFijosController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/ListarProvincias
+        // GET: api/Marca
         [HttpGet]
-        [Route("ListarProvincias")]
-        public async Task<List<Provincia>> GetProvincia()
+        [Route("ListarActivosFijos")]
+        public async Task<List<ActivoFijo>> GetActivosFijos()
         {
             try
             {
-                return await db.Provincia.OrderBy(x => x.Nombre).Include(x=> x.Pais).ToListAsync();
+                return await db.ActivoFijo.ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,13 +48,13 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<Provincia>();
+                return new List<ActivoFijo>();
             }
         }
 
-        // GET: api/Provincia/5
+        // GET: api/Marca/5
         [HttpGet("{id}")]
-        public async Task<Response> GetProvincia([FromRoute] int id)
+        public async Task<Response> GetActivoFijo([FromRoute]int id)
         {
             try
             {
@@ -67,9 +67,9 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var provincia = await db.Provincia.SingleOrDefaultAsync(m => m.IdProvincia == id);
+                var _marca = await db.ActivoFijo.SingleOrDefaultAsync(m => m.IdActivoFijo == id);
 
-                if (provincia == null)
+                if (_marca == null)
                 {
                     return new Response
                     {
@@ -82,7 +82,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = provincia,
+                    Resultado = _marca,
                 };
             }
             catch (Exception ex)
@@ -104,82 +104,11 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
         }
-
-        // PUT: api/Provincia/5
-        [HttpPut("{id}")]
-        public async Task<Response> PutProvincia([FromRoute] int id, [FromBody] Provincia provincia)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
-
-                var ProvinciaActualizar = await db.Provincia.Where(x => x.IdProvincia == id).FirstOrDefaultAsync();
-                if (ProvinciaActualizar != null)
-                {
-                    try
-                    {
-                        ProvinciaActualizar.Nombre = provincia.Nombre;
-                        ProvinciaActualizar.IdPais = provincia.IdPais;
-                        db.Provincia.Update(ProvinciaActualizar);
-                        await db.SaveChangesAsync();
-
-                        return new Response
-                        {
-                            IsSuccess = true,
-                            Message = Mensaje.ModeloInvalido,
-                        };
-
-                    }
-                    catch (Exception ex)
-                    {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                        {
-                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                            ExceptionTrace = ex,
-                            Message = Mensaje.Excepcion,
-                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                            UserName = "",
-
-                        });
-                        return new Response
-                        {
-                            IsSuccess = false,
-                            Message = Mensaje.Error,
-                        };
-                    }
-                }
-
-
-
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
-            }
-            catch (Exception)
-            {
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Excepcion
-                };
-            }
-        }
-
-        // POST: api/Provincia
+        
+        // POST: api/Marca
         [HttpPost]
-        [Route("InsertarProvincia")]
-        public async Task<Response> PostProvincia([FromBody] Provincia provincia)
+        [Route("InsertarActivoFijo")]
+        public async Task<Response> PostActivoFijo([FromBody]ActivoFijo _ActivoFijo)
         {
             try
             {
@@ -192,10 +121,10 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = Existe(provincia);
+                var respuesta = Existe(_ActivoFijo);
                 if (!respuesta.IsSuccess)
                 {
-                    db.Provincia.Add(provincia);
+                    db.ActivoFijo.Add(_ActivoFijo);
                     await db.SaveChangesAsync();
                     return new Response
                     {
@@ -230,10 +159,76 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
         }
+        
+        // PUT: api/Marca/5
+        [HttpPut("{id}")]
+        public async Task<Response> PutActivoFijo([FromRoute] int id, [FromBody]ActivoFijo _ActivosFijos)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = Mensaje.ModeloInvalido
+                    };
+                }
 
-        // DELETE: api/Provincia/5
+                var _ActivosFijosActualizar = await db.ActivoFijo.Where(x => x.IdActivoFijo == id).FirstOrDefaultAsync();
+                if (_ActivosFijosActualizar != null)
+                {
+                    try
+                    {                        
+                        db.ActivoFijo.Update(_ActivosFijosActualizar);
+                        await db.SaveChangesAsync();
+
+                        return new Response
+                        {
+                            IsSuccess = true,
+                            Message = Mensaje.Satisfactorio,
+                        };
+
+                    }
+                    catch (Exception ex)
+                    {
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                        {
+                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                            ExceptionTrace = ex,
+                            Message = Mensaje.Excepcion,
+                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                            UserName = "",
+
+                        });
+                        return new Response
+                        {
+                            IsSuccess = false,
+                            Message = Mensaje.Error,
+                        };
+                    }
+                }
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.ExisteRegistro
+                };
+            }
+            catch (Exception)
+            {
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.Excepcion
+                };
+            }
+        }
+        
+        // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteProvincia([FromRoute] int id)
+        public async Task<Response> DeleteActivoFijo([FromRoute] int id)
         {
             try
             {
@@ -246,7 +241,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.Provincia.SingleOrDefaultAsync(m => m.IdProvincia == id);
+                var respuesta = await db.ActivoFijo.SingleOrDefaultAsync(m => m.IdActivoFijo == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -255,7 +250,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.Provincia.Remove(respuesta);
+                db.ActivoFijo.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -284,11 +279,17 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(Provincia provincia)
+        private bool ActivoFijoExists(int id)
         {
-            var bdd = provincia.Nombre.ToUpper().TrimEnd().TrimStart();
-            var ProvinciaRespuesta = db.Provincia.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd && p.IdPais == provincia.IdPais).FirstOrDefault();
-            if (ProvinciaRespuesta != null)
+            return db.ActivoFijo.Any(e => e.IdActivoFijo == id);
+        }
+
+        public Response Existe(ActivoFijo _ActivosFijos)
+        {
+            var bdd = _ActivosFijos.IdActivoFijo;/*ToUpper().TrimEnd().TrimStart()*/;
+            var loglevelrespuesta = db.ActivoFijo.Where(p => p.IdActivoFijo == bdd).FirstOrDefault();
+            
+            if (loglevelrespuesta != null)
             {
                 return new Response
                 {
@@ -296,13 +297,12 @@ namespace bd.swrm.web.Controllers.API
                     Message = Mensaje.ExisteRegistro,
                     Resultado = null,
                 };
-
             }
 
             return new Response
             {
                 IsSuccess = false,
-                Resultado = ProvinciaRespuesta,
+                Resultado = loglevelrespuesta,
             };
         }
     }
