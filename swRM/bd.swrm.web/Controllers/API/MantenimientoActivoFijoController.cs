@@ -17,24 +17,24 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/Provincia")]
-    public class ProvinciaController : Controller
+    [Route("api/MantenimientoActivoFijo")]
+    public class MantenimientoActivoFijoController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ProvinciaController(SwRMDbContext db)
+        public MantenimientoActivoFijoController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/ListarProvincias
+        // GET: api/ListarMantenimientosActivoFijo
         [HttpGet]
-        [Route("ListarProvincias")]
-        public async Task<List<Provincia>> GetProvincia()
+        [Route("ListarMantenimientosActivoFijo")]
+        public async Task<List<MantenimientoActivoFijo>> GetMantenimientoActivoFijo()
         {
             try
             {
-                return await db.Provincia.OrderBy(x => x.Nombre).Include(x=> x.Pais).ToListAsync();
+                return await db.MantenimientoActivoFijo.OrderBy(x => x.FechaMantenimiento).Include(x => x.Empleado).Include(x => x.ActivoFijo).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,13 +48,13 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<Provincia>();
+                return new List<MantenimientoActivoFijo>();
             }
         }
 
-        // GET: api/Provincia/5
+        // GET: api/MantenimientoActivoFijo/5
         [HttpGet("{id}")]
-        public async Task<Response> GetProvincia([FromRoute] int id)
+        public async Task<Response> GetMantenimientoActivoFijo([FromRoute] int id)
         {
             try
             {
@@ -67,9 +67,9 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var provincia = await db.Provincia.SingleOrDefaultAsync(m => m.IdProvincia == id);
+                var MantenimientoActivoFijo = await db.MantenimientoActivoFijo.SingleOrDefaultAsync(m => m.IdMantenimientoActivoFijo == id);
 
-                if (provincia == null)
+                if (MantenimientoActivoFijo == null)
                 {
                     return new Response
                     {
@@ -82,7 +82,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = provincia,
+                    Resultado = MantenimientoActivoFijo,
                 };
             }
             catch (Exception ex)
@@ -105,9 +105,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // PUT: api/Provincia/5
+        // PUT: api/MantenimientoActivoFijo/5
         [HttpPut("{id}")]
-        public async Task<Response> PutProvincia([FromRoute] int id, [FromBody] Provincia provincia)
+        public async Task<Response> PutMantenimientoActivoFijo([FromRoute] int id, [FromBody] MantenimientoActivoFijo mantenimientoActivoFijo)
         {
             try
             {
@@ -120,14 +120,19 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var ProvinciaActualizar = await db.Provincia.Where(x => x.IdProvincia == id).FirstOrDefaultAsync();
-                if (ProvinciaActualizar != null)
+                var MantenimientoActivoFijoActualizar = await db.MantenimientoActivoFijo.Where(x => x.IdMantenimientoActivoFijo == id).FirstOrDefaultAsync();
+                if (MantenimientoActivoFijoActualizar != null)
                 {
                     try
                     {
-                        ProvinciaActualizar.Nombre = provincia.Nombre;
-                        ProvinciaActualizar.IdPais = provincia.IdPais;
-                        db.Provincia.Update(ProvinciaActualizar);
+                        MantenimientoActivoFijoActualizar.FechaMantenimiento = mantenimientoActivoFijo.FechaMantenimiento;
+                        MantenimientoActivoFijoActualizar.FechaDesde = mantenimientoActivoFijo.FechaDesde;
+                        MantenimientoActivoFijoActualizar.FechaHasta = mantenimientoActivoFijo.FechaHasta;
+                        MantenimientoActivoFijoActualizar.Valor = mantenimientoActivoFijo.Valor;
+                        MantenimientoActivoFijoActualizar.Observaciones = mantenimientoActivoFijo.Observaciones;
+                        MantenimientoActivoFijoActualizar.IdEmpleado = mantenimientoActivoFijo.IdEmpleado;
+                        MantenimientoActivoFijoActualizar.IdActivoFijo = mantenimientoActivoFijo.IdActivoFijo;
+                        db.MantenimientoActivoFijo.Update(MantenimientoActivoFijoActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
@@ -176,10 +181,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // POST: api/Provincia
+        // POST: api/MantenimientoActivoFijo
         [HttpPost]
-        [Route("InsertarProvincia")]
-        public async Task<Response> PostProvincia([FromBody] Provincia provincia)
+        [Route("InsertarMantenimientoActivoFijo")]
+        public async Task<Response> PostMantenimientoActivoFijo([FromBody] MantenimientoActivoFijo mantenimientoActivoFijo)
         {
             try
             {
@@ -192,10 +197,10 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = Existe(provincia);
+                var respuesta = Existe(mantenimientoActivoFijo);
                 if (!respuesta.IsSuccess)
                 {
-                    db.Provincia.Add(provincia);
+                    db.MantenimientoActivoFijo.Add(mantenimientoActivoFijo);
                     await db.SaveChangesAsync();
                     return new Response
                     {
@@ -231,9 +236,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // DELETE: api/Provincia/5
+        // DELETE: api/MantenimientoActivoFijo/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteProvincia([FromRoute] int id)
+        public async Task<Response> DeleteMantenimientoActivoFijo([FromRoute] int id)
         {
             try
             {
@@ -246,7 +251,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.Provincia.SingleOrDefaultAsync(m => m.IdProvincia == id);
+                var respuesta = await db.MantenimientoActivoFijo.SingleOrDefaultAsync(m => m.IdMantenimientoActivoFijo == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -255,7 +260,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.Provincia.Remove(respuesta);
+                db.MantenimientoActivoFijo.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -284,11 +289,11 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(Provincia provincia)
+        public Response Existe(MantenimientoActivoFijo mantenimientoActivoFijo)
         {
-            var bdd = provincia.Nombre.ToUpper().TrimEnd().TrimStart();
-            var ProvinciaRespuesta = db.Provincia.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd && p.IdPais == provincia.IdPais).FirstOrDefault();
-            if (ProvinciaRespuesta != null)
+            var bdd = mantenimientoActivoFijo.FechaMantenimiento;
+            var MantenimientoActivoFijoRespuesta = db.MantenimientoActivoFijo.Where(p => p.FechaMantenimiento == bdd && p.IdEmpleado == mantenimientoActivoFijo.IdEmpleado && p.IdActivoFijo == mantenimientoActivoFijo.IdActivoFijo).FirstOrDefault();
+            if (MantenimientoActivoFijoRespuesta != null)
             {
                 return new Response
                 {
@@ -302,7 +307,7 @@ namespace bd.swrm.web.Controllers.API
             return new Response
             {
                 IsSuccess = false,
-                Resultado = ProvinciaRespuesta,
+                Resultado = MantenimientoActivoFijoRespuesta,
             };
         }
     }
