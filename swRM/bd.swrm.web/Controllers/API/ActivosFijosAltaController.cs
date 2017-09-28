@@ -35,6 +35,7 @@ namespace bd.swrm.web.Controllers.API
             try
             {
                 return await db.ActivosFijosAlta.Include(x => x.ActivoFijo).ToListAsync();
+                
             }
             catch (Exception ex)
             {
@@ -67,9 +68,9 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var _marca = await db.ActivosFijosAlta.SingleOrDefaultAsync(m => m.IdActivoFijo == id);
+                var _ActivosFijosAlta = await db.ActivosFijosAlta.SingleOrDefaultAsync(m => m.IdActivoFijo == id);
 
-                if (_marca == null)
+                if (_ActivosFijosAlta == null)
                 {
                     return new Response
                     {
@@ -82,7 +83,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = _marca,
+                    Resultado = _ActivosFijosAlta,
                 };
             }
             catch (Exception ex)
@@ -108,10 +109,12 @@ namespace bd.swrm.web.Controllers.API
         // POST: api/Marca
         [HttpPost]
         [Route("InsertarActivosFijosAlta")]
-        public async Task<Response> PostMarca([FromBody]ActivosFijosAlta _ActivosFijosAlta)
+        public async Task<Response> PostActivosFijosAlta([FromBody]ActivosFijosAlta _ActivosFijosAlta)
         {
             try
             {
+                ModelState.Remove("IdFactura");
+
                 if (!ModelState.IsValid)
                 {
                     return new Response
@@ -289,7 +292,8 @@ namespace bd.swrm.web.Controllers.API
         public Response Existe(ActivosFijosAlta _ActivosFijosAlta)
         {
             var bdd = _ActivosFijosAlta.IdActivoFijo;/*ToUpper().TrimEnd().TrimStart()*/;
-            var loglevelrespuesta = db.ActivosFijosAlta.Where(p => p.IdActivoFijo == bdd).FirstOrDefault();
+            var _bdd = _ActivosFijosAlta.IdFactura;
+            var loglevelrespuesta = db.ActivosFijosAlta.Where(p => p.IdActivoFijo == bdd && p.IdFactura == _bdd).FirstOrDefault();
             
             if (loglevelrespuesta != null)
             {
