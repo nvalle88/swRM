@@ -35,39 +35,55 @@ namespace bd.swrm.web.Controllers.API
             try
             {
                 return await (from recAFD in db.RecepcionActivoFijoDetalle
-                                  join recAF in db.RecepcionActivoFijo on recAFD.IdRecepcionActivoFijo equals recAF.IdRecepcionActivoFijo
-                                  join af in db.ActivoFijo on recAFD.IdActivoFijo equals af.IdActivoFijo
-                                  join est in db.Estado on recAFD.IdEstado equals est.IdEstado
-                                  join subCAf in db.SubClaseActivoFijo on recAF.IdSubClaseActivoFijo equals subCAf.IdSubClaseActivoFijo
-                                  join cAF in db.ClaseActivoFijo on subCAf.IdClaseActivoFijo equals cAF.IdClaseActivoFijo
-                                  join tAF in db.TipoActivoFijo on cAF.IdTipoActivoFijo equals tAF.IdTipoActivoFijo
-                                  join prov in db.Proveedor on recAF.IdProveedor equals prov.IdProveedor
-                                  join libAF in db.LibroActivoFijo on af.IdLibroActivoFijo equals libAF.IdLibroActivoFijo
-                                  join suc in db.Sucursal on libAF.IdSucursal equals suc.IdSucursal
-                                  join ciud in db.Ciudad on suc.IdCiudad equals ciud.IdCiudad
-                                  join provin in db.Provincia on ciud.IdProvincia equals provin.IdProvincia
-                                  join pais in db.Pais on provin.IdPais equals pais.IdPais
-                                  join emp in db.Empleado on recAF.IdEmpleado equals emp.IdEmpleado
-                                  join pers in db.Persona on emp.IdPersona equals pers.IdPersona
-                                  join codAF in db.CodigoActivoFijo on af.IdCodigoActivoFijo equals codAF.IdCodigoActivoFijo
-                                  join motRec in db.MotivoRecepcion on recAF.IdMotivoRecepcion equals motRec.IdMotivoRecepcion
-                                  join um in db.UnidadMedida on af.IdUnidadMedida equals um.IdUnidadMedida
-                                  join mod in db.Modelo on af.IdModelo equals mod.IdModelo
-                                  join marca in db.Marca on mod.IdMarca equals marca.IdMarca
-                                  let listaMantenimientoActivo = (from mant in db.MantenimientoActivoFijo
-                                                                  join empleadMant in db.Empleado on mant.IdEmpleado equals empleadMant.IdEmpleado
-                                                                where mant.IdActivoFijo == af.IdActivoFijo
-                                                                select new MantenimientoActivoFijo { IdMantenimientoActivoFijo = mant.IdMantenimientoActivoFijo, FechaDesde = mant.FechaDesde, FechaHasta = mant.FechaHasta, FechaMantenimiento = mant.FechaMantenimiento, Observaciones = mant.Observaciones, Valor = mant.Valor, Empleado = empleadMant, IdEmpleado = empleadMant.IdEmpleado }).ToList()
-                                  select new RecepcionActivoFijoDetalle {
-                                      IdRecepcionActivoFijoDetalle = recAFD.IdRecepcionActivoFijoDetalle,
-                                      IdActivoFijo = recAFD.IdActivoFijo,
-                                      IdEstado = recAFD.IdEstado,
-                                      IdRecepcionActivoFijo = recAFD.IdRecepcionActivoFijo,
-                                      NumeroPoliza = recAFD.NumeroPoliza,
-                                      RecepcionActivoFijo = new RecepcionActivoFijo { Fondo = recAF.Fondo, OrdenCompra = recAF.OrdenCompra, Cantidad = recAF.Cantidad, ValidacionTecnica = recAF.ValidacionTecnica, FechaRecepcion = recAF.FechaRecepcion, IdSubClaseActivoFijo = recAF.IdSubClaseActivoFijo, SubClaseActivoFijo = new SubClaseActivoFijo { IdSubClaseActivoFijo = subCAf.IdSubClaseActivoFijo, Nombre = subCAf.Nombre, IdClaseActivoFijo = subCAf.IdClaseActivoFijo, ClaseActivoFijo = new ClaseActivoFijo { IdClaseActivoFijo = cAF.IdClaseActivoFijo, Nombre = cAF.Nombre, IdTipoActivoFijo = cAF.IdTipoActivoFijo, TipoActivoFijo = new TipoActivoFijo { IdTipoActivoFijo = tAF.IdTipoActivoFijo, Nombre = tAF.Nombre } } }, IdProveedor = recAF.IdProveedor, Proveedor = new Proveedor { IdProveedor = prov.IdProveedor, Nombre = prov.Nombre, Apellidos = prov.Apellidos }, Empleado = new Empleado { IdEmpleado = emp.IdEmpleado, IdPersona = emp.IdPersona, Persona = new Persona { IdPersona = pers.IdPersona, Nombres = pers.Nombres, Apellidos = pers.Apellidos, Identificacion = pers.Identificacion, CorreoPrivado = pers.CorreoPrivado, FechaNacimiento = pers.FechaNacimiento, LugarTrabajo = pers.LugarTrabajo, TelefonoCasa = pers.TelefonoCasa, TelefonoPrivado = pers.TelefonoPrivado } }, IdMotivoRecepcion = recAF.IdMotivoRecepcion, MotivoRecepcion = new MotivoRecepcion { IdMotivoRecepcion = motRec.IdMotivoRecepcion, Descripcion = motRec.Descripcion } },
-                                      ActivoFijo = new ActivoFijo { Nombre = af.Nombre, Serie = af.Serie, Ubicacion = af.Ubicacion, ValorCompra = af.ValorCompra, LibroActivoFijo = new LibroActivoFijo { IdLibroActivoFijo = libAF.IdLibroActivoFijo, IdSucursal = libAF.IdSucursal, Sucursal = new Sucursal { IdSucursal = suc.IdSucursal, IdCiudad = suc.IdCiudad, Nombre = suc.Nombre, Ciudad = new Ciudad { IdCiudad = ciud.IdCiudad, Nombre = ciud.Nombre, IdProvincia = ciud.IdProvincia, Provincia = new Provincia { IdProvincia = provin.IdProvincia, Nombre = provin.Nombre, IdPais = provin.IdPais, Pais = new Pais { IdPais = pais.IdPais, Nombre = pais.Nombre } } } } }, IdCodigoActivoFijo = af.IdCodigoActivoFijo, CodigoActivoFijo = new CodigoActivoFijo { IdCodigoActivoFijo = codAF.IdCodigoActivoFijo, Codigosecuencial = codAF.Codigosecuencial, CodigoBarras = codAF.CodigoBarras }, IdUnidadMedida = af.IdUnidadMedida, UnidadMedida = new UnidadMedida { IdUnidadMedida = um.IdUnidadMedida, Nombre = um.Nombre }, IdModelo = af.IdModelo, Modelo = new Modelo { IdModelo = mod.IdModelo, Nombre = mod.Nombre, IdMarca = mod.IdMarca, Marca = new Marca { IdMarca = marca.IdMarca, Nombre = marca.Nombre } }, MantenimientoActivoFijo = listaMantenimientoActivo },
-                                      Estado = new Estado { Nombre = est.Nombre }
-                                  }).ToListAsync();
+                              join recAF in db.RecepcionActivoFijo on recAFD.IdRecepcionActivoFijo equals recAF.IdRecepcionActivoFijo
+                              join af in db.ActivoFijo on recAFD.IdActivoFijo equals af.IdActivoFijo
+                              join est in db.Estado on recAFD.IdEstado equals est.IdEstado
+                              join subCAf in db.SubClaseActivoFijo on recAF.IdSubClaseActivoFijo equals subCAf.IdSubClaseActivoFijo
+                              join cAF in db.ClaseActivoFijo on subCAf.IdClaseActivoFijo equals cAF.IdClaseActivoFijo
+                              join tAF in db.TipoActivoFijo on cAF.IdTipoActivoFijo equals tAF.IdTipoActivoFijo
+                              join prov in db.Proveedor on recAF.IdProveedor equals prov.IdProveedor
+                              join libAF in db.LibroActivoFijo on af.IdLibroActivoFijo equals libAF.IdLibroActivoFijo
+                              join suc in db.Sucursal on libAF.IdSucursal equals suc.IdSucursal
+                              join ciud in db.Ciudad on suc.IdCiudad equals ciud.IdCiudad
+                              join provin in db.Provincia on ciud.IdProvincia equals provin.IdProvincia
+                              join pais in db.Pais on provin.IdPais equals pais.IdPais
+                              join emp in db.Empleado on recAF.IdEmpleado equals emp.IdEmpleado
+                              join pers in db.Persona on emp.IdPersona equals pers.IdPersona
+                              join codAF in db.CodigoActivoFijo on af.IdCodigoActivoFijo equals codAF.IdCodigoActivoFijo
+                              join motRec in db.MotivoRecepcion on recAF.IdMotivoRecepcion equals motRec.IdMotivoRecepcion
+                              join um in db.UnidadMedida on af.IdUnidadMedida equals um.IdUnidadMedida
+                              join mod in db.Modelo on af.IdModelo equals mod.IdModelo
+                              join marca in db.Marca on mod.IdMarca equals marca.IdMarca
+
+                              join afa in db.ActivosFijosAlta on af.IdActivoFijo equals afa.IdActivoFijo
+                              into tmp
+                              from resAFA in tmp.DefaultIfEmpty()
+
+                              join factura in db.Factura on resAFA.IdFactura equals factura.IdFactura
+                              into tmp1
+                              from resFac in tmp1.DefaultIfEmpty()
+
+                              let listaMantenimientoActivo = (from mant in db.MantenimientoActivoFijo
+                                                              join empleadMant in db.Empleado on mant.IdEmpleado equals empleadMant.IdEmpleado
+                                                              where mant.IdActivoFijo == af.IdActivoFijo
+                                                              select new MantenimientoActivoFijo { IdMantenimientoActivoFijo = mant.IdMantenimientoActivoFijo, FechaDesde = mant.FechaDesde, FechaHasta = mant.FechaHasta, FechaMantenimiento = mant.FechaMantenimiento, Observaciones = mant.Observaciones, Valor = mant.Valor, Empleado = empleadMant, IdEmpleado = empleadMant.IdEmpleado }).ToList()
+                              let listaFacturasProveedor = (from provFactura in db.Proveedor
+                                                            join fact in db.Factura on provFactura.IdProveedor equals fact.IdProveedor
+                                                            where provFactura.IdProveedor == prov.IdProveedor
+                                                            select new Factura { IdFactura = fact.IdFactura, Numero = fact.Numero }).ToList()
+
+
+                              select new RecepcionActivoFijoDetalle
+                              {
+                                  IdRecepcionActivoFijoDetalle = recAFD.IdRecepcionActivoFijoDetalle,
+                                  IdActivoFijo = recAFD.IdActivoFijo,
+                                  IdEstado = recAFD.IdEstado,
+                                  IdRecepcionActivoFijo = recAFD.IdRecepcionActivoFijo,
+                                  NumeroPoliza = recAFD.NumeroPoliza,
+                                  RecepcionActivoFijo = new RecepcionActivoFijo { Fondo = recAF.Fondo, OrdenCompra = recAF.OrdenCompra, Cantidad = recAF.Cantidad, ValidacionTecnica = recAF.ValidacionTecnica, FechaRecepcion = recAF.FechaRecepcion, IdSubClaseActivoFijo = recAF.IdSubClaseActivoFijo, SubClaseActivoFijo = new SubClaseActivoFijo { IdSubClaseActivoFijo = subCAf.IdSubClaseActivoFijo, Nombre = subCAf.Nombre, IdClaseActivoFijo = subCAf.IdClaseActivoFijo, ClaseActivoFijo = new ClaseActivoFijo { IdClaseActivoFijo = cAF.IdClaseActivoFijo, Nombre = cAF.Nombre, IdTipoActivoFijo = cAF.IdTipoActivoFijo, TipoActivoFijo = new TipoActivoFijo { IdTipoActivoFijo = tAF.IdTipoActivoFijo, Nombre = tAF.Nombre } } }, IdProveedor = recAF.IdProveedor, Proveedor = new Proveedor { IdProveedor = prov.IdProveedor, Nombre = prov.Nombre, Apellidos = prov.Apellidos, Factura = listaFacturasProveedor }, Empleado = new Empleado { IdEmpleado = emp.IdEmpleado, IdPersona = emp.IdPersona, Persona = new Persona { IdPersona = pers.IdPersona, Nombres = pers.Nombres, Apellidos = pers.Apellidos, Identificacion = pers.Identificacion, CorreoPrivado = pers.CorreoPrivado, FechaNacimiento = pers.FechaNacimiento, LugarTrabajo = pers.LugarTrabajo, TelefonoCasa = pers.TelefonoCasa, TelefonoPrivado = pers.TelefonoPrivado } }, IdMotivoRecepcion = recAF.IdMotivoRecepcion, MotivoRecepcion = new MotivoRecepcion { IdMotivoRecepcion = motRec.IdMotivoRecepcion, Descripcion = motRec.Descripcion } },
+                                  ActivoFijo = new ActivoFijo { Nombre = af.Nombre, Serie = af.Serie, Ubicacion = af.Ubicacion, ValorCompra = af.ValorCompra, LibroActivoFijo = new LibroActivoFijo { IdLibroActivoFijo = libAF.IdLibroActivoFijo, IdSucursal = libAF.IdSucursal, Sucursal = new Sucursal { IdSucursal = suc.IdSucursal, IdCiudad = suc.IdCiudad, Nombre = suc.Nombre, Ciudad = new Ciudad { IdCiudad = ciud.IdCiudad, Nombre = ciud.Nombre, IdProvincia = ciud.IdProvincia, Provincia = new Provincia { IdProvincia = provin.IdProvincia, Nombre = provin.Nombre, IdPais = provin.IdPais, Pais = new Pais { IdPais = pais.IdPais, Nombre = pais.Nombre } } } } }, IdCodigoActivoFijo = af.IdCodigoActivoFijo, CodigoActivoFijo = new CodigoActivoFijo { IdCodigoActivoFijo = codAF.IdCodigoActivoFijo, Codigosecuencial = codAF.Codigosecuencial, CodigoBarras = codAF.CodigoBarras }, IdUnidadMedida = af.IdUnidadMedida, UnidadMedida = new UnidadMedida { IdUnidadMedida = um.IdUnidadMedida, Nombre = um.Nombre }, IdModelo = af.IdModelo, Modelo = new Modelo { IdModelo = mod.IdModelo, Nombre = mod.Nombre, IdMarca = mod.IdMarca, Marca = new Marca { IdMarca = marca.IdMarca, Nombre = marca.Nombre }, }, MantenimientoActivoFijo = listaMantenimientoActivo, ActivosFijosAlta = resAFA != null ? new ActivosFijosAlta { IdActivoFijo = resAFA.IdActivoFijo, IdFactura = resAFA.IdFactura, FechaAlta = resAFA.FechaAlta, Factura = resFac != null ? new Factura { IdFactura = resFac.IdFactura, Numero = resFac.Numero } : null } : null },
+                                  Estado = new Estado { Nombre = est.Nombre }
+                              }).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -114,6 +130,7 @@ namespace bd.swrm.web.Controllers.API
                     .Include(c=> c.ActivoFijo).ThenInclude(c=> c.CodigoActivoFijo)
                     .Include(c => c.ActivoFijo)
                     .Include(c => c.Estado)
+                    .Include(c => c.RecepcionActivoFijo.Proveedor.Factura)
                     .Where(c=> c.IdRecepcionActivoFijoDetalle == id).SingleOrDefaultAsync();
 
                 if (recepcionActivoFijoDetalle == null)
@@ -196,7 +213,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     try
                     {
-                        recepcionActivoFijoDetalleActualizar.Estado = await db.Estado.SingleOrDefaultAsync(c => c.Nombre == "Recepcionado");
+                        recepcionActivoFijoDetalleActualizar.Estado = await db.Estado.SingleOrDefaultAsync(c => c.Nombre == recepcionActivoFijoDetalle.Estado.Nombre);
                         recepcionActivoFijoDetalleActualizar.IdEstado = recepcionActivoFijoDetalleActualizar.Estado.IdEstado;
                         db.RecepcionActivoFijoDetalle.Update(recepcionActivoFijoDetalleActualizar);
                         await db.SaveChangesAsync();
@@ -460,6 +477,6 @@ namespace bd.swrm.web.Controllers.API
                 Resultado = loglevelrespuesta,
             };
         }
-                
+
     }
 }

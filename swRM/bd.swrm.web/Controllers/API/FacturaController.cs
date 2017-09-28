@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,35 +6,35 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using bd.swrm.datos;
 using bd.swrm.entidades.Negocio;
-using bd.log.guardar.Servicios;
-using bd.log.guardar.Enumeradores;
 using Microsoft.EntityFrameworkCore;
+using bd.log.guardar.Servicios;
 using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
-using bd.log.guardar.Utiles;
 using bd.swrm.entidades.Utils;
+using bd.log.guardar.Enumeradores;
+using bd.log.guardar.Utiles;
 
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/Proveedor")]
-    public class ProveedorController : Controller
+    [Route("api/Factura")]
+    public class FacturaController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ProveedorController(SwRMDbContext db)
+        public FacturaController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/ListarProveedors
+        // GET: api/Factura
         [HttpGet]
-        [Route("ListarProveedores")]
-        public async Task<List<Proveedor>> GetProveedor()
+        [Route("ListarFacturas")]
+        public async Task<List<Factura>> GetFactura()
         {
             try
             {
-                return await db.Proveedor.OrderBy(x => x.Nombre).Include(x => x.Factura).ToListAsync();
+                return await db.Factura.OrderBy(x => x.Numero).Include(x => x.Proveedor).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,13 +48,13 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<Proveedor>();
+                return new List<Factura>();
             }
         }
 
-        // GET: api/Proveedor/5
+        // GET: api/Factura/5
         [HttpGet("{id}")]
-        public async Task<Response> GetProveedor([FromRoute] int id)
+        public async Task<Response> GetFactura([FromRoute]int id)
         {
             try
             {
@@ -67,9 +67,9 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var Proveedor = await db.Proveedor.Include(x => x.Factura).SingleOrDefaultAsync(m => m.IdProveedor == id);
+                var _factura = await db.Factura.SingleOrDefaultAsync(m => m.IdFactura == id);
 
-                if (Proveedor == null)
+                if (_factura == null)
                 {
                     return new Response
                     {
@@ -82,7 +82,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = Proveedor,
+                    Resultado = _factura,
                 };
             }
             catch (Exception ex)
@@ -105,80 +105,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // PUT: api/Proveedor/5
-        [HttpPut("{id}")]
-        public async Task<Response> PutProveedor([FromRoute] int id, [FromBody] Proveedor Proveedor)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
-
-                var ProveedorActualizar = await db.Proveedor.Where(x => x.IdProveedor == id).FirstOrDefaultAsync();
-                if (ProveedorActualizar != null)
-                {
-                    try
-                    {
-                        ProveedorActualizar.Nombre = Proveedor.Nombre;
-                        db.Proveedor.Update(ProveedorActualizar);
-                        await db.SaveChangesAsync();
-
-                        return new Response
-                        {
-                            IsSuccess = true,
-                            Message = Mensaje.ModeloInvalido,
-                        };
-
-                    }
-                    catch (Exception ex)
-                    {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                        {
-                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                            ExceptionTrace = ex,
-                            Message = Mensaje.Excepcion,
-                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                            UserName = "",
-
-                        });
-                        return new Response
-                        {
-                            IsSuccess = false,
-                            Message = Mensaje.Error,
-                        };
-                    }
-                }
-
-
-
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
-            }
-            catch (Exception)
-            {
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Excepcion
-                };
-            }
-        }
-
-        // POST: api/Proveedor
+        // POST: api/Factura
         [HttpPost]
-        [Route("InsertarProveedor")]
-        public async Task<Response> PostProveedor([FromBody] Proveedor Proveedor)
+        [Route("InsertarFactura")]
+        public async Task<Response> PostMarca([FromBody]Factura _factura)
         {
             try
             {
@@ -191,10 +121,10 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = Existe(Proveedor);
+                var respuesta = Existe(_factura);
                 if (!respuesta.IsSuccess)
                 {
-                    db.Proveedor.Add(Proveedor);
+                    db.Factura.Add(_factura);
                     await db.SaveChangesAsync();
                     return new Response
                     {
@@ -230,9 +160,79 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // DELETE: api/Proveedor/5
+        // PUT: api/Factura/5
+        [HttpPut("{id}")]
+        public async Task<Response> PutFactura([FromRoute] int id, [FromBody]Factura _factura)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = Mensaje.ModeloInvalido
+                    };
+                }
+
+                var _facturaActualizar = await db.Factura.Where(x => x.IdFactura == id).FirstOrDefaultAsync();
+                if (_facturaActualizar != null)
+                {
+                    try
+                    {
+                        _facturaActualizar.Numero = _factura.Numero;
+                        _facturaActualizar.IdProveedor = _factura.IdProveedor;
+                        _facturaActualizar.IdMaestroArticuloSucursal = _factura.IdMaestroArticuloSucursal;
+                        
+                        db.Factura.Update(_facturaActualizar);
+                        await db.SaveChangesAsync();
+
+                        return new Response
+                        {
+                            IsSuccess = true,
+                            Message = Mensaje.Satisfactorio,
+                        };
+
+                    }
+                    catch (Exception ex)
+                    {
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                        {
+                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                            ExceptionTrace = ex,
+                            Message = Mensaje.Excepcion,
+                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                            UserName = "",
+
+                        });
+                        return new Response
+                        {
+                            IsSuccess = false,
+                            Message = Mensaje.Error,
+                        };
+                    }
+                }
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.ExisteRegistro
+                };
+            }
+            catch (Exception)
+            {
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.Excepcion
+                };
+            }
+        }
+
+        // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteProveedor([FromRoute] int id)
+        public async Task<Response> DeleteFactura([FromRoute] int id)
         {
             try
             {
@@ -245,7 +245,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.Proveedor.SingleOrDefaultAsync(m => m.IdProveedor == id);
+                var respuesta = await db.Factura.SingleOrDefaultAsync(m => m.IdFactura == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -254,7 +254,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.Proveedor.Remove(respuesta);
+                db.Factura.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -283,16 +283,17 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        private bool ProveedorExists(string nombre)
+        private bool FacturaExists(int id)
         {
-            return db.Proveedor.Any(e => e.Nombre == nombre);
+            return db.Factura.Any(e => e.IdFactura == id);
         }
 
-        public Response Existe(Proveedor Proveedor)
+        public Response Existe(Factura _factura)
         {
-            var bdd = Proveedor.Nombre.ToUpper().TrimEnd().TrimStart();
-            var ProveedorRespuesta = db.Proveedor.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
-            if (ProveedorRespuesta != null)
+            var bdd = _factura.Numero;
+            var loglevelrespuesta = db.Factura.Where(p => p.Numero == bdd).FirstOrDefault();
+
+            if (loglevelrespuesta != null)
             {
                 return new Response
                 {
@@ -300,13 +301,12 @@ namespace bd.swrm.web.Controllers.API
                     Message = Mensaje.ExisteRegistro,
                     Resultado = null,
                 };
-
             }
 
             return new Response
             {
                 IsSuccess = false,
-                Resultado = ProveedorRespuesta,
+                Resultado = loglevelrespuesta,
             };
         }
     }
