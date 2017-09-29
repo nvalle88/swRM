@@ -1023,6 +1023,10 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdMotivoBaja)
                     .OnDelete(DeleteBehavior.Restrict);
 
+                entity.HasOne(a => a.ActivoFijo)
+                    .WithOne(b => b.ActivosFijosBaja)
+                    .HasForeignKey<ActivosFijosBaja>(b => b.IdActivo);
+
             });
 
             modelBuilder.Entity<ActivosFijosAlta>(entity =>
