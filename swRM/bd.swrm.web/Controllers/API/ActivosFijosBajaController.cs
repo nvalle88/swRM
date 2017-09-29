@@ -183,6 +183,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
+                ModelState.Remove("IdActivo");
                 if (!ModelState.IsValid)
                 {
                     return new Response
