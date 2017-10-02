@@ -60,7 +60,14 @@ namespace bd.swrm.datos
         public virtual DbSet<ActivoFijoMotivoBaja> ActivoFijoMotivoBaja { get; set; }
         public virtual DbSet<ActivosFijosBaja> ActivosFijosBaja { get; set; }
         public virtual DbSet<ActivosFijosAlta> ActivosFijosAlta { get; set; }
-
+        public virtual DbSet<EstadoCivil> EstadoCivil { get; set; }
+        public virtual DbSet<Etnia> Etnia { get; set; }
+        public virtual DbSet<Genero> Genero { get; set; }
+        public virtual DbSet<Nacionalidad> Nacionalidad { get; set; }
+        public virtual DbSet<Sexo> Sexo { get; set; }
+        public virtual DbSet<TipoIdentificacion> TipoIdentificacion { get; set; }
+        public virtual DbSet<TipoSangre> TipoSangre { get; set; }
+        public virtual DbSet<Canditato> Canditato { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -956,6 +963,30 @@ namespace bd.swrm.datos
                 entity.HasKey(e => e.IdPersona)
                     .HasName("PK_Persona");
 
+                entity.HasIndex(e => e.IdEstadoCivil)
+                    .HasName("IX_Persona_IdEstadoCivil");
+
+                entity.HasIndex(e => e.IdEtnia)
+                    .HasName("IX_Persona_IdEtnia");
+
+                entity.HasIndex(e => e.IdGenero)
+                    .HasName("IX_Persona_IdGenero");
+
+                entity.HasIndex(e => e.IdNacionalidad)
+                    .HasName("IX_Persona_IdNacionalidad");
+
+                entity.HasIndex(e => e.IdSexo)
+                    .HasName("IX_Persona_IdSexo");
+
+                entity.HasIndex(e => e.IdTipoIdentificacion)
+                    .HasName("IX_Persona_IdTipoIdentificacion");
+
+                entity.HasIndex(e => e.IdTipoSangre)
+                    .HasName("IX_Persona_IdTipoSangre");
+
+                entity.HasIndex(e => e.IdCanditato)
+                    .HasName("IX_Persona_IdCanditato");
+
                 entity.Property(e => e.Apellidos)
                     .IsRequired()
                     .HasMaxLength(100);
@@ -981,6 +1012,38 @@ namespace bd.swrm.datos
                 entity.Property(e => e.TelefonoPrivado)
                     .IsRequired()
                     .HasMaxLength(20);
+
+                entity.HasOne(d => d.EstadoCivil)
+                    .WithMany(p => p.Persona)
+                    .HasForeignKey(d => d.IdEstadoCivil);
+
+                entity.HasOne(d => d.Etnia)
+                    .WithMany(p => p.Persona)
+                    .HasForeignKey(d => d.IdEtnia);
+
+                entity.HasOne(d => d.Genero)
+                    .WithMany(p => p.Persona)
+                    .HasForeignKey(d => d.IdGenero);
+
+                entity.HasOne(d => d.Nacionalidad)
+                    .WithMany(p => p.Persona)
+                    .HasForeignKey(d => d.IdNacionalidad);
+
+                entity.HasOne(d => d.Sexo)
+                    .WithMany(p => p.Persona)
+                    .HasForeignKey(d => d.IdSexo);
+
+                entity.HasOne(d => d.TipoIdentificacion)
+                    .WithMany(p => p.Persona)
+                    .HasForeignKey(d => d.IdTipoIdentificacion);
+
+                entity.HasOne(d => d.TipoSangre)
+                    .WithMany(p => p.Persona)
+                    .HasForeignKey(d => d.IdTipoSangre);
+
+                entity.HasOne(d => d.Canditato)
+                    .WithMany(p => p.Persona)
+                    .HasForeignKey(d => d.IdCanditato);
             });
 
             modelBuilder.Entity<Estado>(entity =>
@@ -1043,7 +1106,81 @@ namespace bd.swrm.datos
                 
              });
 
-           
+            modelBuilder.Entity<EstadoCivil>(entity =>
+            {
+                entity.HasKey(e => e.IdEstadoCivil)
+                    .HasName("PK_EstadoCivil");
+
+                entity.Property(e => e.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(20);
+            });
+
+            modelBuilder.Entity<Etnia>(entity =>
+            {
+                entity.HasKey(e => e.IdEtnia)
+                    .HasName("PK_Etnia");
+
+                entity.Property(e => e.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(20);
+            });
+
+            modelBuilder.Entity<Genero>(entity =>
+            {
+                entity.HasKey(e => e.IdGenero)
+                    .HasName("PK_Genero");
+
+                entity.Property(e => e.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(20);
+            });
+
+            modelBuilder.Entity<Nacionalidad>(entity =>
+            {
+                entity.HasKey(e => e.IdNacionalidad)
+                    .HasName("PK_Nacionalidad");
+
+                entity.Property(e => e.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(20);
+            });
+
+            modelBuilder.Entity<Sexo>(entity =>
+            {
+                entity.HasKey(e => e.IdSexo)
+                    .HasName("PK_Sexo");
+
+                entity.Property(e => e.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(20);
+            });
+
+            modelBuilder.Entity<TipoIdentificacion>(entity =>
+            {
+                entity.HasKey(e => e.IdTipoIdentificacion)
+                    .HasName("PK_TipoIdentificacion");
+
+                entity.Property(e => e.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(20);
+            });
+
+            modelBuilder.Entity<TipoSangre>(entity =>
+            {
+                entity.HasKey(e => e.IdTipoSangre)
+                    .HasName("PK_TipoSangre");
+
+                entity.Property(e => e.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(20);
+            });
+
+            modelBuilder.Entity<Canditato>(entity =>
+            {
+                entity.HasKey(e => e.IdCanditato)
+                    .HasName("PK_Canditato");
+            });
 
 
             foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))

@@ -17,24 +17,24 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/Articulo")]
-    public class ArticuloController : Controller
+    [Route("api/EstadoCivil")]
+    public class EstadoCivilController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ArticuloController(SwRMDbContext db)
+        public EstadoCivilController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/ListarArticulos
+        // GET: api/ListarEstadosCiviles
         [HttpGet]
-        [Route("ListarArticulos")]
-        public async Task<List<Articulo>> GetArticulo()
+        [Route("ListarEstadosCiviles")]
+        public async Task<List<EstadoCivil>> GetEstadoCivil()
         {
             try
             {
-                return await db.Articulo.OrderBy(x => x.Nombre).Include(c=> c.SubClaseArticulo).Include(c=> c.UnidadMedida).Include(c=> c.Modelo).ToListAsync();
+                return await db.EstadoCivil.OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,13 +48,13 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<Articulo>();
+                return new List<EstadoCivil>();
             }
         }
 
-        // GET: api/Articulo/5
+        // GET: api/EstadoCivil/5
         [HttpGet("{id}")]
-        public async Task<Response> GetArticulo([FromRoute] int id)
+        public async Task<Response> GetEstadoCivil([FromRoute] int id)
         {
             try
             {
@@ -67,9 +67,9 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var articulo = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var estadoCivil = await db.EstadoCivil.SingleOrDefaultAsync(m => m.IdEstadoCivil == id);
 
-                if (articulo == null)
+                if (estadoCivil == null)
                 {
                     return new Response
                     {
@@ -82,7 +82,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = articulo,
+                    Resultado = estadoCivil,
                 };
             }
             catch (Exception ex)
@@ -105,9 +105,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // PUT: api/Articulo/5
+        // PUT: api/EstadoCivil/5
         [HttpPut("{id}")]
-        public async Task<Response> PutArticulo([FromRoute] int id, [FromBody] Articulo articulo)
+        public async Task<Response> PutEstadoCivil([FromRoute] int id, [FromBody] EstadoCivil estadoCivil)
         {
             try
             {
@@ -120,16 +120,13 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var articuloActualizar = await db.Articulo.Where(x => x.IdArticulo == id).FirstOrDefaultAsync();
-                if (articuloActualizar != null)
+                var estadoCivilActualizar = await db.EstadoCivil.Where(x => x.IdEstadoCivil == id).FirstOrDefaultAsync();
+                if (estadoCivilActualizar != null)
                 {
                     try
                     {
-                        articuloActualizar.Nombre = articulo.Nombre;
-                        articuloActualizar.IdSubClaseArticulo = articulo.IdSubClaseArticulo;
-                        articuloActualizar.IdUnidadMedida = articulo.IdUnidadMedida;
-                        articuloActualizar.IdModelo = articulo.IdModelo;
-                        db.Articulo.Update(articuloActualizar);
+                        estadoCivilActualizar.Nombre = estadoCivil.Nombre;
+                        db.EstadoCivil.Update(estadoCivilActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
@@ -178,10 +175,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // POST: api/Articulo
+        // POST: api/EstadoCivil
         [HttpPost]
-        [Route("InsertarArticulo")]
-        public async Task<Response> PostArticulo([FromBody] Articulo articulo)
+        [Route("InsertarEstadoCivil")]
+        public async Task<Response> PostEstadoCivil([FromBody] EstadoCivil estadoCivil)
         {
             try
             {
@@ -194,10 +191,10 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = Existe(articulo);
+                var respuesta = Existe(estadoCivil);
                 if (!respuesta.IsSuccess)
                 {
-                    db.Articulo.Add(articulo);
+                    db.EstadoCivil.Add(estadoCivil);
                     await db.SaveChangesAsync();
                     return new Response
                     {
@@ -233,9 +230,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // DELETE: api/Articulo/5
+        // DELETE: api/EstadoCivil/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteArticulo([FromRoute] int id)
+        public async Task<Response> DeleteEstadoCivil([FromRoute] int id)
         {
             try
             {
@@ -248,7 +245,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var respuesta = await db.EstadoCivil.SingleOrDefaultAsync(m => m.IdEstadoCivil == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -257,7 +254,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.Articulo.Remove(respuesta);
+                db.EstadoCivil.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -286,15 +283,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        private bool ArticuloExists(string nombre)
+        public Response Existe(EstadoCivil estadoCivil)
         {
-            return db.Articulo.Any(e => e.Nombre == nombre);
-        }
-
-        public Response Existe(Articulo articulo)
-        {
-            var bdd = articulo.Nombre.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.Articulo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            var bdd = estadoCivil.Nombre.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.EstadoCivil.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
             if (loglevelrespuesta != null)
             {
                 return new Response

@@ -17,24 +17,24 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/Articulo")]
-    public class ArticuloController : Controller
+    [Route("api/Etnia")]
+    public class EtniaController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ArticuloController(SwRMDbContext db)
+        public EtniaController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/ListarArticulos
+        // GET: api/ListarEtnias
         [HttpGet]
-        [Route("ListarArticulos")]
-        public async Task<List<Articulo>> GetArticulo()
+        [Route("ListarEtnias")]
+        public async Task<List<Etnia>> GetEtnia()
         {
             try
             {
-                return await db.Articulo.OrderBy(x => x.Nombre).Include(c=> c.SubClaseArticulo).Include(c=> c.UnidadMedida).Include(c=> c.Modelo).ToListAsync();
+                return await db.Etnia.OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,13 +48,13 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<Articulo>();
+                return new List<Etnia>();
             }
         }
 
-        // GET: api/Articulo/5
+        // GET: api/Etnia/5
         [HttpGet("{id}")]
-        public async Task<Response> GetArticulo([FromRoute] int id)
+        public async Task<Response> GetEtnia([FromRoute] int id)
         {
             try
             {
@@ -67,9 +67,9 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var articulo = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var etnia = await db.Etnia.SingleOrDefaultAsync(m => m.IdEtnia == id);
 
-                if (articulo == null)
+                if (etnia == null)
                 {
                     return new Response
                     {
@@ -82,7 +82,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = articulo,
+                    Resultado = etnia,
                 };
             }
             catch (Exception ex)
@@ -105,9 +105,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // PUT: api/Articulo/5
+        // PUT: api/Etnia/5
         [HttpPut("{id}")]
-        public async Task<Response> PutArticulo([FromRoute] int id, [FromBody] Articulo articulo)
+        public async Task<Response> PutEtnia([FromRoute] int id, [FromBody] Etnia etnia)
         {
             try
             {
@@ -120,16 +120,13 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var articuloActualizar = await db.Articulo.Where(x => x.IdArticulo == id).FirstOrDefaultAsync();
-                if (articuloActualizar != null)
+                var etniaActualizar = await db.Etnia.Where(x => x.IdEtnia == id).FirstOrDefaultAsync();
+                if (etniaActualizar != null)
                 {
                     try
                     {
-                        articuloActualizar.Nombre = articulo.Nombre;
-                        articuloActualizar.IdSubClaseArticulo = articulo.IdSubClaseArticulo;
-                        articuloActualizar.IdUnidadMedida = articulo.IdUnidadMedida;
-                        articuloActualizar.IdModelo = articulo.IdModelo;
-                        db.Articulo.Update(articuloActualizar);
+                        etniaActualizar.Nombre = etnia.Nombre;
+                        db.Etnia.Update(etniaActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
@@ -178,10 +175,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // POST: api/Articulo
+        // POST: api/Etnia
         [HttpPost]
-        [Route("InsertarArticulo")]
-        public async Task<Response> PostArticulo([FromBody] Articulo articulo)
+        [Route("InsertarEtnia")]
+        public async Task<Response> PostEtnia([FromBody] Etnia etnia)
         {
             try
             {
@@ -194,10 +191,10 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = Existe(articulo);
+                var respuesta = Existe(etnia);
                 if (!respuesta.IsSuccess)
                 {
-                    db.Articulo.Add(articulo);
+                    db.Etnia.Add(etnia);
                     await db.SaveChangesAsync();
                     return new Response
                     {
@@ -233,9 +230,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // DELETE: api/Articulo/5
+        // DELETE: api/Etnia/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteArticulo([FromRoute] int id)
+        public async Task<Response> DeleteEtnia([FromRoute] int id)
         {
             try
             {
@@ -248,7 +245,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var respuesta = await db.Etnia.SingleOrDefaultAsync(m => m.IdEtnia == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -257,7 +254,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.Articulo.Remove(respuesta);
+                db.Etnia.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -286,15 +283,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        private bool ArticuloExists(string nombre)
+        public Response Existe(Etnia etnia)
         {
-            return db.Articulo.Any(e => e.Nombre == nombre);
-        }
-
-        public Response Existe(Articulo articulo)
-        {
-            var bdd = articulo.Nombre.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.Articulo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            var bdd = etnia.Nombre.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.Etnia.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
             if (loglevelrespuesta != null)
             {
                 return new Response
