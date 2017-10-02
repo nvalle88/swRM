@@ -67,9 +67,12 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var Sucursal = await db.Sucursal.SingleOrDefaultAsync(m => m.IdSucursal == id);
+                var sucursal = await db.Sucursal.SingleOrDefaultAsync(m => m.IdSucursal == id);
+                sucursal.Ciudad = await db.Ciudad.SingleOrDefaultAsync(c => c.IdCiudad == sucursal.IdCiudad);
+                sucursal.Ciudad.Provincia = await db.Provincia.SingleOrDefaultAsync(c => c.IdProvincia == sucursal.Ciudad.IdProvincia);
+                sucursal.Ciudad.Provincia.Pais = await db.Pais.SingleOrDefaultAsync(c => c.IdPais == sucursal.Ciudad.Provincia.IdPais);
 
-                if (Sucursal == null)
+                if (sucursal == null)
                 {
                     return new Response
                     {
@@ -82,7 +85,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = Sucursal,
+                    Resultado = sucursal,
                 };
             }
             catch (Exception ex)
@@ -179,7 +182,7 @@ namespace bd.swrm.web.Controllers.API
         // POST: api/Sucursal
         [HttpPost]
         [Route("InsertarSucursal")]
-        public async Task<Response> PostSucursal([FromBody] Sucursal Sucursal)
+        public async Task<Response> PostSucursal([FromBody] Sucursal sucursal)
         {
             try
             {
@@ -192,10 +195,11 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = Existe(Sucursal);
+                var respuesta = Existe(sucursal);
                 if (!respuesta.IsSuccess)
                 {
-                    db.Sucursal.Add(Sucursal);
+                    db.Entry(sucursal.Ciudad).State = EntityState.Unchanged;
+                    db.Sucursal.Add(sucursal);
                     await db.SaveChangesAsync();
                     return new Response
                     {
