@@ -21,7 +21,7 @@ namespace bd.swrm.entidades.Negocio
         public int IdCiudad { get; set; }
         public virtual Ciudad Ciudad { get; set; }
 
-      
+        public virtual ICollection<Dependencia> Dependencia { get; set; }
 
         public virtual ICollection<LibroActivoFijo> LibroActivoFijo { get; set; }
 

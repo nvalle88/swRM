@@ -68,6 +68,7 @@ namespace bd.swrm.datos
         public virtual DbSet<TipoIdentificacion> TipoIdentificacion { get; set; }
         public virtual DbSet<TipoSangre> TipoSangre { get; set; }
         public virtual DbSet<Canditato> Canditato { get; set; }
+        public virtual DbSet<Dependencia> Dependencia { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -379,7 +380,8 @@ namespace bd.swrm.datos
                 entity.HasIndex(e => e.IdCiudadLugarNacimiento)
                     .HasName("IX_Empleado_CiudadNacimientoIdCiudad");
 
-              
+                entity.HasIndex(e => e.IdDependencia)
+                      .HasName("IX_Empleado_IdDependencia");
 
                 entity.HasIndex(e => e.IdProvinciaLugarSufragio)
                     .HasName("IX_Empleado_ProvinciaSufragioIdProvincia");
@@ -395,6 +397,11 @@ namespace bd.swrm.datos
                 entity.HasOne(d => d.ProvinciaSufragio)
                     .WithMany(p => p.Empleado)
                     .HasForeignKey(d => d.IdProvinciaLugarSufragio);
+
+                entity.HasOne(d => d.Dependencia)
+                    .WithMany(p => p.Empleado)
+                    .HasForeignKey(d => d.IdDependencia)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<EmpleadoActivoFijo>(entity =>
@@ -1180,6 +1187,31 @@ namespace bd.swrm.datos
             {
                 entity.HasKey(e => e.IdCanditato)
                     .HasName("PK_Canditato");
+            });
+
+            modelBuilder.Entity<Dependencia>(entity =>
+            {
+                entity.HasKey(e => e.IdDependencia)
+                    .HasName("PK_Dependencia");
+
+                entity.HasIndex(e => e.IdDependenciaPadre)
+                    .HasName("IX_Dependencia_DependenciaPadreIdDependencia");
+
+                entity.HasIndex(e => e.IdSucursal)
+                    .HasName("IX_Dependencia_IdSucursal");
+
+                entity.Property(e => e.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(60);
+
+                entity.HasOne(d => d.DependenciaPadre)
+                    .WithMany(p => p.InverseDependenciaPadreIdDependenciaNavigation)
+                    .HasForeignKey(d => d.IdDependenciaPadre);
+
+                entity.HasOne(d => d.Sucursal)
+                    .WithMany(p => p.Dependencia)
+                    .HasForeignKey(d => d.IdSucursal)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
 

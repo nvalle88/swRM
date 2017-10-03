@@ -66,5 +66,10 @@ namespace bd.swrm.entidades.Negocio
         public int IdProvinciaLugarSufragio { get; set; }
         public virtual Provincia ProvinciaSufragio { get; set; }
 
+        [Display(Name = "Dependencia:")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        public int IdDependencia { get; set; }
+        public virtual Dependencia Dependencia { get; set; }
+
     }
 }
