@@ -17,24 +17,24 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/Empleado")]
-    public class EmpleadoController : Controller
+    [Route("api/Dependencia")]
+    public class DependenciaController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public EmpleadoController(SwRMDbContext db)
+        public DependenciaController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/ListarEmpleados
+        // GET: api/ListarDependencias
         [HttpGet]
-        [Route("ListarEmpleados")]
-        public async Task<List<Empleado>> GetEmpleado()
+        [Route("ListarDependencias")]
+        public async Task<List<Dependencia>> GetDependencia()
         {
             try
             {
-                return await db.Empleado.Include(c=> c.Persona).OrderBy(x => x.Persona.Nombres).ThenBy(x=> x.Persona.Apellidos).ToListAsync();
+                return await db.Dependencia.OrderBy(x => x.Nombre).Include(c=> c.DependenciaPadre).Include(c=> c.Sucursal).ThenInclude(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,13 +48,13 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<Empleado>();
+                return new List<Dependencia>();
             }
         }
 
-        // GET: api/Empleado/5
+        // GET: api/Dependencia/5
         [HttpGet("{id}")]
-        public async Task<Response> GetEmpleado([FromRoute] int id)
+        public async Task<Response> GetDependencia([FromRoute] int id)
         {
             try
             {
@@ -67,15 +67,9 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var empleado = await db.Empleado.SingleOrDefaultAsync(m => m.IdEmpleado == id);
-                empleado.Persona = await db.Persona.SingleOrDefaultAsync(c => c.IdPersona == empleado.IdPersona);
-                empleado.CiudadNacimiento = await db.Ciudad.SingleOrDefaultAsync(c => c.IdCiudad == empleado.IdCiudadLugarNacimiento);
-                empleado.CiudadNacimiento.Provincia = await db.Provincia.SingleOrDefaultAsync(c => c.IdProvincia == empleado.CiudadNacimiento.IdProvincia);
-                empleado.CiudadNacimiento.Provincia.Pais = await db.Pais.SingleOrDefaultAsync(c => c.IdPais == empleado.CiudadNacimiento.Provincia.IdPais);
-                empleado.ProvinciaSufragio = await db.Provincia.SingleOrDefaultAsync(c => c.IdProvincia == empleado.IdProvinciaLugarSufragio);
-                empleado.ProvinciaSufragio.Pais = await db.Pais.SingleOrDefaultAsync(c => c.IdPais == empleado.ProvinciaSufragio.IdPais);
+                var dependencia = await db.Dependencia.SingleOrDefaultAsync(m => m.IdDependencia == id);
 
-                if (empleado == null)
+                if (dependencia == null)
                 {
                     return new Response
                     {
@@ -88,7 +82,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = empleado,
+                    Resultado = dependencia,
                 };
             }
             catch (Exception ex)
@@ -111,13 +105,12 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // PUT: api/Empleado/5
+        // PUT: api/Dependencia/5
         [HttpPut("{id}")]
-        public async Task<Response> PutEmpleado([FromRoute] int id, [FromBody] Empleado empleado)
+        public async Task<Response> PutDependencia([FromRoute] int id, [FromBody] Dependencia dependencia)
         {
             try
             {
-                ModelState.Remove("IdPersona");
                 if (!ModelState.IsValid)
                 {
                     return new Response
@@ -127,52 +120,21 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var empleadoActualizar = await db.Empleado.Where(x => x.IdEmpleado == id).FirstOrDefaultAsync();
-                if (empleadoActualizar != null)
+                var dependenciaActualizar = await db.Dependencia.Where(x => x.IdDependencia == id).FirstOrDefaultAsync();
+                if (dependenciaActualizar != null)
                 {
-                    empleadoActualizar.Persona = await db.Persona.SingleOrDefaultAsync(c => c.IdPersona == empleado.IdPersona);
-
                     try
                     {
-                        empleadoActualizar.FechaIngreso = empleado.FechaIngreso;
-                        empleadoActualizar.FechaIngresoSectorPublico = empleado.FechaIngresoSectorPublico;
-                        empleadoActualizar.TrabajoSuperintendenciaBanco = empleado.TrabajoSuperintendenciaBanco;
-                        empleadoActualizar.Nepotismo = empleado.Nepotismo;
-                        empleadoActualizar.DeclaracionJurada = empleado.DeclaracionJurada;
-                        empleadoActualizar.IngresosOtraActividad = empleado.IngresosOtraActividad;
-                        empleadoActualizar.MesesImposiciones = empleado.MesesImposiciones;
-                        empleadoActualizar.DiasImposiciones = empleado.DiasImposiciones;
-                        empleadoActualizar.IdCiudadLugarNacimiento = empleado.IdCiudadLugarNacimiento;
-                        empleadoActualizar.IdProvinciaLugarSufragio = empleado.IdProvinciaLugarSufragio;
-                        empleadoActualizar.IdDependencia = empleado.IdDependencia;
-                        empleadoActualizar.Persona.FechaNacimiento = empleado.Persona.FechaNacimiento;
-                        empleadoActualizar.Persona.Identificacion = empleado.Persona.Identificacion;
-                        empleadoActualizar.Persona.Nombres = empleado.Persona.Nombres;
-                        empleadoActualizar.Persona.Apellidos = empleado.Persona.Apellidos;
-                        empleadoActualizar.Persona.TelefonoPrivado = empleado.Persona.TelefonoPrivado;
-                        empleadoActualizar.Persona.TelefonoCasa = empleado.Persona.TelefonoCasa;
-                        empleadoActualizar.Persona.CorreoPrivado = empleado.Persona.CorreoPrivado;
-                        empleadoActualizar.Persona.LugarTrabajo = empleado.Persona.LugarTrabajo;
-                        empleadoActualizar.Persona.IdEstadoCivil = empleado.Persona.IdEstadoCivil;
-                        empleadoActualizar.Persona.IdEtnia = empleado.Persona.IdEtnia;
-                        empleadoActualizar.Persona.IdGenero = empleado.Persona.IdGenero;
-                        empleadoActualizar.Persona.IdNacionalidad = empleado.Persona.IdNacionalidad;
-                        empleadoActualizar.Persona.IdSexo = empleado.Persona.IdSexo;
-                        empleadoActualizar.Persona.IdTipoIdentificacion = empleado.Persona.IdTipoIdentificacion;
-                        empleadoActualizar.Persona.IdTipoSangre = empleado.Persona.IdTipoSangre;
-                        empleadoActualizar.Persona.IdCanditato = empleado.Persona.IdCanditato;
-
-                        db.Entry(empleado.CiudadNacimiento).State = EntityState.Unchanged;
-                        db.Entry(empleado.ProvinciaSufragio).State = EntityState.Unchanged;
-
-                        db.Empleado.Update(empleadoActualizar);
-                        db.Persona.Update(empleadoActualizar.Persona);
+                        dependenciaActualizar.Nombre = dependencia.Nombre;
+                        dependenciaActualizar.IdSucursal = dependencia.IdSucursal;
+                        dependenciaActualizar.IdDependenciaPadre = dependencia.IdDependenciaPadre;
+                        db.Dependencia.Update(dependenciaActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
                         {
                             IsSuccess = true,
-                            Message = Mensaje.ModeloInvalido,
+                            Message = Mensaje.Satisfactorio,
                         };
 
                     }
@@ -215,14 +177,13 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // POST: api/Empleado
+        // POST: api/Dependencia
         [HttpPost]
-        [Route("InsertarEmpleado")]
-        public async Task<Response> PostEmpleado([FromBody] Empleado empleado)
+        [Route("InsertarDependencia")]
+        public async Task<Response> PostDependencia([FromBody] Dependencia dependencia)
         {
             try
             {
-                ModelState.Remove("IdPersona");
                 if (!ModelState.IsValid)
                 {
                     return new Response
@@ -232,13 +193,10 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = Existe(empleado);
+                var respuesta = Existe(dependencia);
                 if (!respuesta.IsSuccess)
                 {
-                    db.Entry(empleado.CiudadNacimiento).State = EntityState.Unchanged;
-                    db.Entry(empleado.ProvinciaSufragio).State = EntityState.Unchanged;
-
-                    db.Empleado.Add(empleado);
+                    db.Dependencia.Add(dependencia);
                     await db.SaveChangesAsync();
                     return new Response
                     {
@@ -274,9 +232,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // DELETE: api/Empleado/5
+        // DELETE: api/Dependencia/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteEmpleado([FromRoute] int id)
+        public async Task<Response> DeleteDependencia([FromRoute] int id)
         {
             try
             {
@@ -289,7 +247,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.Empleado.SingleOrDefaultAsync(m => m.IdEmpleado == id);
+                var respuesta = await db.Dependencia.SingleOrDefaultAsync(m => m.IdDependencia == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -298,8 +256,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.Persona.Remove(await db.Persona.SingleOrDefaultAsync(c => c.IdPersona == respuesta.IdPersona));
-                db.Empleado.Remove(respuesta);
+                db.Dependencia.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -328,11 +285,11 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(Empleado empleado)
+        public Response Existe(Dependencia dependencia)
         {
-            var identificacion = empleado.Persona.Identificacion.ToUpper().TrimEnd().TrimStart();
-            var EmpleadoRespuesta = db.Empleado.Where(p => p.Persona.Nombres.ToUpper().TrimStart().TrimEnd() == identificacion).FirstOrDefault();
-            if (EmpleadoRespuesta != null)
+            var bdd = dependencia.Nombre.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.Dependencia.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            if (loglevelrespuesta != null)
             {
                 return new Response
                 {
@@ -346,7 +303,7 @@ namespace bd.swrm.web.Controllers.API
             return new Response
             {
                 IsSuccess = false,
-                Resultado = EmpleadoRespuesta,
+                Resultado = loglevelrespuesta,
             };
         }
     }
