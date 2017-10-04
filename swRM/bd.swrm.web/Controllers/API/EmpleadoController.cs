@@ -331,7 +331,7 @@ namespace bd.swrm.web.Controllers.API
         public Response Existe(Empleado empleado)
         {
             var identificacion = empleado.Persona.Identificacion.ToUpper().TrimEnd().TrimStart();
-            var EmpleadoRespuesta = db.Empleado.Where(p => p.Persona.Nombres.ToUpper().TrimStart().TrimEnd() == identificacion).FirstOrDefault();
+            var EmpleadoRespuesta = db.Empleado.Where(p => p.Persona.Identificacion.ToUpper().TrimStart().TrimEnd() == identificacion).FirstOrDefault();
             if (EmpleadoRespuesta != null)
             {
                 return new Response
