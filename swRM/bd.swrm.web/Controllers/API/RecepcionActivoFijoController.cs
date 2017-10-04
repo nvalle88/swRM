@@ -138,8 +138,12 @@ namespace bd.swrm.web.Controllers.API
                     .Include(c => c.ActivoFijo).ThenInclude(c => c.CodigoActivoFijo)
                     .Include(c => c.ActivoFijo)
                     .Include(c => c.Estado)
+<<<<<<< Updated upstream
                     .Include(c => c.RecepcionActivoFijo.Proveedor.Factura)
                     .Include(c => c.ActivoFijo).ThenInclude(c => c.ActivosFijosBaja)
+=======
+                    .Include(c => c.ActivoFijo.MantenimientoActivoFijo)
+>>>>>>> Stashed changes
                     .Where(c=> c.IdRecepcionActivoFijoDetalle == id).SingleOrDefaultAsync();
 
                 if (recepcionActivoFijoDetalle == null)
