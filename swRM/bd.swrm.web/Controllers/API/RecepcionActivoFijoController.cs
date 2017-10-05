@@ -62,7 +62,7 @@ namespace bd.swrm.web.Controllers.API
                               join factura in db.Factura on resAFA.IdFactura equals factura.IdFactura
                               into tmp1
                               from resFac in tmp1.DefaultIfEmpty()
-
+                              
                               let listaMantenimientoActivo = (from mant in db.MantenimientoActivoFijo
                                                               join empleadMant in db.Empleado on mant.IdEmpleado equals empleadMant.IdEmpleado
                                                               where mant.IdActivoFijo == af.IdActivoFijo
@@ -71,6 +71,11 @@ namespace bd.swrm.web.Controllers.API
                                                             join fact in db.Factura on provFactura.IdProveedor equals fact.IdProveedor
                                                             where provFactura.IdProveedor == prov.IdProveedor
                                                             select new Factura { IdFactura = fact.IdFactura, Numero = fact.Numero }).ToList()
+
+                              let listaComponentesAdd = (from afadd in db.ActivosFijosAdicionados
+                                                        join afaf in db.ActivoFijo on afadd.idActivoFijoOrigen equals afaf.IdActivoFijo
+                                                        where afadd.idActivoFijoOrigen == af.IdActivoFijo
+                                                        select new ActivosFijosAdicionados { idAdicion = afadd.idAdicion, idActivoFijoOrigen = afadd.idActivoFijoOrigen, idActivoFijoDestino = afadd.idActivoFijoDestino, fechaAdicion = afadd.fechaAdicion }).ToList()
 
 
                               select new RecepcionActivoFijoDetalle
@@ -81,7 +86,7 @@ namespace bd.swrm.web.Controllers.API
                                   IdRecepcionActivoFijo = recAFD.IdRecepcionActivoFijo,
                                   NumeroPoliza = recAFD.NumeroPoliza,
                                   RecepcionActivoFijo = new RecepcionActivoFijo { Fondo = recAF.Fondo, OrdenCompra = recAF.OrdenCompra, Cantidad = recAF.Cantidad, ValidacionTecnica = recAF.ValidacionTecnica, FechaRecepcion = recAF.FechaRecepcion, IdSubClaseActivoFijo = recAF.IdSubClaseActivoFijo, SubClaseActivoFijo = new SubClaseActivoFijo { IdSubClaseActivoFijo = subCAf.IdSubClaseActivoFijo, Nombre = subCAf.Nombre, IdClaseActivoFijo = subCAf.IdClaseActivoFijo, ClaseActivoFijo = new ClaseActivoFijo { IdClaseActivoFijo = cAF.IdClaseActivoFijo, Nombre = cAF.Nombre, IdTipoActivoFijo = cAF.IdTipoActivoFijo, TipoActivoFijo = new TipoActivoFijo { IdTipoActivoFijo = tAF.IdTipoActivoFijo, Nombre = tAF.Nombre } } }, IdProveedor = recAF.IdProveedor, Proveedor = new Proveedor { IdProveedor = prov.IdProveedor, Nombre = prov.Nombre, Apellidos = prov.Apellidos, Factura = listaFacturasProveedor }, Empleado = new Empleado { IdEmpleado = emp.IdEmpleado, IdPersona = emp.IdPersona, Persona = new Persona { IdPersona = pers.IdPersona, Nombres = pers.Nombres, Apellidos = pers.Apellidos, Identificacion = pers.Identificacion, CorreoPrivado = pers.CorreoPrivado, FechaNacimiento = pers.FechaNacimiento, LugarTrabajo = pers.LugarTrabajo, TelefonoCasa = pers.TelefonoCasa, TelefonoPrivado = pers.TelefonoPrivado } }, IdMotivoRecepcion = recAF.IdMotivoRecepcion, MotivoRecepcion = new MotivoRecepcion { IdMotivoRecepcion = motRec.IdMotivoRecepcion, Descripcion = motRec.Descripcion } },
-                                  ActivoFijo = new ActivoFijo { Nombre = af.Nombre, Serie = af.Serie, Ubicacion = af.Ubicacion, ValorCompra = af.ValorCompra, LibroActivoFijo = new LibroActivoFijo { IdLibroActivoFijo = libAF.IdLibroActivoFijo, IdSucursal = libAF.IdSucursal, Sucursal = new Sucursal { IdSucursal = suc.IdSucursal, IdCiudad = suc.IdCiudad, Nombre = suc.Nombre, Ciudad = new Ciudad { IdCiudad = ciud.IdCiudad, Nombre = ciud.Nombre, IdProvincia = ciud.IdProvincia, Provincia = new Provincia { IdProvincia = provin.IdProvincia, Nombre = provin.Nombre, IdPais = provin.IdPais, Pais = new Pais { IdPais = pais.IdPais, Nombre = pais.Nombre } } } } }, IdCodigoActivoFijo = af.IdCodigoActivoFijo, CodigoActivoFijo = new CodigoActivoFijo { IdCodigoActivoFijo = codAF.IdCodigoActivoFijo, Codigosecuencial = codAF.Codigosecuencial, CodigoBarras = codAF.CodigoBarras }, IdUnidadMedida = af.IdUnidadMedida, UnidadMedida = new UnidadMedida { IdUnidadMedida = um.IdUnidadMedida, Nombre = um.Nombre }, IdModelo = af.IdModelo, Modelo = new Modelo { IdModelo = mod.IdModelo, Nombre = mod.Nombre, IdMarca = mod.IdMarca, Marca = new Marca { IdMarca = marca.IdMarca, Nombre = marca.Nombre }, }, MantenimientoActivoFijo = listaMantenimientoActivo, ActivosFijosAlta = resAFA != null ? new ActivosFijosAlta { IdActivoFijo = resAFA.IdActivoFijo, IdFactura = resAFA.IdFactura, FechaAlta = resAFA.FechaAlta, Factura = resFac != null ? new Factura { IdFactura = resFac.IdFactura, Numero = resFac.Numero } : null } : null },
+                                  ActivoFijo = new ActivoFijo { Nombre = af.Nombre, Serie = af.Serie, Ubicacion = af.Ubicacion, ValorCompra = af.ValorCompra, LibroActivoFijo = new LibroActivoFijo { IdLibroActivoFijo = libAF.IdLibroActivoFijo, IdSucursal = libAF.IdSucursal, Sucursal = new Sucursal { IdSucursal = suc.IdSucursal, IdCiudad = suc.IdCiudad, Nombre = suc.Nombre, Ciudad = new Ciudad { IdCiudad = ciud.IdCiudad, Nombre = ciud.Nombre, IdProvincia = ciud.IdProvincia, Provincia = new Provincia { IdProvincia = provin.IdProvincia, Nombre = provin.Nombre, IdPais = provin.IdPais, Pais = new Pais { IdPais = pais.IdPais, Nombre = pais.Nombre } } } } }, IdCodigoActivoFijo = af.IdCodigoActivoFijo, CodigoActivoFijo = new CodigoActivoFijo { IdCodigoActivoFijo = codAF.IdCodigoActivoFijo, Codigosecuencial = codAF.Codigosecuencial, CodigoBarras = codAF.CodigoBarras }, IdUnidadMedida = af.IdUnidadMedida, UnidadMedida = new UnidadMedida { IdUnidadMedida = um.IdUnidadMedida, Nombre = um.Nombre }, IdModelo = af.IdModelo, Modelo = new Modelo { IdModelo = mod.IdModelo, Nombre = mod.Nombre, IdMarca = mod.IdMarca, Marca = new Marca { IdMarca = marca.IdMarca, Nombre = marca.Nombre }, }, MantenimientoActivoFijo = listaMantenimientoActivo, ActivosFijosAlta = resAFA != null ? new ActivosFijosAlta { IdActivoFijo = resAFA.IdActivoFijo, IdFactura = resAFA.IdFactura, FechaAlta = resAFA.FechaAlta, Factura = resFac != null ? new Factura { IdFactura = resFac.IdFactura, Numero = resFac.Numero } : null } : null, ActivosFijosAdicionados = listaComponentesAdd},
                                   Estado = new Estado { Nombre = est.Nombre }
                               }).ToListAsync();
             }
@@ -131,6 +136,7 @@ namespace bd.swrm.web.Controllers.API
                     .Include(c => c.ActivoFijo)
                     .Include(c => c.Estado)
                     .Include(c => c.RecepcionActivoFijo.Proveedor.Factura)
+                    .Include(c => c.ActivoFijo.ActivosFijosAdicionados)
                     .Where(c=> c.IdRecepcionActivoFijoDetalle == id).SingleOrDefaultAsync();
 
                 if (recepcionActivoFijoDetalle == null)

@@ -72,6 +72,8 @@ namespace bd.swrm.entidades.Negocio
 
         public virtual ICollection<TransferenciaActivoFijoDetalle> TransferenciaActivoFijoDetalle { get; set; }
 
-       
+        public virtual ICollection<ActivosFijosAdicionados> ActivosFijosAdicionados { get; set; }
+
+
     }
 }
