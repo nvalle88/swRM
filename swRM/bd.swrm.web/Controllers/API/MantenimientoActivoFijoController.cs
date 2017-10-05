@@ -34,7 +34,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.MantenimientoActivoFijo.OrderBy(x => x.FechaMantenimiento).Include(x => x.Empleado).Include(x => x.ActivoFijo).ToListAsync();
+                return await db.MantenimientoActivoFijo.OrderBy(x => x.FechaMantenimiento).Include(x => x.Empleado).ThenInclude(x => x.Persona).Include(x => x.ActivoFijo).ToListAsync();
             }
             catch (Exception ex)
             {
