@@ -5,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using bd.swrm.datos;
+using System.Threading;
+using System;
 
 namespace bd.swrm.web
 {
@@ -29,6 +31,8 @@ namespace bd.swrm.web
             services.AddMvc().AddJsonOptions(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
             services.AddDbContext<SwRMDbContext>(options =>
               options.UseSqlServer(Configuration.GetConnectionString("SwRMConnection")));
+
+            Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

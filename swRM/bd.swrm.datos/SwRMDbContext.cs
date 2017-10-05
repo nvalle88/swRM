@@ -341,6 +341,8 @@ namespace bd.swrm.datos
 
                 entity.Property(e => e.DepreciacionAcumulada).HasColumnType("decimal");
 
+                entity.Property(e => e.ValorResidual).HasColumnType("decimal");
+
                 entity.HasOne(d => d.ActivoFijo)
                     .WithMany(p => p.DepreciacionActivoFijo)
                     .HasForeignKey(d => d.IdActivoFijo)

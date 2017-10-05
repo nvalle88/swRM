@@ -129,6 +129,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     db.ActivosFijosAlta.Add(_ActivosFijosAlta);
                     await db.SaveChangesAsync();
+                    Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
                     return new Response
                     {
                         IsSuccess = true,
