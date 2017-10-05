@@ -65,6 +65,7 @@ namespace bd.swrm.entidades.Negocio
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int IdProvinciaLugarSufragio { get; set; }
         public virtual Provincia ProvinciaSufragio { get; set; }
+        public virtual ICollection<TransferenciaActivoFijo> TransferenciaActivoFijo { get; set; }
 
     }
 }
