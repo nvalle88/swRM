@@ -60,6 +60,10 @@ namespace bd.swrm.datos
         public virtual DbSet<ActivoFijoMotivoBaja> ActivoFijoMotivoBaja { get; set; }
         public virtual DbSet<ActivosFijosBaja> ActivosFijosBaja { get; set; }
         public virtual DbSet<ActivosFijosAlta> ActivosFijosAlta { get; set; }
+
+        public virtual DbSet<ActivosFijosAdicionados> ActivosFijosAdicionados { get; set; }
+        public virtual DbSet<MotivoTransferencia> MotivoTransferencia { get; set; }
+
         public virtual DbSet<EstadoCivil> EstadoCivil { get; set; }
         public virtual DbSet<Etnia> Etnia { get; set; }
         public virtual DbSet<Genero> Genero { get; set; }
@@ -944,6 +948,10 @@ namespace bd.swrm.datos
                     .HasMaxLength(50);
 
                 entity.Property(e => e.Origen).HasMaxLength(50);
+
+                entity.HasOne(d => d.MotivoTransferencia)
+                  .WithMany(p => p.TransferenciaActivoFijo)
+                  .HasForeignKey(d => d.IdMotivoTransferencia);
             });
 
             modelBuilder.Entity<TransferenciaActivoFijoDetalle>(entity =>
@@ -1115,6 +1123,22 @@ namespace bd.swrm.datos
                 
              });
 
+
+            modelBuilder.Entity<ActivosFijosAdicionados>(entity =>
+            {
+                entity.HasKey(e => e.idAdicion)
+                    .HasName("PK_AcitvosFijosAdicionados_1");
+
+                entity.Property(e => e.fechaAdicion)
+                    .IsRequired();
+                
+                entity.HasOne(a => a.ActivoFijo)
+                    .WithMany(b => b.ActivosFijosAdicionados)
+                    .HasForeignKey(b => b.idActivoFijoOrigen);
+
+            });
+
+
             modelBuilder.Entity<EstadoCivil>(entity =>
             {
                 entity.HasKey(e => e.IdEstadoCivil)
@@ -1216,11 +1240,23 @@ namespace bd.swrm.datos
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            modelBuilder.Entity<MotivoTransferencia>(entity =>
+            {
+                entity.HasKey(e => e.IdMotivoTransferencia)
+                    .HasName("PK_MotivoTransferencia");
+
+                entity.Property(e => e.IdMotivoTransferencia).HasColumnName("idMotivoTransferencia");
+
+                entity.Property(e => e.Motivo_Transferencia)
+                    .HasColumnName("Motivo_Transferencia")
+                    .HasColumnType("varchar(150)");
+            });
+            
 
             foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             {
                 relationship.DeleteBehavior = DeleteBehavior.Restrict;
-            }
+            }            
         }
 
         //protected override void OnModelCreating(ModelBuilder builder)
