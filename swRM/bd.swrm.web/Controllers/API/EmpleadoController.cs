@@ -34,7 +34,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.Empleado.OrderBy(x => x.Persona.Nombres).ThenBy(x=> x.Persona.Apellidos).Include(c=> c.Persona).ToListAsync();
+                return await db.Empleado.Include(c=> c.Persona).OrderBy(x => x.Persona.Nombres).ThenBy(x=> x.Persona.Apellidos).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -68,6 +68,12 @@ namespace bd.swrm.web.Controllers.API
                 }
 
                 var empleado = await db.Empleado.SingleOrDefaultAsync(m => m.IdEmpleado == id);
+                empleado.Persona = await db.Persona.SingleOrDefaultAsync(c => c.IdPersona == empleado.IdPersona);
+                empleado.CiudadNacimiento = await db.Ciudad.SingleOrDefaultAsync(c => c.IdCiudad == empleado.IdCiudadLugarNacimiento);
+                empleado.CiudadNacimiento.Provincia = await db.Provincia.SingleOrDefaultAsync(c => c.IdProvincia == empleado.CiudadNacimiento.IdProvincia);
+                empleado.CiudadNacimiento.Provincia.Pais = await db.Pais.SingleOrDefaultAsync(c => c.IdPais == empleado.CiudadNacimiento.Provincia.IdPais);
+                empleado.ProvinciaSufragio = await db.Provincia.SingleOrDefaultAsync(c => c.IdProvincia == empleado.IdProvinciaLugarSufragio);
+                empleado.ProvinciaSufragio.Pais = await db.Pais.SingleOrDefaultAsync(c => c.IdPais == empleado.ProvinciaSufragio.IdPais);
 
                 if (empleado == null)
                 {
@@ -111,6 +117,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
+                ModelState.Remove("IdPersona");
                 if (!ModelState.IsValid)
                 {
                     return new Response
@@ -123,6 +130,8 @@ namespace bd.swrm.web.Controllers.API
                 var empleadoActualizar = await db.Empleado.Where(x => x.IdEmpleado == id).FirstOrDefaultAsync();
                 if (empleadoActualizar != null)
                 {
+                    empleadoActualizar.Persona = await db.Persona.SingleOrDefaultAsync(c => c.IdPersona == empleado.IdPersona);
+
                     try
                     {
                         empleadoActualizar.FechaIngreso = empleado.FechaIngreso;
@@ -133,11 +142,31 @@ namespace bd.swrm.web.Controllers.API
                         empleadoActualizar.IngresosOtraActividad = empleado.IngresosOtraActividad;
                         empleadoActualizar.MesesImposiciones = empleado.MesesImposiciones;
                         empleadoActualizar.DiasImposiciones = empleado.DiasImposiciones;
-                        empleadoActualizar.IdPersona = empleado.IdPersona;
                         empleadoActualizar.IdCiudadLugarNacimiento = empleado.IdCiudadLugarNacimiento;
                         empleadoActualizar.IdProvinciaLugarSufragio = empleado.IdProvinciaLugarSufragio;
+                        empleadoActualizar.IdDependencia = empleado.IdDependencia;
+                        empleadoActualizar.Persona.FechaNacimiento = empleado.Persona.FechaNacimiento;
+                        empleadoActualizar.Persona.Identificacion = empleado.Persona.Identificacion;
+                        empleadoActualizar.Persona.Nombres = empleado.Persona.Nombres;
+                        empleadoActualizar.Persona.Apellidos = empleado.Persona.Apellidos;
+                        empleadoActualizar.Persona.TelefonoPrivado = empleado.Persona.TelefonoPrivado;
+                        empleadoActualizar.Persona.TelefonoCasa = empleado.Persona.TelefonoCasa;
+                        empleadoActualizar.Persona.CorreoPrivado = empleado.Persona.CorreoPrivado;
+                        empleadoActualizar.Persona.LugarTrabajo = empleado.Persona.LugarTrabajo;
+                        empleadoActualizar.Persona.IdEstadoCivil = empleado.Persona.IdEstadoCivil;
+                        empleadoActualizar.Persona.IdEtnia = empleado.Persona.IdEtnia;
+                        empleadoActualizar.Persona.IdGenero = empleado.Persona.IdGenero;
+                        empleadoActualizar.Persona.IdNacionalidad = empleado.Persona.IdNacionalidad;
+                        empleadoActualizar.Persona.IdSexo = empleado.Persona.IdSexo;
+                        empleadoActualizar.Persona.IdTipoIdentificacion = empleado.Persona.IdTipoIdentificacion;
+                        empleadoActualizar.Persona.IdTipoSangre = empleado.Persona.IdTipoSangre;
+                        empleadoActualizar.Persona.IdCanditato = empleado.Persona.IdCanditato;
+
+                        db.Entry(empleado.CiudadNacimiento).State = EntityState.Unchanged;
+                        db.Entry(empleado.ProvinciaSufragio).State = EntityState.Unchanged;
 
                         db.Empleado.Update(empleadoActualizar);
+                        db.Persona.Update(empleadoActualizar.Persona);
                         await db.SaveChangesAsync();
 
                         return new Response
@@ -193,6 +222,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
+                ModelState.Remove("IdPersona");
                 if (!ModelState.IsValid)
                 {
                     return new Response
@@ -205,6 +235,9 @@ namespace bd.swrm.web.Controllers.API
                 var respuesta = Existe(empleado);
                 if (!respuesta.IsSuccess)
                 {
+                    db.Entry(empleado.CiudadNacimiento).State = EntityState.Unchanged;
+                    db.Entry(empleado.ProvinciaSufragio).State = EntityState.Unchanged;
+
                     db.Empleado.Add(empleado);
                     await db.SaveChangesAsync();
                     return new Response
@@ -265,6 +298,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
+                db.Persona.Remove(await db.Persona.SingleOrDefaultAsync(c => c.IdPersona == respuesta.IdPersona));
                 db.Empleado.Remove(respuesta);
                 await db.SaveChangesAsync();
 
@@ -297,7 +331,7 @@ namespace bd.swrm.web.Controllers.API
         public Response Existe(Empleado empleado)
         {
             var identificacion = empleado.Persona.Identificacion.ToUpper().TrimEnd().TrimStart();
-            var EmpleadoRespuesta = db.Empleado.Where(p => p.Persona.Nombres.ToUpper().TrimStart().TrimEnd() == identificacion).FirstOrDefault();
+            var EmpleadoRespuesta = db.Empleado.Where(p => p.Persona.Identificacion.ToUpper().TrimStart().TrimEnd() == identificacion).FirstOrDefault();
             if (EmpleadoRespuesta != null)
             {
                 return new Response

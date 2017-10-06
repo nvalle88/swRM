@@ -9,6 +9,8 @@ namespace bd.swrm.entidades.Negocio
         public int IdActivoFijo { get; set; }
         public virtual ActivosFijosAlta ActivosFijosAlta { get; set; }
 
+        public virtual ActivosFijosBaja ActivosFijosBaja { get; set; }
+
         [Required(ErrorMessage = "Debe introducir {0}")]
         [Display(Name = "Activo fijo:")]
         [StringLength(100, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
@@ -47,7 +49,7 @@ namespace bd.swrm.entidades.Negocio
         public int IdCiudad { get; set; }
         public virtual Ciudad Ciudad { get; set; }
 
-        [Display(Name = "Unidadd de medida:")]
+        [Display(Name = "Unidad de medida:")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int IdUnidadMedida { get; set; }
         public virtual UnidadMedida UnidadMedida { get; set; }

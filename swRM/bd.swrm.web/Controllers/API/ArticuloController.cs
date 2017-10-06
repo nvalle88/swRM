@@ -52,7 +52,6 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-
         // GET: api/Articulo/5
         [HttpGet("{id}")]
         public async Task<Response> GetArticulo([FromRoute] int id)

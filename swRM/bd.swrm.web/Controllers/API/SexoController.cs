@@ -6,36 +6,35 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using bd.swrm.datos;
 using bd.swrm.entidades.Negocio;
-using Microsoft.EntityFrameworkCore;
 using bd.log.guardar.Servicios;
+using bd.log.guardar.Enumeradores;
+using Microsoft.EntityFrameworkCore;
 using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
-using bd.log.guardar.Enumeradores;
 using bd.log.guardar.Utiles;
 using bd.swrm.entidades.Utils;
 
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/ActivosFijosAlta")]
-    public class ActivosFijosAltaController : Controller
+    [Route("api/Sexo")]
+    public class SexoController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ActivosFijosAltaController(SwRMDbContext db)
+        public SexoController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/Marca
+        // GET: api/ListarSexos
         [HttpGet]
-        [Route("ListarAltasActivosFijos")]
-        public async Task<List<ActivosFijosAlta>> GetActivosFijosAlta()
+        [Route("ListarSexos")]
+        public async Task<List<Sexo>> GetSexo()
         {
             try
             {
-                return await db.ActivosFijosAlta.Include(x => x.ActivoFijo).ToListAsync();
-                
+                return await db.Sexo.OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -49,13 +48,13 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<ActivosFijosAlta>();
+                return new List<Sexo>();
             }
         }
 
-        // GET: api/Marca/5
+        // GET: api/Sexo/5
         [HttpGet("{id}")]
-        public async Task<Response> GetActivosFijosAlta([FromRoute]int id)
+        public async Task<Response> GetSexo([FromRoute] int id)
         {
             try
             {
@@ -68,9 +67,9 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var _ActivosFijosAlta = await db.ActivosFijosAlta.SingleOrDefaultAsync(m => m.IdActivoFijo == id);
+                var sexo = await db.Sexo.SingleOrDefaultAsync(m => m.IdSexo == id);
 
-                if (_ActivosFijosAlta == null)
+                if (sexo == null)
                 {
                     return new Response
                     {
@@ -83,7 +82,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = _ActivosFijosAlta,
+                    Resultado = sexo,
                 };
             }
             catch (Exception ex)
@@ -105,16 +104,84 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
         }
-        
-        // POST: api/Marca
-        [HttpPost]
-        [Route("InsertarActivosFijosAlta")]
-        public async Task<Response> PostActivosFijosAlta([FromBody]ActivosFijosAlta _ActivosFijosAlta)
+
+        // PUT: api/Sexo/5
+        [HttpPut("{id}")]
+        public async Task<Response> PutSexo([FromRoute] int id, [FromBody] Sexo sexo)
         {
             try
             {
-                ModelState.Remove("IdFactura");
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = Mensaje.ModeloInvalido,
+                    };
+                }
 
+                var sexoActualizar = await db.Sexo.Where(x => x.IdSexo == id).FirstOrDefaultAsync();
+                if (sexoActualizar != null)
+                {
+                    try
+                    {
+                        sexoActualizar.Nombre = sexo.Nombre;
+                        db.Sexo.Update(sexoActualizar);
+                        await db.SaveChangesAsync();
+
+                        return new Response
+                        {
+                            IsSuccess = true,
+                            Message = Mensaje.Satisfactorio,
+                        };
+
+                    }
+                    catch (Exception ex)
+                    {
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                        {
+                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                            ExceptionTrace = ex,
+                            Message = Mensaje.Excepcion,
+                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                            UserName = "",
+
+                        });
+                        return new Response
+                        {
+                            IsSuccess = false,
+                            Message = Mensaje.Error,
+                        };
+                    }
+                }
+
+
+
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.ExisteRegistro
+                };
+            }
+            catch (Exception)
+            {
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.Excepcion
+                };
+            }
+        }
+
+        // POST: api/Sexo
+        [HttpPost]
+        [Route("InsertarSexo")]
+        public async Task<Response> PostSexo([FromBody] Sexo sexo)
+        {
+            try
+            {
                 if (!ModelState.IsValid)
                 {
                     return new Response
@@ -124,12 +191,11 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = Existe(_ActivosFijosAlta);
+                var respuesta = Existe(sexo);
                 if (!respuesta.IsSuccess)
                 {
-                    db.ActivosFijosAlta.Add(_ActivosFijosAlta);
+                    db.Sexo.Add(sexo);
                     await db.SaveChangesAsync();
-                    Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
                     return new Response
                     {
                         IsSuccess = true,
@@ -163,78 +229,10 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
         }
-        
-        // PUT: api/Marca/5
-        [HttpPut("{id}")]
-        public async Task<Response> PutActivosFijosAlta([FromRoute] int id, [FromBody]ActivosFijosAlta _ActivosFijosAlta)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido
-                    };
-                }
 
-                var _ActivosFijosAltaActualizar = await db.ActivosFijosAlta.Where(x => x.IdActivoFijo == id).FirstOrDefaultAsync();
-                if (_ActivosFijosAltaActualizar != null)
-                {
-                    try
-                    {
-                        _ActivosFijosAltaActualizar.FechaAlta = _ActivosFijosAlta.FechaAlta;    
-                        
-                        db.ActivosFijosAlta.Update(_ActivosFijosAltaActualizar);
-                        await db.SaveChangesAsync();
-
-                        return new Response
-                        {
-                            IsSuccess = true,
-                            Message = Mensaje.Satisfactorio,
-                        };
-
-                    }
-                    catch (Exception ex)
-                    {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                        {
-                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                            ExceptionTrace = ex,
-                            Message = Mensaje.Excepcion,
-                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                            UserName = "",
-
-                        });
-                        return new Response
-                        {
-                            IsSuccess = false,
-                            Message = Mensaje.Error,
-                        };
-                    }
-                }
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
-            }
-            catch (Exception)
-            {
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Excepcion
-                };
-            }
-        }
-        
-        // DELETE: api/ApiWithActions/5
+        // DELETE: api/Sexo/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteActivosFijosAlta([FromRoute] int id)
+        public async Task<Response> DeleteSexo([FromRoute] int id)
         {
             try
             {
@@ -247,7 +245,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.ActivosFijosAlta.SingleOrDefaultAsync(m => m.IdActivoFijo == id);
+                var respuesta = await db.Sexo.SingleOrDefaultAsync(m => m.IdSexo == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -256,7 +254,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.ActivosFijosAlta.Remove(respuesta);
+                db.Sexo.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -285,17 +283,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        private bool ActivosFijosAltaExists(int id)
+        public Response Existe(Sexo sexo)
         {
-            return db.ActivosFijosAlta.Any(e => e.IdActivoFijo == id);
-        }
-
-        public Response Existe(ActivosFijosAlta _ActivosFijosAlta)
-        {
-            var bdd = _ActivosFijosAlta.IdActivoFijo;/*ToUpper().TrimEnd().TrimStart()*/;
-            var _bdd = _ActivosFijosAlta.IdFactura;
-            var loglevelrespuesta = db.ActivosFijosAlta.Where(p => p.IdActivoFijo == bdd && p.IdFactura == _bdd).FirstOrDefault();
-            
+            var bdd = sexo.Nombre.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.Sexo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
             if (loglevelrespuesta != null)
             {
                 return new Response
@@ -304,6 +295,7 @@ namespace bd.swrm.web.Controllers.API
                     Message = Mensaje.ExisteRegistro,
                     Resultado = null,
                 };
+
             }
 
             return new Response

@@ -57,6 +57,46 @@ namespace bd.swrm.entidades.Negocio
 
         //Propiedades Virtuales Referencias a otras clases
 
+        [Display(Name = "Estado civil:")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        public int? IdEstadoCivil { get; set; }
+        public virtual EstadoCivil EstadoCivil { get; set; }
+
+        [Display(Name = "Etnia:")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        public int? IdEtnia { get; set; }
+        public virtual Etnia Etnia { get; set; }
+
+        [Display(Name = "Género:")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        public int? IdGenero { get; set; }
+        public virtual Genero Genero { get; set; }
+
+        [Display(Name = "Nacionalidad:")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        public virtual Nacionalidad Nacionalidad { get; set; }
+        public int? IdNacionalidad { get; set; }
+
+        [Display(Name = "Sub clase de activo fijo:")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        public int? IdSexo { get; set; }
+        public virtual Sexo Sexo { get; set; }
+
+        [Display(Name = "Tipo de identificación:")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        public int? IdTipoIdentificacion { get; set; }
+        public virtual TipoIdentificacion TipoIdentificacion { get; set; }
+
+        [Display(Name = "Tipo de sangre:")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        public int? IdTipoSangre { get; set; }
+        public virtual TipoSangre TipoSangre { get; set; }
+
+        [Display(Name = "Candidato:")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        public int? IdCanditato { get; set; }
+        public virtual Canditato Canditato { get; set; }
+
         public virtual ICollection<Empleado> Empleado { get; set; }
     }
 }

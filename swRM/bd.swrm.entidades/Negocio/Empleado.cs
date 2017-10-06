@@ -67,5 +67,10 @@ namespace bd.swrm.entidades.Negocio
         public virtual Provincia ProvinciaSufragio { get; set; }
         public virtual ICollection<TransferenciaActivoFijo> TransferenciaActivoFijo { get; set; }
 
+        [Display(Name = "Dependencia:")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        public int IdDependencia { get; set; }
+        public virtual Dependencia Dependencia { get; set; }
+
     }
 }
