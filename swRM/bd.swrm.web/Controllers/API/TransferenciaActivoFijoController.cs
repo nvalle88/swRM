@@ -181,6 +181,7 @@ namespace bd.swrm.web.Controllers.API
                     try
                     {
                         _TransferenciaActivoFijoActualizar.IdEmpleado = _TransferenciaActivoFijo.IdEmpleado;
+                        _TransferenciaActivoFijoActualizar.IdEmpleadoRecibo = _TransferenciaActivoFijo.IdEmpleadoRecibo;
                         _TransferenciaActivoFijoActualizar.IdMotivoTransferencia = _TransferenciaActivoFijo.IdMotivoTransferencia;
                         _TransferenciaActivoFijoActualizar.FechaTransferencia = _TransferenciaActivoFijo.FechaTransferencia;
                         _TransferenciaActivoFijoActualizar.Origen = _TransferenciaActivoFijo.Origen;
@@ -294,7 +295,7 @@ namespace bd.swrm.web.Controllers.API
         public Response Existe(TransferenciaActivoFijo _TransferenciaActivoFijo)
         {
             //var bdd = _TransferenciaActivoFijo.Motivo_Transferencia.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.TransferenciaActivoFijo.Where(p => p.IdEmpleado == _TransferenciaActivoFijo.IdEmpleado && p.IdMotivoTransferencia == _TransferenciaActivoFijo.IdMotivoTransferencia
+            var loglevelrespuesta = db.TransferenciaActivoFijo.Where(p => p.IdEmpleado == _TransferenciaActivoFijo.IdEmpleado && p.IdEmpleadoRecibo == _TransferenciaActivoFijo.IdEmpleadoRecibo && p.IdMotivoTransferencia == _TransferenciaActivoFijo.IdMotivoTransferencia
                                         && p.FechaTransferencia == _TransferenciaActivoFijo.FechaTransferencia && p.Destino == _TransferenciaActivoFijo.Destino && p.Origen == _TransferenciaActivoFijo.Origen
                                         && p.Observaciones == _TransferenciaActivoFijo.Observaciones).FirstOrDefault();
 
