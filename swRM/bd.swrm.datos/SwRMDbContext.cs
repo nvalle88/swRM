@@ -949,6 +949,8 @@ namespace bd.swrm.datos
 
                 entity.Property(e => e.Origen).HasMaxLength(50);
 
+                entity.Property(e => e.Destino).HasMaxLength(50);
+
                 entity.HasOne(d => d.MotivoTransferencia)
                   .WithMany(p => p.TransferenciaActivoFijo)
                   .HasForeignKey(d => d.IdMotivoTransferencia);
