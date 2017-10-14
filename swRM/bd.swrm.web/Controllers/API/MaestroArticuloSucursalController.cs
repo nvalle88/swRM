@@ -17,24 +17,24 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/Articulo")]
-    public class ArticuloController : Controller
+    [Route("api/MaestroArticuloSucursal")]
+    public class MaestroArticuloSucursalController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ArticuloController(SwRMDbContext db)
+        public MaestroArticuloSucursalController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/ListarArticulos
+        // GET: api/MaestroArticuloSucursal
         [HttpGet]
-        [Route("ListarArticulos")]
-        public async Task<List<Articulo>> GetArticulo()
+        [Route("ListarMaestroArticuloSucursal")]
+        public async Task<List<MaestroArticuloSucursal>> GetMaestroArticuloSucursal()
         {
             try
             {
-                return await db.Articulo.OrderBy(x => x.Nombre).Include(c=> c.SubClaseArticulo).ThenInclude(c=> c.ClaseArticulo).ThenInclude(c=> c.TipoArticulo).Include(c=> c.UnidadMedida).Include(c=> c.Modelo).ToListAsync();
+                return await db.MaestroArticuloSucursal.OrderBy(c=> c.Minimo).ThenBy(c=> c.Maximo).Include(c => c.Sucursal).ThenInclude(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,13 +48,13 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<Articulo>();
+                return new List<MaestroArticuloSucursal>();
             }
         }
 
-        // GET: api/Articulo/5
+        // GET: api/MaestroArticuloSucursal/5
         [HttpGet("{id}")]
-        public async Task<Response> GetArticulo([FromRoute] int id)
+        public async Task<Response> GetMaestroArticuloSucursal([FromRoute] int id)
         {
             try
             {
@@ -67,9 +67,13 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var articulo = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var maestroArticuloSucursal = await db.MaestroArticuloSucursal.SingleOrDefaultAsync(m => m.IdMaestroArticuloSucursal == id);
+                maestroArticuloSucursal.Sucursal = await db.Sucursal.SingleOrDefaultAsync(c => c.IdSucursal == maestroArticuloSucursal.IdSucursal);
+                maestroArticuloSucursal.Sucursal.Ciudad = await db.Ciudad.SingleOrDefaultAsync(c => c.IdCiudad == maestroArticuloSucursal.Sucursal.IdCiudad);
+                maestroArticuloSucursal.Sucursal.Ciudad.Provincia = await db.Provincia.SingleOrDefaultAsync(c => c.IdProvincia == maestroArticuloSucursal.Sucursal.Ciudad.IdProvincia);
+                maestroArticuloSucursal.Sucursal.Ciudad.Provincia.Pais = await db.Pais.SingleOrDefaultAsync(c => c.IdPais == maestroArticuloSucursal.Sucursal.Ciudad.Provincia.IdPais);
 
-                if (articulo == null)
+                if (maestroArticuloSucursal == null)
                 {
                     return new Response
                     {
@@ -82,7 +86,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = articulo,
+                    Resultado = maestroArticuloSucursal,
                 };
             }
             catch (Exception ex)
@@ -105,9 +109,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // PUT: api/Articulo/5
+        // PUT: api/MaestroArticuloSucursal/5
         [HttpPut("{id}")]
-        public async Task<Response> PutArticulo([FromRoute] int id, [FromBody] Articulo articulo)
+        public async Task<Response> PutMaestroArticuloSucursal([FromRoute] int id, [FromBody] MaestroArticuloSucursal maestroArticuloSucursal)
         {
             try
             {
@@ -120,22 +124,21 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var articuloActualizar = await db.Articulo.Where(x => x.IdArticulo == id).FirstOrDefaultAsync();
-                if (articuloActualizar != null)
+                var maestroArticuloSucursalActualizar = await db.MaestroArticuloSucursal.Where(x => x.IdMaestroArticuloSucursal == id).FirstOrDefaultAsync();
+                if (maestroArticuloSucursalActualizar != null)
                 {
                     try
                     {
-                        articuloActualizar.Nombre = articulo.Nombre;
-                        articuloActualizar.IdSubClaseArticulo = articulo.IdSubClaseArticulo;
-                        articuloActualizar.IdUnidadMedida = articulo.IdUnidadMedida;
-                        articuloActualizar.IdModelo = articulo.IdModelo;
-                        db.Articulo.Update(articuloActualizar);
+                        maestroArticuloSucursalActualizar.Minimo = maestroArticuloSucursal.Minimo;
+                        maestroArticuloSucursalActualizar.Maximo = maestroArticuloSucursal.Maximo;
+                        maestroArticuloSucursalActualizar.IdSucursal = maestroArticuloSucursal.IdSucursal;
+                        db.MaestroArticuloSucursal.Update(maestroArticuloSucursalActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
                         {
                             IsSuccess = true,
-                            Message = Mensaje.Satisfactorio,
+                            Message = Mensaje.ModeloInvalido,
                         };
 
                     }
@@ -159,9 +162,6 @@ namespace bd.swrm.web.Controllers.API
                     }
                 }
 
-
-
-
                 return new Response
                 {
                     IsSuccess = false,
@@ -178,10 +178,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // POST: api/Articulo
+        // POST: api/MaestroArticuloSucursal
         [HttpPost]
-        [Route("InsertarArticulo")]
-        public async Task<Response> PostArticulo([FromBody] Articulo articulo)
+        [Route("InsertarMaestroArticuloSucursal")]
+        public async Task<Response> PostMaestroArticuloSucursal([FromBody] MaestroArticuloSucursal maestroArticuloSucursal)
         {
             try
             {
@@ -194,10 +194,11 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = Existe(articulo);
+                var respuesta = Existe(maestroArticuloSucursal);
                 if (!respuesta.IsSuccess)
                 {
-                    db.Articulo.Add(articulo);
+                    db.Entry(maestroArticuloSucursal.Sucursal).State = EntityState.Unchanged;
+                    db.MaestroArticuloSucursal.Add(maestroArticuloSucursal);
                     await db.SaveChangesAsync();
                     return new Response
                     {
@@ -233,9 +234,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // DELETE: api/Articulo/5
+        // DELETE: api/MaestroArticuloSucursal/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteArticulo([FromRoute] int id)
+        public async Task<Response> DeleteMaestroArticuloSucursal([FromRoute] int id)
         {
             try
             {
@@ -248,7 +249,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var respuesta = await db.MaestroArticuloSucursal.SingleOrDefaultAsync(m => m.IdMaestroArticuloSucursal == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -257,7 +258,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.Articulo.Remove(respuesta);
+                db.MaestroArticuloSucursal.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -286,16 +287,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        private bool ArticuloExists(string nombre)
+        public Response Existe(MaestroArticuloSucursal maestroArticuloSucursal)
         {
-            return db.Articulo.Any(e => e.Nombre == nombre);
-        }
-
-        public Response Existe(Articulo articulo)
-        {
-            var bdd = articulo.Nombre.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.Articulo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
-            if (loglevelrespuesta != null)
+            var MaestroArticuloSucursalRespuesta = db.MaestroArticuloSucursal.Where(p => p.Minimo == maestroArticuloSucursal.Minimo && p.Maximo == maestroArticuloSucursal.Maximo && p.IdSucursal == maestroArticuloSucursal.IdSucursal).FirstOrDefault();
+            if (MaestroArticuloSucursalRespuesta != null)
             {
                 return new Response
                 {
@@ -309,7 +304,7 @@ namespace bd.swrm.web.Controllers.API
             return new Response
             {
                 IsSuccess = false,
-                Resultado = loglevelrespuesta,
+                Resultado = MaestroArticuloSucursalRespuesta,
             };
         }
     }
