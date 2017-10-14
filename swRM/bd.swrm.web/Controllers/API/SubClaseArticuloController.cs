@@ -34,7 +34,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.SubClaseArticulo.OrderBy(x => x.Nombre).ToListAsync();
+                return await db.SubClaseArticulo.OrderBy(x => x.Nombre).Include(c=> c.ClaseArticulo).ThenInclude(c=> c.TipoArticulo).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -67,9 +67,11 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var SubClaseArticulo = await db.SubClaseArticulo.SingleOrDefaultAsync(m => m.IdSubClaseArticulo == id);
+                var subClaseArticulo = await db.SubClaseArticulo.SingleOrDefaultAsync(m => m.IdSubClaseArticulo == id);
+                subClaseArticulo.ClaseArticulo = await db.ClaseArticulo.SingleOrDefaultAsync(c => c.IdClaseArticulo == subClaseArticulo.IdClaseArticulo);
+                subClaseArticulo.ClaseArticulo.TipoArticulo = await db.TipoArticulo.SingleOrDefaultAsync(c => c.IdTipoArticulo == subClaseArticulo.ClaseArticulo.IdTipoArticulo);
 
-                if (SubClaseArticulo == null)
+                if (subClaseArticulo == null)
                 {
                     return new Response
                     {
@@ -82,7 +84,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = SubClaseArticulo,
+                    Resultado = subClaseArticulo,
                 };
             }
             catch (Exception ex)
