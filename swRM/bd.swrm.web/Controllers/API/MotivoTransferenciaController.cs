@@ -17,25 +17,24 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/ActivosFijosAlta")]
-    public class ActivosFijosAltaController : Controller
+    [Route("api/MotivoTransferencia")]
+    public class MotivoTransferenciaController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ActivosFijosAltaController(SwRMDbContext db)
+        public MotivoTransferenciaController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/Marca
+        // GET: api/MotivoRecepcion
         [HttpGet]
-        [Route("ListarAltasActivosFijos")]
-        public async Task<List<ActivosFijosAlta>> GetActivosFijosAlta()
+        [Route("ListarMotivoTransferencia")]
+        public async Task<List<MotivoTransferencia>> GetMotivoTransferencia()
         {
             try
             {
-                return await db.ActivosFijosAlta.Include(x => x.ActivoFijo).ToListAsync();
-                
+                return await db.MotivoTransferencia.OrderBy(x => x.Motivo_Transferencia).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -49,13 +48,13 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<ActivosFijosAlta>();
+                return new List<MotivoTransferencia>();
             }
         }
 
-        // GET: api/Marca/5
+        // GET: api/MotivoTransferencia/5
         [HttpGet("{id}")]
-        public async Task<Response> GetActivosFijosAlta([FromRoute]int id)
+        public async Task<Response> GetMotivoTransferencia([FromRoute] int id)
         {
             try
             {
@@ -68,9 +67,9 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var _ActivosFijosAlta = await db.ActivosFijosAlta.SingleOrDefaultAsync(m => m.IdActivoFijo == id);
+                var _motivoTransferencia = await db.MotivoTransferencia.SingleOrDefaultAsync(m => m.IdMotivoTransferencia == id);
 
-                if (_ActivosFijosAlta == null)
+                if (_motivoTransferencia == null)
                 {
                     return new Response
                     {
@@ -83,7 +82,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = _ActivosFijosAlta,
+                    Resultado = _motivoTransferencia
                 };
             }
             catch (Exception ex)
@@ -105,16 +104,14 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
         }
-        
-        // POST: api/Marca
+
+        // POST: api/MotivoTransferencia
         [HttpPost]
-        [Route("InsertarActivosFijosAlta")]
-        public async Task<Response> PostActivosFijosAlta([FromBody]ActivosFijosAlta _ActivosFijosAlta)
+        [Route("InsertarMotivoTransferencia")]
+        public async Task<Response> PostMotivoTransferencia([FromBody]MotivoTransferencia _motivoTransferencia)
         {
             try
             {
-                ModelState.Remove("IdFactura");
-
                 if (!ModelState.IsValid)
                 {
                     return new Response
@@ -124,12 +121,11 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = Existe(_ActivosFijosAlta);
+                var respuesta = Existe(_motivoTransferencia);
                 if (!respuesta.IsSuccess)
                 {
-                    db.ActivosFijosAlta.Add(_ActivosFijosAlta);
+                    db.MotivoTransferencia.Add(_motivoTransferencia);
                     await db.SaveChangesAsync();
-                    Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
                     return new Response
                     {
                         IsSuccess = true,
@@ -140,7 +136,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
+                    Message = Mensaje.Satisfactorio
                 };
 
             }
@@ -163,10 +159,10 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
         }
-        
-        // PUT: api/Marca/5
+
+        // PUT: api/MotivoTransferencia/5
         [HttpPut("{id}")]
-        public async Task<Response> PutActivosFijosAlta([FromRoute] int id, [FromBody]ActivosFijosAlta _ActivosFijosAlta)
+        public async Task<Response> PutMotivoTransferencia([FromRoute] int id, [FromBody]MotivoTransferencia _motivoTransferencia)
         {
             try
             {
@@ -179,14 +175,14 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var _ActivosFijosAltaActualizar = await db.ActivosFijosAlta.Where(x => x.IdActivoFijo == id).FirstOrDefaultAsync();
-                if (_ActivosFijosAltaActualizar != null)
+                var _motivoTransferenciaActualizar = await db.MotivoTransferencia.Where(x => x.IdMotivoTransferencia == id).FirstOrDefaultAsync();
+                if (_motivoTransferenciaActualizar != null)
                 {
                     try
                     {
-                        _ActivosFijosAltaActualizar.FechaAlta = _ActivosFijosAlta.FechaAlta;    
+                        _motivoTransferenciaActualizar.Motivo_Transferencia = _motivoTransferencia.Motivo_Transferencia;
                         
-                        db.ActivosFijosAlta.Update(_ActivosFijosAltaActualizar);
+                        db.MotivoTransferencia.Update(_motivoTransferenciaActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
@@ -234,7 +230,7 @@ namespace bd.swrm.web.Controllers.API
         
         // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteActivosFijosAlta([FromRoute] int id)
+        public async Task<Response> DeleteMotivoTransferencia([FromRoute] int id)
         {
             try
             {
@@ -247,7 +243,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.ActivosFijosAlta.SingleOrDefaultAsync(m => m.IdActivoFijo == id);
+                var respuesta = await db.MotivoTransferencia.SingleOrDefaultAsync(m => m.IdMotivoTransferencia == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -256,7 +252,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.ActivosFijosAlta.Remove(respuesta);
+                db.MotivoTransferencia.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -285,17 +281,16 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        private bool ActivosFijosAltaExists(int id)
+        private bool MotivoTransferenciaExists(int id)
         {
-            return db.ActivosFijosAlta.Any(e => e.IdActivoFijo == id);
+            return db.MotivoTransferencia.Any(e => e.IdMotivoTransferencia == id);
         }
 
-        public Response Existe(ActivosFijosAlta _ActivosFijosAlta)
+        public Response Existe(MotivoTransferencia _motivoTransferencia)
         {
-            var bdd = _ActivosFijosAlta.IdActivoFijo;/*ToUpper().TrimEnd().TrimStart()*/;
-            var _bdd = _ActivosFijosAlta.IdFactura;
-            var loglevelrespuesta = db.ActivosFijosAlta.Where(p => p.IdActivoFijo == bdd && p.IdFactura == _bdd).FirstOrDefault();
-            
+            var bdd = _motivoTransferencia.Motivo_Transferencia.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.MotivoTransferencia.Where(p => p.Motivo_Transferencia.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+
             if (loglevelrespuesta != null)
             {
                 return new Response

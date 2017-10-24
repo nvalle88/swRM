@@ -34,7 +34,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.Articulo.OrderBy(x => x.Nombre).Include(c=> c.SubClaseArticulo).Include(c=> c.UnidadMedida).Include(c=> c.Modelo).ToListAsync();
+                return await db.Articulo.OrderBy(x => x.Nombre).Include(c=> c.SubClaseArticulo).ThenInclude(c=> c.ClaseArticulo).ThenInclude(c=> c.TipoArticulo).Include(c=> c.UnidadMedida).Include(c=> c.Modelo).ToListAsync();
             }
             catch (Exception ex)
             {

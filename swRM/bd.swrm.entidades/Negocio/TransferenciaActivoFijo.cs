@@ -13,9 +13,9 @@ namespace bd.swrm.entidades.Negocio
 
         public int IdEmpleado { get; set; }
 
-        //public int IdEmpleadoResponsableEnvio { get; set; }
+        public int IdEmpleadoRecibo { get; set; }
 
-        //public int IdEmpleadoResponsableRecibo { get; set; }
+        public int IdMotivoTransferencia { get; set; }
 
         public DateTime FechaTransferencia { get; set; }
 
@@ -30,9 +30,7 @@ namespace bd.swrm.entidades.Negocio
 
         public virtual Empleado Empleado { get; set; }
 
-        //public virtual Empleado Empleado1 { get; set; }
-
-        //public virtual Empleado Empleado2 { get; set; }
+        public virtual MotivoTransferencia MotivoTransferencia { get; set; }
 
         public virtual ICollection<TransferenciaActivoFijoDetalle> TransferenciaActivoFijoDetalle { get; set; }
     }

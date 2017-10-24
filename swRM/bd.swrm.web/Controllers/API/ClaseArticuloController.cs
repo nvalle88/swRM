@@ -69,6 +69,7 @@ namespace bd.swrm.web.Controllers.API
                 }
 
                 var claseArticulo = await db.ClaseArticulo.SingleOrDefaultAsync(m => m.IdClaseArticulo == id);
+                claseArticulo.TipoArticulo = await db.TipoArticulo.SingleOrDefaultAsync(c => c.IdTipoArticulo == claseArticulo.IdTipoArticulo);
 
                 if (claseArticulo == null)
                 {

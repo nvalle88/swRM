@@ -70,7 +70,7 @@ namespace bd.swrm.web.Controllers.API
                               join factura in db.Factura on resAFA.IdFactura equals factura.IdFactura
                               into tmp1
                               from resFac in tmp1.DefaultIfEmpty()
-
+                              
                               let listaMantenimientoActivo = (from mant in db.MantenimientoActivoFijo
                                                               join empleadMant in db.Empleado on mant.IdEmpleado equals empleadMant.IdEmpleado
                                                               where mant.IdActivoFijo == af.IdActivoFijo
@@ -79,6 +79,11 @@ namespace bd.swrm.web.Controllers.API
                                                             join fact in db.Factura on provFactura.IdProveedor equals fact.IdProveedor
                                                             where provFactura.IdProveedor == prov.IdProveedor
                                                             select new Factura { IdFactura = fact.IdFactura, Numero = fact.Numero }).ToList()
+
+                              let listaComponentesAdd = (from afadd in db.ActivosFijosAdicionados
+                                                        join afaf in db.ActivoFijo on afadd.idActivoFijoOrigen equals afaf.IdActivoFijo
+                                                        where afadd.idActivoFijoOrigen == af.IdActivoFijo
+                                                        select new ActivosFijosAdicionados { idAdicion = afadd.idAdicion, idActivoFijoOrigen = afadd.idActivoFijoOrigen, idActivoFijoDestino = afadd.idActivoFijoDestino, fechaAdicion = afadd.fechaAdicion }).ToList()
 
 
                               select new RecepcionActivoFijoDetalle
@@ -138,10 +143,11 @@ namespace bd.swrm.web.Controllers.API
                     .Include(c => c.ActivoFijo).ThenInclude(c => c.CodigoActivoFijo)
                     .Include(c => c.ActivoFijo)
                     .Include(c => c.Estado)
-
                     .Include(c => c.RecepcionActivoFijo.Proveedor.Factura)
-                    .Include(c => c.ActivoFijo).ThenInclude(c => c.ActivosFijosBaja)
 
+                    .Include(c => c.ActivoFijo.ActivosFijosAdicionados)
+
+                    .Include(c => c.ActivoFijo).ThenInclude(c => c.ActivosFijosBaja)
                     .Include(c => c.ActivoFijo.MantenimientoActivoFijo)
 
                     .Where(c=> c.IdRecepcionActivoFijoDetalle == id).SingleOrDefaultAsync();

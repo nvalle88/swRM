@@ -6,36 +6,35 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using bd.swrm.datos;
 using bd.swrm.entidades.Negocio;
-using Microsoft.EntityFrameworkCore;
 using bd.log.guardar.Servicios;
 using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
-using bd.log.guardar.Enumeradores;
-using bd.log.guardar.Utiles;
 using bd.swrm.entidades.Utils;
+using bd.log.guardar.Enumeradores;
+using Microsoft.EntityFrameworkCore;
+using bd.log.guardar.Utiles;
 
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/ActivosFijosAlta")]
-    public class ActivosFijosAltaController : Controller
+    [Route("api/TransferenciaActivoFijo")]
+    public class TransferenciaActivoFijoController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ActivosFijosAltaController(SwRMDbContext db)
+        public TransferenciaActivoFijoController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/Marca
+        // GET: api/TransferenciaActivoFijo
         [HttpGet]
-        [Route("ListarAltasActivosFijos")]
-        public async Task<List<ActivosFijosAlta>> GetActivosFijosAlta()
+        [Route("ListarTransferenciaActivoFijo")]
+        public async Task<List<TransferenciaActivoFijo>> GetTransferenciaActivoFijo()
         {
             try
             {
-                return await db.ActivosFijosAlta.Include(x => x.ActivoFijo).ToListAsync();
-                
+                return await db.TransferenciaActivoFijo.OrderBy(x => x.FechaTransferencia).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -49,13 +48,13 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<ActivosFijosAlta>();
+                return new List<TransferenciaActivoFijo>();
             }
         }
 
-        // GET: api/Marca/5
+        // GET: api/TransferenciaActivoFijo/5
         [HttpGet("{id}")]
-        public async Task<Response> GetActivosFijosAlta([FromRoute]int id)
+        public async Task<Response> GetTransferenciaActivoFijo([FromRoute] int id)
         {
             try
             {
@@ -68,9 +67,9 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var _ActivosFijosAlta = await db.ActivosFijosAlta.SingleOrDefaultAsync(m => m.IdActivoFijo == id);
+                var _TransferenciaActivoFijo = await db.TransferenciaActivoFijo.SingleOrDefaultAsync(m => m.IdTransferenciaActivoFijo == id);
 
-                if (_ActivosFijosAlta == null)
+                if (_TransferenciaActivoFijo == null)
                 {
                     return new Response
                     {
@@ -83,7 +82,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = _ActivosFijosAlta,
+                    Resultado = _TransferenciaActivoFijo
                 };
             }
             catch (Exception ex)
@@ -105,16 +104,14 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
         }
-        
-        // POST: api/Marca
+
+        // POST: api/MotivoTransferencia
         [HttpPost]
-        [Route("InsertarActivosFijosAlta")]
-        public async Task<Response> PostActivosFijosAlta([FromBody]ActivosFijosAlta _ActivosFijosAlta)
+        [Route("InsertarTransferenciaActivoFijo")]
+        public async Task<Response> PostTransferenciaActivoFijo([FromBody]TransferenciaActivoFijo _TransferenciaActivoFijo)
         {
             try
             {
-                ModelState.Remove("IdFactura");
-
                 if (!ModelState.IsValid)
                 {
                     return new Response
@@ -124,12 +121,11 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = Existe(_ActivosFijosAlta);
+                var respuesta = Existe(_TransferenciaActivoFijo);
                 if (!respuesta.IsSuccess)
                 {
-                    db.ActivosFijosAlta.Add(_ActivosFijosAlta);
+                    db.TransferenciaActivoFijo.Add(_TransferenciaActivoFijo);
                     await db.SaveChangesAsync();
-                    Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
                     return new Response
                     {
                         IsSuccess = true,
@@ -140,7 +136,7 @@ namespace bd.swrm.web.Controllers.API
                 return new Response
                 {
                     IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
+                    Message = Mensaje.Satisfactorio
                 };
 
             }
@@ -163,10 +159,10 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
         }
-        
-        // PUT: api/Marca/5
+
+        // PUT: api/TransferenciaActivoFijo/5
         [HttpPut("{id}")]
-        public async Task<Response> PutActivosFijosAlta([FromRoute] int id, [FromBody]ActivosFijosAlta _ActivosFijosAlta)
+        public async Task<Response> PutTransferenciaActivoFijo([FromRoute] int id, [FromBody]TransferenciaActivoFijo _TransferenciaActivoFijo)
         {
             try
             {
@@ -179,14 +175,20 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var _ActivosFijosAltaActualizar = await db.ActivosFijosAlta.Where(x => x.IdActivoFijo == id).FirstOrDefaultAsync();
-                if (_ActivosFijosAltaActualizar != null)
+                var _TransferenciaActivoFijoActualizar = await db.TransferenciaActivoFijo.Where(x => x.IdTransferenciaActivoFijo == id).FirstOrDefaultAsync();
+                if (_TransferenciaActivoFijoActualizar != null)
                 {
                     try
                     {
-                        _ActivosFijosAltaActualizar.FechaAlta = _ActivosFijosAlta.FechaAlta;    
+                        _TransferenciaActivoFijoActualizar.IdEmpleado = _TransferenciaActivoFijo.IdEmpleado;
+                        _TransferenciaActivoFijoActualizar.IdEmpleadoRecibo = _TransferenciaActivoFijo.IdEmpleadoRecibo;
+                        _TransferenciaActivoFijoActualizar.IdMotivoTransferencia = _TransferenciaActivoFijo.IdMotivoTransferencia;
+                        _TransferenciaActivoFijoActualizar.FechaTransferencia = _TransferenciaActivoFijo.FechaTransferencia;
+                        _TransferenciaActivoFijoActualizar.Origen = _TransferenciaActivoFijo.Origen;
+                        _TransferenciaActivoFijoActualizar.Destino = _TransferenciaActivoFijo.Destino;
+                        _TransferenciaActivoFijoActualizar.Observaciones = _TransferenciaActivoFijo.Observaciones;
                         
-                        db.ActivosFijosAlta.Update(_ActivosFijosAltaActualizar);
+                        db.TransferenciaActivoFijo.Update(_TransferenciaActivoFijoActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
@@ -231,10 +233,10 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
         }
-        
+
         // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteActivosFijosAlta([FromRoute] int id)
+        public async Task<Response> DeleteTransferenciaActivoFijo([FromRoute] int id)
         {
             try
             {
@@ -247,7 +249,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.ActivosFijosAlta.SingleOrDefaultAsync(m => m.IdActivoFijo == id);
+                var respuesta = await db.TransferenciaActivoFijo.SingleOrDefaultAsync(m => m.IdTransferenciaActivoFijo == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -256,7 +258,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.ActivosFijosAlta.Remove(respuesta);
+                db.TransferenciaActivoFijo.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -285,17 +287,18 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        private bool ActivosFijosAltaExists(int id)
+        private bool TransferenciaActivoFijoExists(int id)
         {
-            return db.ActivosFijosAlta.Any(e => e.IdActivoFijo == id);
+            return db.TransferenciaActivoFijo.Any(e => e.IdTransferenciaActivoFijo == id);
         }
 
-        public Response Existe(ActivosFijosAlta _ActivosFijosAlta)
+        public Response Existe(TransferenciaActivoFijo _TransferenciaActivoFijo)
         {
-            var bdd = _ActivosFijosAlta.IdActivoFijo;/*ToUpper().TrimEnd().TrimStart()*/;
-            var _bdd = _ActivosFijosAlta.IdFactura;
-            var loglevelrespuesta = db.ActivosFijosAlta.Where(p => p.IdActivoFijo == bdd && p.IdFactura == _bdd).FirstOrDefault();
-            
+            //var bdd = _TransferenciaActivoFijo.Motivo_Transferencia.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.TransferenciaActivoFijo.Where(p => p.IdEmpleado == _TransferenciaActivoFijo.IdEmpleado && p.IdEmpleadoRecibo == _TransferenciaActivoFijo.IdEmpleadoRecibo && p.IdMotivoTransferencia == _TransferenciaActivoFijo.IdMotivoTransferencia
+                                        && p.FechaTransferencia == _TransferenciaActivoFijo.FechaTransferencia && p.Destino == _TransferenciaActivoFijo.Destino && p.Origen == _TransferenciaActivoFijo.Origen
+                                        && p.Observaciones == _TransferenciaActivoFijo.Observaciones).FirstOrDefault();
+
             if (loglevelrespuesta != null)
             {
                 return new Response
