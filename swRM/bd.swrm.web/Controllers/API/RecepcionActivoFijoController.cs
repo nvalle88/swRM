@@ -205,20 +205,10 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
 
-            var respuesta = Existe(recepcionActivoFijoDetalle);
-            if (!respuesta.IsSuccess)
-            {
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio
-                };
-            }
-
             return new Response
             {
-                IsSuccess = false,
-                Message = Mensaje.ExisteRegistro
+                IsSuccess = true,
+                Message = Mensaje.Satisfactorio
             };
         }
 
@@ -399,6 +389,71 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = false,
                     Message = Mensaje.Error,
+                };
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<Response> PutRecepcionActivoFijo([FromRoute] int id, [FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = Mensaje.ModeloInvalido
+                    };
+                }
+                var recepcionActivoFijoDetalleActualizar = await db.RecepcionActivoFijoDetalle.Include(c=> c.Estado).Include(c=> c.RecepcionActivoFijo).Include(c=> c.ActivoFijo).ThenInclude(c=> c.CodigoActivoFijo).SingleOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
+                if (recepcionActivoFijoDetalleActualizar != null)
+                {
+                    recepcionActivoFijoDetalleActualizar.RecepcionActivoFijo.FechaRecepcion = recepcionActivoFijoDetalle.RecepcionActivoFijo.FechaRecepcion;
+                    recepcionActivoFijoDetalleActualizar.RecepcionActivoFijo.Cantidad = recepcionActivoFijoDetalle.RecepcionActivoFijo.Cantidad;
+                    recepcionActivoFijoDetalleActualizar.RecepcionActivoFijo.ValidacionTecnica = recepcionActivoFijoDetalle.RecepcionActivoFijo.ValidacionTecnica;
+                    recepcionActivoFijoDetalleActualizar.RecepcionActivoFijo.Fondo = recepcionActivoFijoDetalle.RecepcionActivoFijo.Fondo;
+                    recepcionActivoFijoDetalleActualizar.RecepcionActivoFijo.OrdenCompra = recepcionActivoFijoDetalle.RecepcionActivoFijo.OrdenCompra;
+                    recepcionActivoFijoDetalleActualizar.RecepcionActivoFijo.IdLibroActivoFijo = recepcionActivoFijoDetalle.RecepcionActivoFijo.IdLibroActivoFijo;
+                    recepcionActivoFijoDetalleActualizar.RecepcionActivoFijo.IdEmpleado = recepcionActivoFijoDetalle.RecepcionActivoFijo.IdEmpleado;
+                    recepcionActivoFijoDetalleActualizar.RecepcionActivoFijo.IdSubClaseActivoFijo = recepcionActivoFijoDetalle.RecepcionActivoFijo.IdSubClaseActivoFijo;
+                    recepcionActivoFijoDetalleActualizar.RecepcionActivoFijo.IdMotivoRecepcion = recepcionActivoFijoDetalle.RecepcionActivoFijo.IdMotivoRecepcion;
+                    recepcionActivoFijoDetalleActualizar.RecepcionActivoFijo.IdProveedor = recepcionActivoFijoDetalle.RecepcionActivoFijo.IdProveedor;
+                    recepcionActivoFijoDetalleActualizar.ActivoFijo.Nombre = recepcionActivoFijoDetalle.ActivoFijo.Nombre;
+                    recepcionActivoFijoDetalleActualizar.ActivoFijo.Serie = recepcionActivoFijoDetalle.ActivoFijo.Serie;
+                    recepcionActivoFijoDetalleActualizar.ActivoFijo.ValorCompra = recepcionActivoFijoDetalle.ActivoFijo.ValorCompra;
+                    recepcionActivoFijoDetalleActualizar.ActivoFijo.Ubicacion = recepcionActivoFijoDetalle.ActivoFijo.Ubicacion;
+                    recepcionActivoFijoDetalleActualizar.ActivoFijo.IdSubClaseActivoFijo = recepcionActivoFijoDetalle.ActivoFijo.IdSubClaseActivoFijo;
+                    recepcionActivoFijoDetalleActualizar.ActivoFijo.IdLibroActivoFijo = recepcionActivoFijoDetalle.ActivoFijo.IdLibroActivoFijo;
+                    recepcionActivoFijoDetalleActualizar.ActivoFijo.IdCiudad = recepcionActivoFijoDetalle.ActivoFijo.IdCiudad;
+                    recepcionActivoFijoDetalleActualizar.ActivoFijo.IdUnidadMedida = recepcionActivoFijoDetalle.ActivoFijo.IdUnidadMedida;
+                    recepcionActivoFijoDetalleActualizar.ActivoFijo.IdCodigoActivoFijo = recepcionActivoFijoDetalle.ActivoFijo.IdCodigoActivoFijo;
+                    recepcionActivoFijoDetalleActualizar.ActivoFijo.IdModelo = recepcionActivoFijoDetalle.ActivoFijo.IdModelo;
+                    recepcionActivoFijoDetalleActualizar.ActivoFijo.CodigoActivoFijo.CodigoBarras = recepcionActivoFijoDetalle.ActivoFijo.CodigoActivoFijo.CodigoBarras;
+                    recepcionActivoFijoDetalleActualizar.ActivoFijo.CodigoActivoFijo.Codigosecuencial = recepcionActivoFijoDetalle.ActivoFijo.CodigoActivoFijo.Codigosecuencial;
+                    recepcionActivoFijoDetalleActualizar.IdEstado = recepcionActivoFijoDetalle.IdEstado;
+
+                    db.RecepcionActivoFijoDetalle.Update(recepcionActivoFijoDetalleActualizar);
+                    await db.SaveChangesAsync();
+
+                    return new Response
+                    {
+                        IsSuccess = true,
+                        Message = Mensaje.Satisfactorio
+                    };
+                }
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.Error
+                };
+            }
+            catch (Exception)
+            {
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.Excepcion
                 };
             }
         }
