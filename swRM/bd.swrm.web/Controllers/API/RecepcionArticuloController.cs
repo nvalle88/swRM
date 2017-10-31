@@ -41,6 +41,7 @@ namespace bd.swrm.web.Controllers.API
                               join modelo in db.Modelo on articulo.IdModelo equals modelo.IdModelo
                               join subClaseArticulo in db.SubClaseArticulo on articulo.IdSubClaseArticulo equals subClaseArticulo.IdSubClaseArticulo
                               join claseArticulo in db.ClaseArticulo on subClaseArticulo.IdClaseArticulo equals claseArticulo.IdClaseArticulo
+                              join tipoArticulo in db.TipoArticulo on claseArticulo.IdTipoArticulo equals tipoArticulo.IdTipoArticulo
                               join proveedor in db.Proveedor on recA.IdProveedor equals proveedor.IdProveedor
                               join empleado in db.Empleado on recA.IdEmpleado equals empleado.IdEmpleado
                               join persona in db.Persona on empleado.IdPersona equals persona.IdPersona
@@ -62,7 +63,11 @@ namespace bd.swrm.web.Controllers.API
                                           ClaseArticulo = new ClaseArticulo
                                           {
                                               IdClaseArticulo = subClaseArticulo.IdClaseArticulo,
-                                              Nombre = claseArticulo.Nombre
+                                              Nombre = claseArticulo.Nombre,
+                                              TipoArticulo = new TipoArticulo {
+                                                  IdTipoArticulo = tipoArticulo.IdTipoArticulo,
+                                                  Nombre = tipoArticulo.Nombre
+                                              }
                                           }
                                       },
                                       Modelo = new Modelo
@@ -132,10 +137,10 @@ namespace bd.swrm.web.Controllers.API
                 var recepcionArticulo = await db.RecepcionArticulos
                     .Include(c => c.Proveedor)
                     .Include(c => c.MaestroArticuloSucursal)
-                    .Include(c => c.Articulo).ThenInclude(c => c.SubClaseArticulo).ThenInclude(c => c.ClaseArticulo)
+                    .Include(c => c.Articulo).ThenInclude(c => c.SubClaseArticulo).ThenInclude(c => c.ClaseArticulo).ThenInclude(c=> c.TipoArticulo)
                     .Include(c => c.Empleado).ThenInclude(c => c.Persona)
                     .Include(c => c.Articulo).ThenInclude(c => c.DetalleFactura)
-                    
+                    .Include(c=> c.MaestroArticuloSucursal.Sucursal).ThenInclude(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais)
                     .Where(c => c.IdRecepcionArticulos == id).SingleOrDefaultAsync();
 
                 if (recepcionArticulo == null)
