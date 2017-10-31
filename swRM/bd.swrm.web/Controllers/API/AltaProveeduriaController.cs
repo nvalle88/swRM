@@ -17,86 +17,24 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/RecepcionArticulo")]
-    public class RecepcionArticuloController : Controller
+    [Route("api/AltaProveeduria")]
+    public class AltaProveeduriaController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public RecepcionArticuloController(SwRMDbContext db)
+        public AltaProveeduriaController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/ListarRecepcionArticulos
+        // GET: api/ListarPaises
         [HttpGet]
-        [Route("ListarRecepcionArticulos")]
-        public async Task<List<RecepcionArticulos>> GetRecepcionArticulo()
+        [Route("ListarAltasProveeduria")]
+        public async Task<List<AltaProveeduria>> GetAltasProveeduria()
         {
             try
             {
-                //return await db.RecepcionArticulos.Include(c => c.Articulo).ThenInclude(c =>c.Modelo).ToListAsync();
-
-                return await (from recA in db.RecepcionArticulos
-                              join articulo in db.Articulo on recA.IdArticulo equals articulo.IdArticulo
-                              join modelo in db.Modelo on articulo.IdModelo equals modelo.IdModelo
-                              join subClaseArticulo in db.SubClaseArticulo on articulo.IdSubClaseArticulo equals subClaseArticulo.IdSubClaseArticulo
-                              join claseArticulo in db.ClaseArticulo on subClaseArticulo.IdClaseArticulo equals claseArticulo.IdClaseArticulo
-                              join proveedor in db.Proveedor on recA.IdProveedor equals proveedor.IdProveedor
-                              join empleado in db.Empleado on recA.IdEmpleado equals empleado.IdEmpleado
-                              join persona in db.Persona on empleado.IdPersona equals persona.IdPersona
-
-                              select new RecepcionArticulos
-                              {
-                                  Articulo = new Articulo
-                                  {
-                                      Nombre = articulo.Nombre,
-                                      IdArticulo = articulo.IdArticulo,
-                                      IdModelo = articulo.IdModelo,
-                                      IdSubClaseArticulo = articulo.IdSubClaseArticulo,
-                                      IdUnidadMedida = articulo.IdUnidadMedida,
-                                      SubClaseArticulo = new SubClaseArticulo
-                                      {
-                                          IdSubClaseArticulo = articulo.IdSubClaseArticulo,
-                                          Nombre = subClaseArticulo.Nombre,
-                                          IdClaseArticulo = subClaseArticulo.IdClaseArticulo,
-                                          ClaseArticulo = new ClaseArticulo
-                                          {
-                                              IdClaseArticulo = subClaseArticulo.IdClaseArticulo,
-                                              Nombre = claseArticulo.Nombre
-                                          }
-                                      },
-                                      Modelo = new Modelo
-                                      {
-                                          IdModelo = articulo.IdModelo != null ? (int)articulo.IdModelo : -1 ,
-                                          Nombre = modelo.Nombre
-                                      }
-                                  },
-                                  Cantidad = recA.Cantidad,
-                                  Fecha = recA.Fecha,
-                                  IdArticulo = recA.IdArticulo,
-                                  IdEmpleado = recA.IdEmpleado,
-                                  IdMaestroArticuloSucursal = recA.IdMaestroArticuloSucursal,
-                                  IdProveedor = recA.IdProveedor,
-                                  IdRecepcionArticulos = recA.IdRecepcionArticulos,
-                                  Empleado = new Empleado
-                                  {
-                                      IdEmpleado = recA.IdEmpleado,
-                                      IdPersona = empleado.IdPersona,
-                                      Persona = new Persona
-                                      {
-                                          IdPersona = empleado.IdPersona,
-                                          Nombres = persona.Nombres,
-                                          Apellidos = persona.Apellidos
-                                      }
-                                  },
-                                  Proveedor = new Proveedor
-                                  {
-                                      IdProveedor = recA.IdProveedor,
-                                      Nombre = proveedor.Nombre,
-                                      Apellidos = proveedor.Apellidos
-                                  }
-                              }
-                              ).ToListAsync();
+                return await db.AltaProveeduria.OrderBy(x => x.FechaAlta).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -110,13 +48,13 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<RecepcionArticulos>();
+                return new List<AltaProveeduria>();
             }
         }
 
-        // GET: api/RecepcionArticulo/5
+        // GET: api/AltaProveeduria/5
         [HttpGet("{id}")]
-        public async Task<Response> GetRecepcionArticulo([FromRoute] int id)
+        public async Task<Response> GetAltaProveeduria([FromRoute] int id)
         {
             try
             {
@@ -129,16 +67,9 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var recepcionArticulo = await db.RecepcionArticulos
-                    .Include(c => c.Proveedor)
-                    .Include(c => c.MaestroArticuloSucursal)
-                    .Include(c => c.Articulo).ThenInclude(c => c.SubClaseArticulo).ThenInclude(c => c.ClaseArticulo)
-                    .Include(c => c.Empleado).ThenInclude(c => c.Persona)
-                    .Include(c => c.Articulo).ThenInclude(c => c.DetalleFactura)
-                    
-                    .Where(c => c.IdRecepcionArticulos == id).SingleOrDefaultAsync();
+                var AltaProveeduria = await db.AltaProveeduria.SingleOrDefaultAsync(m => m.IdArticulo == id);
 
-                if (recepcionArticulo == null)
+                if (AltaProveeduria == null)
                 {
                     return new Response
                     {
@@ -151,7 +82,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = recepcionArticulo,
+                    Resultado = AltaProveeduria,
                 };
             }
             catch (Exception ex)
@@ -172,11 +103,11 @@ namespace bd.swrm.web.Controllers.API
                     Message = Mensaje.Error,
                 };
             }
-        }
+        }        
 
-        // PUT: api/RecepcionArticulo/5
+        // PUT: api/AltaProveeduria/5
         [HttpPut("{id}")]
-        public async Task<Response> PutRecepcionArticulo([FromRoute] int id, [FromBody] RecepcionArticulos recepcionArticulo)
+        public async Task<Response> PutAltaProveeduria([FromRoute] int id, [FromBody] AltaProveeduria AltaProveeduria)
         {
             try
             {
@@ -189,18 +120,16 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var recepcionArticuloActualizar = await db.RecepcionArticulos.Where(x => x.IdRecepcionArticulos == id).FirstOrDefaultAsync();
-                if (recepcionArticuloActualizar != null)
+                var AltaProveeduriaActualizar = await db.AltaProveeduria.Where(x => x.IdArticulo == id).FirstOrDefaultAsync();
+                if (AltaProveeduriaActualizar != null)
                 {
                     try
                     {
-                        recepcionArticuloActualizar.Fecha = recepcionArticulo.Fecha;
-                        recepcionArticuloActualizar.Cantidad = recepcionArticulo.Cantidad;
-                        recepcionArticuloActualizar.IdEmpleado = recepcionArticulo.IdEmpleado;
-                        recepcionArticuloActualizar.IdArticulo = recepcionArticulo.IdArticulo;
-                        recepcionArticuloActualizar.IdMaestroArticuloSucursal = recepcionArticulo.IdMaestroArticuloSucursal;
-                        recepcionArticuloActualizar.IdProveedor = recepcionArticulo.IdProveedor;
-                        db.RecepcionArticulos.Update(recepcionArticuloActualizar);
+                        AltaProveeduriaActualizar.Acreditacion = AltaProveeduria.Acreditacion;
+                        AltaProveeduriaActualizar.FechaAlta = AltaProveeduria.FechaAlta;
+                        AltaProveeduriaActualizar.IdProveedor = AltaProveeduria.IdProveedor;
+
+                        db.AltaProveeduria.Update(AltaProveeduriaActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
@@ -229,10 +158,7 @@ namespace bd.swrm.web.Controllers.API
                         };
                     }
                 }
-
-
-
-
+                
                 return new Response
                 {
                     IsSuccess = false,
@@ -249,10 +175,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // POST: api/RecepcionArticulo
+        // POST: api/AltaProveeduria
         [HttpPost]
-        [Route("InsertarRecepcionArticulo")]
-        public async Task<Response> PostRecepcionArticulo([FromBody] RecepcionArticulos recepcionArticulo)
+        [Route("InsertarAltaProveeduria")]
+        public async Task<Response> PostAltaProveeduria([FromBody] AltaProveeduria AltaProveeduria)
         {
             try
             {
@@ -265,15 +191,24 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                db.Entry(recepcionArticulo.Articulo).State = EntityState.Unchanged;
-                db.Entry(recepcionArticulo.MaestroArticuloSucursal).State = EntityState.Unchanged;
-                db.Entry(recepcionArticulo).State = EntityState.Added;
-                await db.SaveChangesAsync();
+                var respuesta = Existe(AltaProveeduria);
+                if (!respuesta.IsSuccess)
+                {
+                    db.AltaProveeduria.Add(AltaProveeduria);
+                    await db.SaveChangesAsync();
+                    return new Response
+                    {
+                        IsSuccess = true,
+                        Message = Mensaje.Satisfactorio
+                    };
+                }
+
                 return new Response
                 {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio
+                    IsSuccess = false,
+                    Message = Mensaje.ExisteRegistro
                 };
+
             }
             catch (Exception ex)
             {
@@ -295,9 +230,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // DELETE: api/RecepcionArticulo/5
+        // DELETE: api/AltaProveeduria/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteRecepcionArticulo([FromRoute] int id)
+        public async Task<Response> DeleteAltaProveeduria([FromRoute] int id)
         {
             try
             {
@@ -310,7 +245,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.RecepcionArticulos.SingleOrDefaultAsync(m => m.IdRecepcionArticulos == id);
+                var respuesta = await db.AltaProveeduria.SingleOrDefaultAsync(m => m.IdArticulo == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -319,7 +254,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.RecepcionArticulos.Remove(respuesta);
+                db.AltaProveeduria.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -346,6 +281,28 @@ namespace bd.swrm.web.Controllers.API
                     Message = Mensaje.Error,
                 };
             }
+        }
+
+        public Response Existe(AltaProveeduria AltaProveeduria)
+        {
+            var bdd = AltaProveeduria.IdArticulo;
+            var AltaProveeduriaRespuesta = db.AltaProveeduria.Where(p => p.IdArticulo == AltaProveeduria.IdArticulo && p.FechaAlta == AltaProveeduria.FechaAlta).FirstOrDefault();
+            if (AltaProveeduriaRespuesta != null)
+            {
+                return new Response
+                {
+                    IsSuccess = true,
+                    Message = Mensaje.ExisteRegistro,
+                    Resultado = null,
+                };
+
+            }
+
+            return new Response
+            {
+                IsSuccess = false,
+                Resultado = AltaProveeduriaRespuesta,
+            };
         }
     }
 }

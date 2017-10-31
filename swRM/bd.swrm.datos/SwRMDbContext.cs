@@ -73,6 +73,8 @@ namespace bd.swrm.datos
         public virtual DbSet<TipoSangre> TipoSangre { get; set; }
         public virtual DbSet<Canditato> Canditato { get; set; }
         public virtual DbSet<Dependencia> Dependencia { get; set; }
+        public virtual DbSet<AltaProveeduria> AltaProveeduria { get; set; }
+        public virtual DbSet<FacturasPorAltaProveeduria> FacturasPorAltaProveeduria { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -1122,8 +1124,7 @@ namespace bd.swrm.datos
                 entity.HasOne(a => a.ActivoFijo)
                     .WithOne(b => b.ActivosFijosAlta)
                     .HasForeignKey<ActivosFijosAlta>(b => b.IdActivoFijo);
-                
-             });
+            });
 
 
             modelBuilder.Entity<ActivosFijosAdicionados>(entity =>
@@ -1253,7 +1254,47 @@ namespace bd.swrm.datos
                     .HasColumnName("Motivo_Transferencia")
                     .HasColumnType("varchar(150)");
             });
-            
+
+            modelBuilder.Entity<AltaProveeduria>(entity =>
+            {
+                entity.HasKey(e => e.IdAlta)
+                    .HasName("PK_AltaProveeduria_1");
+
+                entity.Property(e => e.IdAlta).HasColumnName("idAlta");
+
+                entity.Property(e => e.Acreditacion).HasColumnName("acreditacion");
+
+                entity.Property(e => e.FechaAlta)
+                    .HasColumnName("fechaAlta")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.IdArticulo).HasColumnName("idArticulo");
+
+                entity.Property(e => e.IdProveedor).HasColumnName("idProveedor");
+
+                entity.HasOne(d => d.IdArticuloNavigation)
+                    .WithMany(p => p.AltaProveeduria)
+                    .HasForeignKey(d => d.IdArticulo)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<FacturasPorAltaProveeduria>(entity =>
+            {
+                entity.HasKey(e => e.IdFacturasPorAlta)
+                    .HasName("PK_FacturasPorAltaProveeduria");
+
+                entity.Property(e => e.IdFacturasPorAlta).HasColumnName("idFacturasPorAlta");
+
+                entity.Property(e => e.IdAlta).HasColumnName("idAlta");
+
+                entity.Property(e => e.NumeroFactura).HasMaxLength(30);
+
+                entity.HasOne(d => d.IdAltaNavigation)
+                    .WithMany(p => p.FacturasPorAltaProveeduria)
+                    .HasForeignKey(d => d.IdAlta)
+                    .HasConstraintName("FK_FacturasPorAltaProveeduria_AltaProveeduria");
+            });
+
 
             foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             {
