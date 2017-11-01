@@ -6,35 +6,35 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using bd.swrm.datos;
 using bd.swrm.entidades.Negocio;
-using Microsoft.EntityFrameworkCore;
 using bd.log.guardar.Servicios;
+using bd.log.guardar.Enumeradores;
+using Microsoft.EntityFrameworkCore;
 using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
-using bd.swrm.entidades.Utils;
-using bd.log.guardar.Enumeradores;
 using bd.log.guardar.Utiles;
+using bd.swrm.entidades.Utils;
 
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/FacturaPorAltaProveeduria")]
-    public class FacturaPorAltaProveeduriaController : Controller
+    [Route("api/BajaProveeduria")]
+    public class BajaProveeduriaController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public FacturaPorAltaProveeduriaController(SwRMDbContext db)
+        public BajaProveeduriaController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/Factura
+        // GET: api/ListarPaises
         [HttpGet]
-        [Route("ListarFacturasPorAltaProveeduria")]
-        public async Task<List<FacturasPorAltaProveeduria>> GetFacturasPorAltaProveeduria()
+        [Route("ListarBajasProveeduria")]
+        public async Task<List<BajaProveeduria>> GetBajasProveeduria()
         {
             try
             {
-                return await db.FacturasPorAltaProveeduria.OrderBy(x => x.NumeroFactura).ToListAsync();
+                return await db.BajaProveeduria.OrderBy(x => x.FechaBaja).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,13 +48,13 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<FacturasPorAltaProveeduria>();
+                return new List<BajaProveeduria>();
             }
         }
 
-        // GET: api/FacturasPorAltaProveeduria/5
+        // GET: api/BajaProveeduria/5
         [HttpGet("{id}")]
-        public async Task<Response> GetFacturasPorAltaProveeduria([FromRoute]string id)
+        public async Task<Response> GetBajaProveeduria([FromRoute] int id)
         {
             try
             {
@@ -67,9 +67,9 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var _factura = await db.FacturasPorAltaProveeduria.SingleOrDefaultAsync(m => m.NumeroFactura == id);
+                var BajaProveeduria = await db.BajaProveeduria.SingleOrDefaultAsync(m => m.IdBaja == id);
 
-                if (_factura == null)
+                if (BajaProveeduria == null)
                 {
                     return new Response
                     {
@@ -82,7 +82,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = _factura,
+                    Resultado = BajaProveeduria,
                 };
             }
             catch (Exception ex)
@@ -103,66 +103,11 @@ namespace bd.swrm.web.Controllers.API
                     Message = Mensaje.Error,
                 };
             }
-        }
+        }        
 
-        // POST: api/FacturasPorAltaProveeduria
-        [HttpPost]
-        [Route("InsertarFacturasPorAltaProveeduria")]
-        public async Task<Response> PostFacturasPorAltaProveeduria([FromBody]FacturasPorAltaProveeduria _FacturasPorAltaProveeduria)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido
-                    };
-                }
-
-                var respuesta = Existe(_FacturasPorAltaProveeduria);
-                if (!respuesta.IsSuccess)
-                {
-                    db.FacturasPorAltaProveeduria.Add(_FacturasPorAltaProveeduria);
-                    await db.SaveChangesAsync();
-                    return new Response
-                    {
-                        IsSuccess = true,
-                        Message = Mensaje.Satisfactorio
-                    };
-                }
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
-
-            }
-            catch (Exception ex)
-            {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
-            }
-        }
-
-        // PUT: api/FacturasPorAltaProveeduria/5
+        // PUT: api/BajaProveeduria/5
         [HttpPut("{id}")]
-        public async Task<Response> PutFacturasPorAltaProveeduria([FromRoute] int id, [FromBody]FacturasPorAltaProveeduria _FacturasPorAltaProveeduria)
+        public async Task<Response> PutBajaProveeduria([FromRoute] int id, [FromBody] BajaProveeduria BajaProveeduria)
         {
             try
             {
@@ -171,25 +116,25 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido
+                        Message = Mensaje.ModeloInvalido,
                     };
                 }
 
-                var _FacturasPorAltaProveeduriaActualizar = await db.FacturasPorAltaProveeduria.Where(x => x.IdFacturasPorAlta == id).FirstOrDefaultAsync();
-                if (_FacturasPorAltaProveeduriaActualizar != null)
+                var BajaProveeduriaActualizar = await db.BajaProveeduria.Where(x => x.IdArticulo == id).FirstOrDefaultAsync();
+                if (BajaProveeduriaActualizar != null)
                 {
                     try
                     {
-                        _FacturasPorAltaProveeduriaActualizar.NumeroFactura = _FacturasPorAltaProveeduria.NumeroFactura;
-                        _FacturasPorAltaProveeduriaActualizar.IdAlta = _FacturasPorAltaProveeduria.IdAlta;
-                        
-                        db.FacturasPorAltaProveeduria.Update(_FacturasPorAltaProveeduriaActualizar);
+                        BajaProveeduriaActualizar.FechaBaja = BajaProveeduria.FechaBaja;
+                        BajaProveeduriaActualizar.IdProveedor = BajaProveeduria.IdProveedor;
+
+                        db.BajaProveeduria.Update(BajaProveeduriaActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
                         {
                             IsSuccess = true,
-                            Message = Mensaje.Satisfactorio,
+                            Message = Mensaje.ModeloInvalido,
                         };
 
                     }
@@ -212,7 +157,7 @@ namespace bd.swrm.web.Controllers.API
                         };
                     }
                 }
-
+                
                 return new Response
                 {
                     IsSuccess = false,
@@ -229,9 +174,65 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // DELETE: api/ApiWithActions/5
+        // POST: api/BajaProveeduria
+        [HttpPost]
+        [Route("InsertarBajaProveeduria")]
+        public async Task<Response> PostBajaProveeduria([FromBody] BajaProveeduria BajaProveeduria)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = Mensaje.ModeloInvalido
+                    };
+                }
+
+                var respuesta = Existe(BajaProveeduria);
+                if (!respuesta.IsSuccess)
+                {
+                    db.BajaProveeduria.Add(BajaProveeduria);
+                    await db.SaveChangesAsync();
+                    return new Response
+                    {
+                        IsSuccess = true,
+                        Message = Mensaje.Satisfactorio,
+                        Resultado = BajaProveeduria
+                    };
+                }
+
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.ExisteRegistro
+                };
+
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = Mensaje.Excepcion,
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new Response
+                {
+                    IsSuccess = false,
+                    Message = Mensaje.Error,
+                };
+            }
+        }
+
+        // DELETE: api/BajaProveeduria/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteFacturasPorAltaProveeduria([FromRoute] int id)
+        public async Task<Response> DeleteBajaProveeduria([FromRoute] int id)
         {
             try
             {
@@ -244,7 +245,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.FacturasPorAltaProveeduria.SingleOrDefaultAsync(m => m.IdFacturasPorAlta == id);
+                var respuesta = await db.BajaProveeduria.SingleOrDefaultAsync(m => m.IdArticulo == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -253,7 +254,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.FacturasPorAltaProveeduria.Remove(respuesta);
+                db.BajaProveeduria.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -282,17 +283,12 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        private bool FacturasPorAltaProveeduriaExists(int id)
+        public Response Existe(BajaProveeduria BajaProveeduria)
         {
-            return db.FacturasPorAltaProveeduria.Any(e => e.IdFacturasPorAlta == id);
-        }
-
-        public Response Existe(FacturasPorAltaProveeduria _FacturasPorAltaProveeduria)
-        {
-            var bdd = _FacturasPorAltaProveeduria.NumeroFactura;
-            var loglevelrespuesta = db.FacturasPorAltaProveeduria.Where(p => p.NumeroFactura == bdd).FirstOrDefault();
-
-            if (loglevelrespuesta != null)
+            var bdd = BajaProveeduria.IdArticulo;
+            var bdd_fecha = BajaProveeduria.FechaBaja;
+            var BajaProveeduriaRespuesta = db.BajaProveeduria.Where(p => p.IdArticulo == bdd && p.FechaBaja == bdd_fecha).FirstOrDefault();
+            if (BajaProveeduriaRespuesta != null)
             {
                 return new Response
                 {
@@ -300,12 +296,13 @@ namespace bd.swrm.web.Controllers.API
                     Message = Mensaje.ExisteRegistro,
                     Resultado = null,
                 };
+
             }
 
             return new Response
             {
                 IsSuccess = false,
-                Resultado = loglevelrespuesta,
+                Resultado = BajaProveeduriaRespuesta,
             };
         }
     }

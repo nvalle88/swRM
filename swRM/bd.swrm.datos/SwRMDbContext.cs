@@ -74,6 +74,8 @@ namespace bd.swrm.datos
         public virtual DbSet<Canditato> Canditato { get; set; }
         public virtual DbSet<Dependencia> Dependencia { get; set; }
         public virtual DbSet<AltaProveeduria> AltaProveeduria { get; set; }
+
+        public virtual DbSet<BajaProveeduria> BajaProveeduria { get; set; }
         public virtual DbSet<FacturasPorAltaProveeduria> FacturasPorAltaProveeduria { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -1276,6 +1278,28 @@ namespace bd.swrm.datos
                     .WithMany(p => p.AltaProveeduria)
                     .HasForeignKey(d => d.IdArticulo)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<BajaProveeduria>(entity =>
+            {
+                entity.HasKey(e => e.IdBaja)
+                    .HasName("PK_BajaProveeduria");
+
+                entity.Property(e => e.IdBaja).HasColumnName("idBaja");
+
+                entity.Property(e => e.FechaBaja)
+                    .HasColumnName("fechaBaja")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.IdArticulo).HasColumnName("idArticulo");
+
+                entity.Property(e => e.IdProveedor).HasColumnName("idProveedor");
+
+                entity.HasOne(d => d.IdArticuloNavigation)
+                    .WithMany(p => p.BajaProveeduria)
+                    .HasForeignKey(d => d.IdArticulo)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_BajaProveeduria_Articulo");
             });
 
             modelBuilder.Entity<FacturasPorAltaProveeduria>(entity =>

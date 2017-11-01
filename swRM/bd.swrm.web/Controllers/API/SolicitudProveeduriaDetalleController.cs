@@ -17,24 +17,71 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/AltaProveeduria")]
-    public class AltaProveeduriaController : Controller
+    [Route("api/SolicitudDetalleProveeduria")]
+    public class SolicitudProveeduriaDetalleController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public AltaProveeduriaController(SwRMDbContext db)
+        public SolicitudProveeduriaDetalleController(SwRMDbContext db)
         {
             this.db = db;
         }
 
-        // GET: api/ListarPaises
+        // GET: api/ListarSolicitudProveeduriasDetalle
         [HttpGet]
-        [Route("ListarAltasProveeduria")]
-        public async Task<List<AltaProveeduria>> GetAltasProveeduria()
+        [Route("ListarSolicitudProveeduriasDetalle")]
+        public async Task<List<SolicitudProveduriaDetalle>> GetSolicitudProveeduria()
         {
             try
             {
-                return await db.AltaProveeduria.OrderBy(x => x.FechaAlta).ToListAsync();
+                //return await db.SolicitudProveduriaDetalle.OrderBy(x => x.IdSolicitudProveduriaDetalle).Include(c=> c).ToListAsync();
+
+                return await (from solProv in db.SolicitudProveduria
+                              join solProvDet in db.SolicitudProveduriaDetalle on solProv.IdSolicitudProveduria equals solProvDet.IdSolicitudProveduria
+                              join empl in db.Empleado on solProv.IdEmpleado equals empl.IdEmpleado
+                              join pers in db.Persona on empl.IdPersona equals pers.IdPersona
+                              join art in db.Articulo on solProvDet.IdArticulo equals art.IdArticulo
+                              join est in db.Estado on solProvDet.IdEstado equals est.IdEstado
+
+                              select new SolicitudProveduriaDetalle
+                              {
+                                  CantidadAprobada = solProvDet.CantidadAprobada,
+                                  CantidadSolicitada = solProvDet.CantidadSolicitada,
+                                  FechaAprobada = solProvDet.FechaAprobada,
+                                  FechaSolicitud = solProvDet.FechaSolicitud,
+                                  IdMaestroArticuloSucursal = solProvDet.IdMaestroArticuloSucursal,
+                                  IdSolicitudProveduria = solProv.IdSolicitudProveduria,
+                                  IdArticulo = art.IdArticulo,
+                                  IdEstado = est.IdEstado,
+                                  IdSolicitudProveduriaDetalle = solProvDet.IdSolicitudProveduriaDetalle,
+                                  Articulo = new Articulo
+                                  {
+                                      IdArticulo = solProvDet.IdArticulo,
+                                      Nombre = art.Nombre
+                                  },
+                                  Estado = new Estado
+                                  {
+                                      IdEstado = solProvDet.IdEstado,
+                                      Nombre = est.Nombre
+                                  },
+                                  SolicitudProveduria = new SolicitudProveduria
+                                  {
+                                      IdSolicitudProveduria = solProv.IdSolicitudProveduria,
+                                      IdEmpleado = empl.IdEmpleado,
+                                      Empleado = new Empleado
+                                      {
+                                          IdEmpleado = solProv.IdEmpleado,
+                                          IdPersona = empl.IdPersona,
+                                          Persona = new Persona
+                                          {
+                                              IdPersona = empl.IdPersona,
+                                              Nombres = pers.Nombres,
+                                              Apellidos = pers.Apellidos
+                                          }
+                                      }
+                                  }
+                              }
+                    ).Where(c => c.Estado.Nombre == "Solicitado").ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,13 +95,13 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<AltaProveeduria>();
+                return new List<SolicitudProveduriaDetalle>();
             }
         }
 
-        // GET: api/AltaProveeduria/5
+        // GET: api/SolicitudProveeduriaDetalle/5
         [HttpGet("{id}")]
-        public async Task<Response> GetAltaProveeduria([FromRoute] int id)
+        public async Task<Response> GetSolicitudProveeduria([FromRoute] int id)
         {
             try
             {
@@ -67,9 +114,13 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var AltaProveeduria = await db.AltaProveeduria.SingleOrDefaultAsync(m => m.IdAlta == id);
-
-                if (AltaProveeduria == null)
+                var SolicitudProveeduriaDetalle = await db.SolicitudProveduriaDetalle //.SingleOrDefaultAsync(m => m.IdSolicitudProveduriaDetalle == id);
+                    .Include(c => c.Articulo)
+                    .Include(c => c.Estado)
+                    .Include(c => c.SolicitudProveduria).ThenInclude(c => c.Empleado).ThenInclude(c => c.Persona)
+                    .Where(c => c.IdSolicitudProveduriaDetalle == id).SingleOrDefaultAsync();
+                    
+                if (SolicitudProveeduriaDetalle == null)
                 {
                     return new Response
                     {
@@ -82,7 +133,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     IsSuccess = true,
                     Message = Mensaje.Satisfactorio,
-                    Resultado = AltaProveeduria,
+                    Resultado = SolicitudProveeduriaDetalle,
                 };
             }
             catch (Exception ex)
@@ -103,11 +154,11 @@ namespace bd.swrm.web.Controllers.API
                     Message = Mensaje.Error,
                 };
             }
-        }        
+        }
 
-        // PUT: api/AltaProveeduria/5
+        // PUT: api/SolicitudProveeduria/5
         [HttpPut("{id}")]
-        public async Task<Response> PutAltaProveeduria([FromRoute] int id, [FromBody] AltaProveeduria AltaProveeduria)
+        public async Task<Response> PutSolicitudProveeduriaDetalle([FromRoute] int id, [FromBody] SolicitudProveduriaDetalle SolicitudProveeduriaDetalle)
         {
             try
             {
@@ -120,22 +171,27 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var AltaProveeduriaActualizar = await db.AltaProveeduria.Where(x => x.IdArticulo == id).FirstOrDefaultAsync();
-                if (AltaProveeduriaActualizar != null)
+                var SolicitudProveeduriaDetalleActualizar = await db.SolicitudProveduriaDetalle.Where(x => x.IdSolicitudProveduriaDetalle == id).FirstOrDefaultAsync();
+                if (SolicitudProveeduriaDetalleActualizar != null)
                 {
                     try
                     {
-                        AltaProveeduriaActualizar.Acreditacion = AltaProveeduria.Acreditacion;
-                        AltaProveeduriaActualizar.FechaAlta = AltaProveeduria.FechaAlta;
-                        AltaProveeduriaActualizar.IdProveedor = AltaProveeduria.IdProveedor;
-
-                        db.AltaProveeduria.Update(AltaProveeduriaActualizar);
+                        SolicitudProveeduriaDetalleActualizar.IdSolicitudProveduriaDetalle = SolicitudProveeduriaDetalle.IdSolicitudProveduriaDetalle;
+                        SolicitudProveeduriaDetalleActualizar.IdMaestroArticuloSucursal = SolicitudProveeduriaDetalle.IdMaestroArticuloSucursal;
+                        SolicitudProveeduriaDetalleActualizar.IdArticulo = SolicitudProveeduriaDetalle.IdArticulo;
+                        SolicitudProveeduriaDetalleActualizar.IdSolicitudProveduria = SolicitudProveeduriaDetalle.IdSolicitudProveduria;
+                        SolicitudProveeduriaDetalleActualizar.CantidadAprobada = SolicitudProveeduriaDetalle.CantidadAprobada;
+                        SolicitudProveeduriaDetalleActualizar.CantidadSolicitada = SolicitudProveeduriaDetalle.CantidadSolicitada;
+                        SolicitudProveeduriaDetalleActualizar.FechaAprobada = SolicitudProveeduriaDetalle.FechaAprobada;
+                        SolicitudProveeduriaDetalleActualizar.FechaSolicitud = SolicitudProveeduriaDetalle.FechaSolicitud;
+                        SolicitudProveeduriaDetalleActualizar.IdEstado = SolicitudProveeduriaDetalle.IdEstado;
+                        db.SolicitudProveduriaDetalle.Update(SolicitudProveeduriaDetalleActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
                         {
                             IsSuccess = true,
-                            Message = Mensaje.ModeloInvalido,
+                            Message = Mensaje.Satisfactorio,
                         };
 
                     }
@@ -158,7 +214,10 @@ namespace bd.swrm.web.Controllers.API
                         };
                     }
                 }
-                
+
+
+
+
                 return new Response
                 {
                     IsSuccess = false,
@@ -175,10 +234,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // POST: api/AltaProveeduria
+        // POST: api/SolicitudProveeduria
         [HttpPost]
-        [Route("InsertarAltaProveeduria")]
-        public async Task<Response> PostAltaProveeduria([FromBody] AltaProveeduria AltaProveeduria)
+        [Route("InsertarSolicitudProveeduriaDetalle")]
+        public async Task<Response> PostSolicitudProveeduriaDetalle([FromBody] SolicitudProveduriaDetalle SolicitudProveeduriaDetalle)
         {
             try
             {
@@ -191,16 +250,16 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = Existe(AltaProveeduria);
+                var respuesta = Existe(SolicitudProveeduriaDetalle);
                 if (!respuesta.IsSuccess)
                 {
-                    db.AltaProveeduria.Add(AltaProveeduria);
+                    db.SolicitudProveduriaDetalle.Add(SolicitudProveeduriaDetalle);
                     await db.SaveChangesAsync();
                     return new Response
                     {
                         IsSuccess = true,
                         Message = Mensaje.Satisfactorio,
-                        Resultado = AltaProveeduria
+                        Resultado = SolicitudProveeduriaDetalle
                     };
                 }
 
@@ -231,9 +290,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        // DELETE: api/AltaProveeduria/5
+        // DELETE: api/SolicitudProveeduria/5
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteAltaProveeduria([FromRoute] int id)
+        public async Task<Response> DeleteSolicitudProveeduriaDetalle([FromRoute] int id)
         {
             try
             {
@@ -246,7 +305,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.AltaProveeduria.SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var respuesta = await db.SolicitudProveduriaDetalle.SingleOrDefaultAsync(m => m.IdSolicitudProveduriaDetalle == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -255,7 +314,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.AltaProveeduria.Remove(respuesta);
+                db.SolicitudProveduriaDetalle.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -284,12 +343,16 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(AltaProveeduria AltaProveeduria)
+        private bool SolicitudProveeduriaDetalleExists(int id)
         {
-            var bdd = AltaProveeduria.IdArticulo;
-            var bdd_fecha = AltaProveeduria.FechaAlta;
-            var AltaProveeduriaRespuesta = db.AltaProveeduria.Where(p => p.IdArticulo == bdd && p.FechaAlta == bdd_fecha).FirstOrDefault();
-            if (AltaProveeduriaRespuesta != null)
+            return db.SolicitudProveduriaDetalle.Any(e => e.IdSolicitudProveduriaDetalle == id);
+        }
+
+        public Response Existe(SolicitudProveduriaDetalle SolicitudProveeduriaDetalle)
+        {
+            var bdd = SolicitudProveeduriaDetalle.IdSolicitudProveduriaDetalle;
+            var loglevelrespuesta = db.SolicitudProveduriaDetalle.Where(p => p.IdSolicitudProveduriaDetalle == bdd).FirstOrDefault();
+            if (loglevelrespuesta != null)
             {
                 return new Response
                 {
@@ -303,7 +366,7 @@ namespace bd.swrm.web.Controllers.API
             return new Response
             {
                 IsSuccess = false,
-                Resultado = AltaProveeduriaRespuesta,
+                Resultado = loglevelrespuesta,
             };
         }
     }
