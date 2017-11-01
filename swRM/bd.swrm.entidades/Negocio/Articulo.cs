@@ -32,6 +32,8 @@ namespace bd.swrm.entidades.Negocio
 
         public virtual ICollection<AltaProveeduria> AltaProveeduria { get; set; }
 
+        public virtual ICollection<BajaProveeduria> BajaProveeduria { get; set; }
+
         public virtual ICollection<MaestroDetalleArticulo> MaestroDetalleArticulo { get; set; }
 
         public virtual ICollection<RecepcionArticulos> RecepcionArticulos { get; set; }

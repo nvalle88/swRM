@@ -39,7 +39,10 @@ namespace bd.swrm.entidades.Negocio
 
         //Propiedades Virtuales Referencias a otras clases
 
-     
+        [Display(Name = "Estado:")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        public int IdEstado { get; set; }
+        public virtual Estado Estado { get; set; }
 
         //Propiedades Virtuales Referencias a otras clases
 
@@ -54,10 +57,6 @@ namespace bd.swrm.entidades.Negocio
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int IdArticulo { get; set; }
         public virtual Articulo Articulo { get; set; }
-
-       
-
-
 
     }
 }
