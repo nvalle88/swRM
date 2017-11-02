@@ -26,9 +26,7 @@ namespace bd.swrm.entidades.Negocio
         [Display(Name = "¿Trabajó en la Superintendencia de InstitucionesFinancieras?")]
         public bool TrabajoSuperintendenciaBanco { get; set; }
 
-        [Required(ErrorMessage = "Debe introducir {0}")]
-        [Display(Name = "Nepotismo:")]
-        public bool Nepotismo { get; set; }
+        public bool FondosReservas { get; set; }
 
         [Required(ErrorMessage = "Debe introducir {0}")]
         [Display(Name = "¿Declaración jurada?")]
@@ -65,12 +63,10 @@ namespace bd.swrm.entidades.Negocio
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int IdProvinciaLugarSufragio { get; set; }
         public virtual Provincia ProvinciaSufragio { get; set; }
-        public virtual ICollection<TransferenciaActivoFijo> TransferenciaActivoFijo { get; set; }
 
         [Display(Name = "Dependencia:")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int IdDependencia { get; set; }
         public virtual Dependencia Dependencia { get; set; }
-
     }
 }
