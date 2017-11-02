@@ -144,12 +144,9 @@ namespace bd.swrm.web.Controllers.API
                     .Include(c => c.ActivoFijo)
                     .Include(c => c.Estado)
                     .Include(c => c.RecepcionActivoFijo.Proveedor.Factura)
-
-                    .Include(c => c.ActivoFijo.ActivosFijosAdicionados)
-
+                    //.Include(c => c.ActivoFijo.ActivosFijosAdicionados)
                     .Include(c => c.ActivoFijo).ThenInclude(c => c.ActivosFijosBaja)
                     .Include(c => c.ActivoFijo.MantenimientoActivoFijo)
-
                     .Where(c=> c.IdRecepcionActivoFijoDetalle == id).SingleOrDefaultAsync();
 
                 if (recepcionActivoFijoDetalle == null)
@@ -230,7 +227,7 @@ namespace bd.swrm.web.Controllers.API
                         return new Response
                         {
                             IsSuccess = true,
-                            Message = Mensaje.ModeloInvalido,
+                            Message = Mensaje.Satisfactorio
                         };
 
                     }
@@ -249,7 +246,7 @@ namespace bd.swrm.web.Controllers.API
                         return new Response
                         {
                             IsSuccess = false,
-                            Message = Mensaje.Error,
+                            Message = Mensaje.Error
                         };
                     }
                 }
@@ -371,7 +368,6 @@ namespace bd.swrm.web.Controllers.API
                     IsSuccess = false,
                     Message = Mensaje.ExisteRegistro
                 };
-
             }
             catch (Exception ex)
             {

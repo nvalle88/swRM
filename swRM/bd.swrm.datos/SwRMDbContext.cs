@@ -71,7 +71,6 @@ namespace bd.swrm.datos
         public virtual DbSet<Sexo> Sexo { get; set; }
         public virtual DbSet<TipoIdentificacion> TipoIdentificacion { get; set; }
         public virtual DbSet<TipoSangre> TipoSangre { get; set; }
-        public virtual DbSet<Canditato> Canditato { get; set; }
         public virtual DbSet<Dependencia> Dependencia { get; set; }
         public virtual DbSet<AltaProveeduria> AltaProveeduria { get; set; }
 
@@ -1007,9 +1006,6 @@ namespace bd.swrm.datos
                 entity.HasIndex(e => e.IdTipoSangre)
                     .HasName("IX_Persona_IdTipoSangre");
 
-                entity.HasIndex(e => e.IdCanditato)
-                    .HasName("IX_Persona_IdCanditato");
-
                 entity.Property(e => e.Apellidos)
                     .IsRequired()
                     .HasMaxLength(100);
@@ -1063,10 +1059,6 @@ namespace bd.swrm.datos
                 entity.HasOne(d => d.TipoSangre)
                     .WithMany(p => p.Persona)
                     .HasForeignKey(d => d.IdTipoSangre);
-
-                entity.HasOne(d => d.Canditato)
-                    .WithMany(p => p.Persona)
-                    .HasForeignKey(d => d.IdCanditato);
             });
 
             modelBuilder.Entity<Estado>(entity =>
@@ -1212,12 +1204,6 @@ namespace bd.swrm.datos
                 entity.Property(e => e.Nombre)
                     .IsRequired()
                     .HasMaxLength(20);
-            });
-
-            modelBuilder.Entity<Canditato>(entity =>
-            {
-                entity.HasKey(e => e.IdCanditato)
-                    .HasName("PK_Canditato");
             });
 
             modelBuilder.Entity<Dependencia>(entity =>

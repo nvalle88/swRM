@@ -7,9 +7,6 @@ namespace bd.swrm.entidades.Negocio
     {
         [Key]
         public int IdActivoFijo { get; set; }
-        public virtual ActivosFijosAlta ActivosFijosAlta { get; set; }
-
-        public virtual ActivosFijosBaja ActivosFijosBaja { get; set; }
 
         [Required(ErrorMessage = "Debe introducir {0}")]
         [Display(Name = "Activo fijo:")]
@@ -64,6 +61,10 @@ namespace bd.swrm.entidades.Negocio
         public int IdModelo { get; set; }
         public virtual Modelo Modelo { get; set; }
 
+        public virtual ActivosFijosAlta ActivosFijosAlta { get; set; }
+
+        public virtual ActivosFijosBaja ActivosFijosBaja { get; set; }
+
         public virtual ICollection<EmpleadoActivoFijo> EmpleadoActivoFijo { get; set; }
 
         public virtual ICollection<DepreciacionActivoFijo> DepreciacionActivoFijo { get; set; }
@@ -75,7 +76,5 @@ namespace bd.swrm.entidades.Negocio
         public virtual ICollection<TransferenciaActivoFijoDetalle> TransferenciaActivoFijoDetalle { get; set; }
 
         public virtual ICollection<ActivosFijosAdicionados> ActivosFijosAdicionados { get; set; }
-
-
     }
 }
