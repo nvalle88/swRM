@@ -58,8 +58,7 @@ namespace bd.swrm.entidades.Negocio
         [Display(Name = "Lugar de trabajo:")]
         [StringLength(500, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string LugarTrabajo { get; set; }
-
-        [Required(ErrorMessage = "Debe introducir {0}")]
+        
         [Display(Name = "Ocupación:")]
         [StringLength(100, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string Ocupacion { get; set; }
