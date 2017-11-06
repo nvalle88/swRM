@@ -30,11 +30,11 @@ namespace bd.swrm.web.Controllers.API
         // GET: api/ListarSolicitudProveedurias
         [HttpGet]
         [Route("ListarSolicitudProveedurias")]
-        public async Task<List<SolicitudProveduria>> GetSolicitudProveeduria()
+        public async Task<List<SolicitudProveeduria>> GetSolicitudProveeduria()
         {
             try
             {
-                return await db.SolicitudProveduria.OrderBy(x => x.IdSolicitudProveduria).Include(c=> c.IdEmpleado).ToListAsync();
+                return await db.SolicitudProveeduria.OrderBy(x => x.IdSolicitudProveeduria).Include(c=> c.IdEmpleado).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,7 +48,7 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<SolicitudProveduria>();
+                return new List<SolicitudProveeduria>();
             }
         }
 
@@ -67,7 +67,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var SolicitudProveeduria = await db.SolicitudProveduria.SingleOrDefaultAsync(m => m.IdSolicitudProveduria == id);
+                var SolicitudProveeduria = await db.SolicitudProveeduria.SingleOrDefaultAsync(m => m.IdSolicitudProveeduria == id);
 
                 if (SolicitudProveeduria == null)
                 {
@@ -107,7 +107,7 @@ namespace bd.swrm.web.Controllers.API
 
         // PUT: api/SolicitudProveeduria/5
         [HttpPut("{id}")]
-        public async Task<Response> PutSolicitudProveeduria([FromRoute] int id, [FromBody] SolicitudProveduria SolicitudProveeduria)
+        public async Task<Response> PutSolicitudProveeduria([FromRoute] int id, [FromBody] SolicitudProveeduria SolicitudProveeduria)
         {
             try
             {
@@ -120,16 +120,16 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var SolicitudProveeduriaActualizar = await db.SolicitudProveduria.Where(x => x.IdSolicitudProveduria == id).FirstOrDefaultAsync();
+                var SolicitudProveeduriaActualizar = await db.SolicitudProveeduria.Where(x => x.IdSolicitudProveeduria == id).FirstOrDefaultAsync();
                 if (SolicitudProveeduriaActualizar != null)
                 {
                     try
                     {
-                        SolicitudProveeduriaActualizar.IdSolicitudProveduria = SolicitudProveeduria.IdSolicitudProveduria;
+                        SolicitudProveeduriaActualizar.IdSolicitudProveeduria = SolicitudProveeduria.IdSolicitudProveeduria;
                         SolicitudProveeduriaActualizar.IdEmpleado = SolicitudProveeduria.IdEmpleado;
-                        SolicitudProveeduriaActualizar.SolicitudProveduriaDetalle = SolicitudProveeduria.SolicitudProveduriaDetalle;
+                        SolicitudProveeduriaActualizar.SolicitudProveeduriaDetalle = SolicitudProveeduria.SolicitudProveeduriaDetalle;
                         SolicitudProveeduriaActualizar.Empleado = SolicitudProveeduria.Empleado;
-                        db.SolicitudProveduria.Update(SolicitudProveeduriaActualizar);
+                        db.SolicitudProveeduria.Update(SolicitudProveeduriaActualizar);
                         await db.SaveChangesAsync();
 
                         return new Response
@@ -181,7 +181,7 @@ namespace bd.swrm.web.Controllers.API
         // POST: api/SolicitudProveeduria
         [HttpPost]
         [Route("InsertarSolicitudProveeduria")]
-        public async Task<Response> PostSolicitudProveeduria([FromBody] SolicitudProveduria SolicitudProveeduria)
+        public async Task<Response> PostSolicitudProveeduria([FromBody] SolicitudProveeduria SolicitudProveeduria)
         {
             try
             {
@@ -197,7 +197,7 @@ namespace bd.swrm.web.Controllers.API
                 var respuesta = Existe(SolicitudProveeduria);
                 if (!respuesta.IsSuccess)
                 {
-                    db.SolicitudProveduria.Add(SolicitudProveeduria);
+                    db.SolicitudProveeduria.Add(SolicitudProveeduria);
                     await db.SaveChangesAsync();
                     return new Response
                     {
@@ -249,7 +249,7 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
-                var respuesta = await db.SolicitudProveduria.SingleOrDefaultAsync(m => m.IdSolicitudProveduria == id);
+                var respuesta = await db.SolicitudProveeduria.SingleOrDefaultAsync(m => m.IdSolicitudProveeduria == id);
                 if (respuesta == null)
                 {
                     return new Response
@@ -258,7 +258,7 @@ namespace bd.swrm.web.Controllers.API
                         Message = Mensaje.RegistroNoEncontrado,
                     };
                 }
-                db.SolicitudProveduria.Remove(respuesta);
+                db.SolicitudProveeduria.Remove(respuesta);
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -289,13 +289,13 @@ namespace bd.swrm.web.Controllers.API
 
         private bool SolicitudProveeduriaExists(int id)
         {
-            return db.SolicitudProveduria.Any(e => e.IdSolicitudProveduria == id);
+            return db.SolicitudProveeduria.Any(e => e.IdSolicitudProveeduria == id);
         }
 
-        public Response Existe(SolicitudProveduria SolicitudProveeduria)
+        public Response Existe(SolicitudProveeduria SolicitudProveeduria)
         {
-            var bdd = SolicitudProveeduria.IdSolicitudProveduria;
-            var loglevelrespuesta = db.SolicitudProveduria.Where(p => p.IdSolicitudProveduria == bdd).FirstOrDefault();
+            var bdd = SolicitudProveeduria.IdSolicitudProveeduria;
+            var loglevelrespuesta = db.SolicitudProveeduria.Where(p => p.IdSolicitudProveeduria == bdd).FirstOrDefault();
             if (loglevelrespuesta != null)
             {
                 return new Response

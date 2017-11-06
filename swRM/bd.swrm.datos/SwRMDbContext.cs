@@ -43,8 +43,8 @@ namespace bd.swrm.datos
         public virtual DbSet<RecepcionActivoFijo> RecepcionActivoFijo { get; set; }
         public virtual DbSet<RecepcionActivoFijoDetalle> RecepcionActivoFijoDetalle { get; set; }
         public virtual DbSet<RecepcionArticulos> RecepcionArticulos { get; set; }
-        public virtual DbSet<SolicitudProveduria> SolicitudProveduria { get; set; }
-        public virtual DbSet<SolicitudProveduriaDetalle> SolicitudProveduriaDetalle { get; set; }
+        public virtual DbSet<SolicitudProveeduria> SolicitudProveeduria { get; set; }
+        public virtual DbSet<SolicitudProveeduriaDetalle> SolicitudProveeduriaDetalle { get; set; }
         public virtual DbSet<SubClaseActivoFijo> SubClaseActivoFijo { get; set; }
         public virtual DbSet<SubClaseArticulo> SubClaseArticulo { get; set; }
         public virtual DbSet<Sucursal> Sucursal { get; set; }
@@ -772,46 +772,46 @@ namespace bd.swrm.datos
 
 
 
-            modelBuilder.Entity<SolicitudProveduria>(entity =>
+            modelBuilder.Entity<SolicitudProveeduria>(entity =>
             {
-                entity.HasKey(e => e.IdSolicitudProveduria)
-                    .HasName("PK_SolicitudProveduria");
+                entity.HasKey(e => e.IdSolicitudProveeduria)
+                    .HasName("PK_SolicitudProveeduria");
 
                 entity.HasIndex(e => e.IdEmpleado)
-                    .HasName("IX_SolicitudProveduria_IdEmpleado");
+                    .HasName("IX_SolicitudProveeduria_IdEmpleado");
 
                
             });
 
-            modelBuilder.Entity<SolicitudProveduriaDetalle>(entity =>
+            modelBuilder.Entity<SolicitudProveeduriaDetalle>(entity =>
             {
-                entity.HasKey(e => e.IdSolicitudProveduriaDetalle)
-                    .HasName("PK_SolicitudProveduriaDetalle");
+                entity.HasKey(e => e.IdSolicitudProveeduriaDetalle)
+                    .HasName("PK_SolicitudProveeduriaDetalle");
 
                 entity.HasIndex(e => e.IdArticulo)
-                    .HasName("IX_SolicitudProveduriaDetalle_IdArticulo");
+                    .HasName("IX_SolicitudProveeduriaDetalle_IdArticulo");
 
                 entity.HasIndex(e => e.IdMaestroArticuloSucursal)
-                    .HasName("IX_SolicitudProveduriaDetalle_IdMaestroArticuloSucursal");
+                    .HasName("IX_SolicitudProveeduriaDetalle_IdMaestroArticuloSucursal");
 
-                entity.HasIndex(e => e.IdSolicitudProveduria)
-                    .HasName("IX_SolicitudProveduriaDetalle_IdSolicitudProveduria");
+                entity.HasIndex(e => e.IdSolicitudProveeduria)
+                    .HasName("IX_SolicitudProveeduriaDetalle_IdSolicitudProveeduria");
 
                 entity.HasOne(d => d.Articulo)
-                    .WithMany(p => p.SolicitudProveduriaDetalle)
+                    .WithMany(p => p.SolicitudProveeduriaDetalle)
                     .HasForeignKey(d => d.IdArticulo)
                     .OnDelete(DeleteBehavior.Restrict);
 
               
 
                 entity.HasOne(d => d.MaestroArticuloSucursal)
-                    .WithMany(p => p.SolicitudProveduriaDetalle)
+                    .WithMany(p => p.SolicitudProveeduriaDetalle)
                     .HasForeignKey(d => d.IdMaestroArticuloSucursal)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.HasOne(d => d.SolicitudProveduria)
-                    .WithMany(p => p.SolicitudProveduriaDetalle)
-                    .HasForeignKey(d => d.IdSolicitudProveduria)
+                entity.HasOne(d => d.SolicitudProveeduria)
+                    .WithMany(p => p.SolicitudProveeduriaDetalle)
+                    .HasForeignKey(d => d.IdSolicitudProveeduria)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
