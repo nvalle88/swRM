@@ -352,5 +352,106 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
         }
+
+        //Get: api/ListarRecepcionadosAltas
+        [HttpGet]
+        [Route("ListarRecepcionAltas")]
+        public async Task<List<RecepcionArticulos>> GetRecepcionAltas()
+        {
+            try
+            {
+                return await (
+
+                    from recA1 in db.RecepcionArticulos
+
+                    join articulo in db.Articulo on recA1.IdArticulo equals articulo.IdArticulo
+                    join alta in db.AltaProveeduria on articulo.IdArticulo equals alta.IdArticulo
+
+                    select new RecepcionArticulos
+                    {
+                        IdRecepcionArticulos = recA1.IdRecepcionArticulos,
+                        Fecha = recA1.Fecha,
+                        IdArticulo = recA1.IdArticulo,
+                        Cantidad = recA1.Cantidad,
+                        IdEmpleado = recA1.IdEmpleado,
+                        IdProveedor = recA1.IdProveedor,
+                        IdMaestroArticuloSucursal = recA1.IdMaestroArticuloSucursal
+                    }
+                        ).Except(
+                            from recA2 in db.RecepcionArticulos
+
+                            join articulo in db.Articulo on recA2.IdArticulo equals articulo.IdArticulo
+                            join solicitud in db.SolicitudProveeduriaDetalle on articulo.IdArticulo equals solicitud.IdArticulo
+                            where solicitud.Estado.Nombre == "Baja Aprobada"
+
+                            select new RecepcionArticulos
+                            {
+                                IdRecepcionArticulos = recA2.IdRecepcionArticulos,
+                                Fecha = recA2.Fecha,
+                                IdArticulo = recA2.IdArticulo,
+                                Cantidad = recA2.Cantidad,
+                                IdEmpleado = recA2.IdEmpleado,
+                                IdProveedor = recA2.IdProveedor,
+                                IdMaestroArticuloSucursal = recA2.IdMaestroArticuloSucursal
+                            }
+                    ).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = Mensaje.Excepcion,
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new List<RecepcionArticulos>();
+            }
+        }
+
+        //Get: api/ListarRecepcionadosBajas
+        [HttpGet]
+        [Route("ListarRecepcionBajas")]
+        public async Task<List<RecepcionArticulos>> GetRecepcionBajas()
+        {
+            try
+            {
+                return await (
+                    from recA in db.RecepcionArticulos
+                    join articulo in db.Articulo on recA.IdArticulo equals articulo.IdArticulo
+                    join solicitud in db.SolicitudProveeduriaDetalle on articulo.IdArticulo equals solicitud.IdArticulo
+                    where solicitud.Estado.Nombre == "Baja Aprobada"
+
+                    select new RecepcionArticulos
+                    {
+                        IdRecepcionArticulos = recA.IdRecepcionArticulos,
+                        Fecha = recA.Fecha,
+                        IdArticulo = recA.IdArticulo,
+                        Cantidad = recA.Cantidad,
+                        IdEmpleado = recA.IdEmpleado,
+                        IdProveedor = recA.IdProveedor,
+                        IdMaestroArticuloSucursal = recA.IdMaestroArticuloSucursal
+                    }
+                    ).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = Mensaje.Excepcion,
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new List<RecepcionArticulos>();
+            }
+        }
+
     }
 }
