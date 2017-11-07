@@ -360,7 +360,41 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await (
+                var articulosAlta = await (from recepArticulo in db.RecepcionArticulos
+                                     join altaProv in db.AltaProveeduria on recepArticulo.IdArticulo equals altaProv.IdArticulo
+                                     select new  {
+                                         RecepcionArticulo = new RecepcionArticulos {
+                                             IdRecepcionArticulos = recepArticulo.IdRecepcionArticulos,
+                                             Fecha = recepArticulo.Fecha,
+                                             IdArticulo = recepArticulo.IdArticulo,
+                                             Cantidad = recepArticulo.Cantidad,
+                                             IdEmpleado = recepArticulo.IdEmpleado,
+                                             IdProveedor = recepArticulo.IdProveedor,
+                                             IdMaestroArticuloSucursal = recepArticulo.IdMaestroArticuloSucursal
+                                         },
+                                         Alta = new AltaProveeduria {
+                                             IdAlta = altaProv.IdAlta
+                                         }
+                                     }).ToListAsync();
+
+                for (int i = 0; i < articulosAlta.Count; i++)
+                {
+                    var articuloSolicitudProvDetalle = await db.SolicitudProveeduriaDetalle.Include(c=> c.Estado).FirstOrDefaultAsync(c => c.IdArticulo == articulosAlta[i].Alta.IdAlta);
+                    if (articuloSolicitudProvDetalle != null)
+                    {
+                        if (articuloSolicitudProvDetalle.Estado.Nombre == "Baja Aprobada")
+                        {
+                            articulosAlta.RemoveAt(i);
+                            i--;
+                        }
+                    }
+                }
+
+                return articulosAlta.Select(c=> c.RecepcionArticulo).ToList();
+
+
+
+                /*return await (
 
                     from recA1 in db.RecepcionArticulos
 
@@ -394,7 +428,7 @@ namespace bd.swrm.web.Controllers.API
                                 IdProveedor = recA2.IdProveedor,
                                 IdMaestroArticuloSucursal = recA2.IdMaestroArticuloSucursal
                             }
-                    ).ToListAsync();
+                    ).ToListAsync();*/
             }
             catch (Exception ex)
             {
