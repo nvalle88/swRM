@@ -360,75 +360,84 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                var articulosAlta = await (from recepArticulo in db.RecepcionArticulos
-                                     join altaProv in db.AltaProveeduria on recepArticulo.IdArticulo equals altaProv.IdArticulo
-                                     select new  {
-                                         RecepcionArticulo = new RecepcionArticulos {
-                                             IdRecepcionArticulos = recepArticulo.IdRecepcionArticulos,
-                                             Fecha = recepArticulo.Fecha,
-                                             IdArticulo = recepArticulo.IdArticulo,
-                                             Cantidad = recepArticulo.Cantidad,
-                                             IdEmpleado = recepArticulo.IdEmpleado,
-                                             IdProveedor = recepArticulo.IdProveedor,
-                                             IdMaestroArticuloSucursal = recepArticulo.IdMaestroArticuloSucursal
-                                         },
-                                         Alta = new AltaProveeduria {
-                                             IdAlta = altaProv.IdAlta
-                                         }
-                                     }).ToListAsync();
+                var lista = await (
 
-                for (int i = 0; i < articulosAlta.Count; i++)
-                {
-                    var articuloSolicitudProvDetalle = await db.SolicitudProveeduriaDetalle.Include(c=> c.Estado).FirstOrDefaultAsync(c => c.IdArticulo == articulosAlta[i].Alta.IdAlta);
-                    if (articuloSolicitudProvDetalle != null)
-                    {
-                        if (articuloSolicitudProvDetalle.Estado.Nombre == "Baja Aprobada")
+                        from recA in db.RecepcionArticulos
+
+                        join articulo in db.Articulo on recA.IdArticulo equals articulo.IdArticulo
+                        join modelo in db.Modelo on articulo.IdModelo equals modelo.IdModelo
+                        join subClaseArticulo in db.SubClaseArticulo on articulo.IdSubClaseArticulo equals subClaseArticulo.IdSubClaseArticulo
+                        join claseArticulo in db.ClaseArticulo on subClaseArticulo.IdClaseArticulo equals claseArticulo.IdClaseArticulo
+                        join tipoArticulo in db.TipoArticulo on claseArticulo.IdTipoArticulo equals tipoArticulo.IdTipoArticulo
+                        join proveedor in db.Proveedor on recA.IdProveedor equals proveedor.IdProveedor
+                        join empleado in db.Empleado on recA.IdEmpleado equals empleado.IdEmpleado
+                        join persona in db.Persona on empleado.IdPersona equals persona.IdPersona
+                        join alta in db.AltaProveeduria on recA.IdArticulo equals alta.IdArticulo
+
+                        where !(
+                            from sp in db.SolicitudProveeduriaDetalle
+                            where sp.IdEstado == 6
+                            select sp.IdArticulo
+                        ).Contains(alta.IdArticulo)
+
+                        select new RecepcionArticulos
                         {
-                            articulosAlta.RemoveAt(i);
-                            i--;
-                        }
-                    }
-                }
-
-                return articulosAlta.Select(c=> c.RecepcionArticulo).ToList();
-
-
-
-                /*return await (
-
-                    from recA1 in db.RecepcionArticulos
-
-                    join articulo in db.Articulo on recA1.IdArticulo equals articulo.IdArticulo
-                    join alta in db.AltaProveeduria on articulo.IdArticulo equals alta.IdArticulo
-
-                    select new RecepcionArticulos
-                    {
-                        IdRecepcionArticulos = recA1.IdRecepcionArticulos,
-                        Fecha = recA1.Fecha,
-                        IdArticulo = recA1.IdArticulo,
-                        Cantidad = recA1.Cantidad,
-                        IdEmpleado = recA1.IdEmpleado,
-                        IdProveedor = recA1.IdProveedor,
-                        IdMaestroArticuloSucursal = recA1.IdMaestroArticuloSucursal
-                    }
-                        ).Except(
-                            from recA2 in db.RecepcionArticulos
-
-                            join articulo in db.Articulo on recA2.IdArticulo equals articulo.IdArticulo
-                            join solicitud in db.SolicitudProveeduriaDetalle on articulo.IdArticulo equals solicitud.IdArticulo
-                            where solicitud.Estado.Nombre == "Baja Aprobada"
-
-                            select new RecepcionArticulos
+                            Articulo = new Articulo
                             {
-                                IdRecepcionArticulos = recA2.IdRecepcionArticulos,
-                                Fecha = recA2.Fecha,
-                                IdArticulo = recA2.IdArticulo,
-                                Cantidad = recA2.Cantidad,
-                                IdEmpleado = recA2.IdEmpleado,
-                                IdProveedor = recA2.IdProveedor,
-                                IdMaestroArticuloSucursal = recA2.IdMaestroArticuloSucursal
+                                Nombre = articulo.Nombre,
+                                IdArticulo = articulo.IdArticulo,
+                                IdModelo = articulo.IdModelo,
+                                IdSubClaseArticulo = articulo.IdSubClaseArticulo,
+                                IdUnidadMedida = articulo.IdUnidadMedida,
+                                SubClaseArticulo = new SubClaseArticulo
+                                {
+                                    IdSubClaseArticulo = articulo.IdSubClaseArticulo,
+                                    Nombre = subClaseArticulo.Nombre,
+                                    IdClaseArticulo = subClaseArticulo.IdClaseArticulo,
+                                    ClaseArticulo = new ClaseArticulo
+                                    {
+                                        IdClaseArticulo = subClaseArticulo.IdClaseArticulo,
+                                        Nombre = claseArticulo.Nombre,
+                                        TipoArticulo = new TipoArticulo
+                                        {
+                                            IdTipoArticulo = tipoArticulo.IdTipoArticulo,
+                                            Nombre = tipoArticulo.Nombre
+                                        }
+                                    }
+                                },
+                                Modelo = new Modelo
+                                {
+                                    IdModelo = articulo.IdModelo != null ? (int)articulo.IdModelo : -1,
+                                    Nombre = modelo.Nombre
+                                }
+                            },
+                            Cantidad = recA.Cantidad,
+                            Fecha = recA.Fecha,
+                            IdArticulo = recA.IdArticulo,
+                            IdEmpleado = recA.IdEmpleado,
+                            IdMaestroArticuloSucursal = recA.IdMaestroArticuloSucursal,
+                            IdProveedor = recA.IdProveedor,
+                            IdRecepcionArticulos = recA.IdRecepcionArticulos,
+                            Empleado = new Empleado
+                            {
+                                IdEmpleado = recA.IdEmpleado,
+                                IdPersona = empleado.IdPersona,
+                                Persona = new Persona
+                                {
+                                    IdPersona = empleado.IdPersona,
+                                    Nombres = persona.Nombres,
+                                    Apellidos = persona.Apellidos
+                                }
+                            },
+                            Proveedor = new Proveedor
+                            {
+                                IdProveedor = recA.IdProveedor,
+                                Nombre = proveedor.Nombre,
+                                Apellidos = proveedor.Apellidos
                             }
-                    ).ToListAsync();*/
+                        }
+                              ).ToListAsync();
+                return lista;
             }
             catch (Exception ex)
             {
@@ -453,23 +462,83 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await (
+                var lista = await (
+
                     from recA in db.RecepcionArticulos
+
                     join articulo in db.Articulo on recA.IdArticulo equals articulo.IdArticulo
-                    join solicitud in db.SolicitudProveeduriaDetalle on articulo.IdArticulo equals solicitud.IdArticulo
-                    where solicitud.Estado.Nombre == "Baja Aprobada"
+                    join modelo in db.Modelo on articulo.IdModelo equals modelo.IdModelo
+                    join subClaseArticulo in db.SubClaseArticulo on articulo.IdSubClaseArticulo equals subClaseArticulo.IdSubClaseArticulo
+                    join claseArticulo in db.ClaseArticulo on subClaseArticulo.IdClaseArticulo equals claseArticulo.IdClaseArticulo
+                    join tipoArticulo in db.TipoArticulo on claseArticulo.IdTipoArticulo equals tipoArticulo.IdTipoArticulo
+                    join proveedor in db.Proveedor on recA.IdProveedor equals proveedor.IdProveedor
+                    join empleado in db.Empleado on recA.IdEmpleado equals empleado.IdEmpleado
+                    join persona in db.Persona on empleado.IdPersona equals persona.IdPersona
+
+                    where (
+                        from sp in db.SolicitudProveeduriaDetalle
+                        where sp.IdEstado == 6
+                        select sp.IdArticulo
+                    ).Contains(recA.IdArticulo)
 
                     select new RecepcionArticulos
                     {
-                        IdRecepcionArticulos = recA.IdRecepcionArticulos,
+                        Articulo = new Articulo
+                        {
+                            Nombre = articulo.Nombre,
+                            IdArticulo = articulo.IdArticulo,
+                            IdModelo = articulo.IdModelo,
+                            IdSubClaseArticulo = articulo.IdSubClaseArticulo,
+                            IdUnidadMedida = articulo.IdUnidadMedida,
+                            SubClaseArticulo = new SubClaseArticulo
+                            {
+                                IdSubClaseArticulo = articulo.IdSubClaseArticulo,
+                                Nombre = subClaseArticulo.Nombre,
+                                IdClaseArticulo = subClaseArticulo.IdClaseArticulo,
+                                ClaseArticulo = new ClaseArticulo
+                                {
+                                    IdClaseArticulo = subClaseArticulo.IdClaseArticulo,
+                                    Nombre = claseArticulo.Nombre,
+                                    TipoArticulo = new TipoArticulo
+                                    {
+                                        IdTipoArticulo = tipoArticulo.IdTipoArticulo,
+                                        Nombre = tipoArticulo.Nombre
+                                    }
+                                }
+                            },
+                            Modelo = new Modelo
+                            {
+                                IdModelo = articulo.IdModelo != null ? (int)articulo.IdModelo : -1,
+                                Nombre = modelo.Nombre
+                            }
+                        },
+                        Cantidad = recA.Cantidad,
                         Fecha = recA.Fecha,
                         IdArticulo = recA.IdArticulo,
-                        Cantidad = recA.Cantidad,
                         IdEmpleado = recA.IdEmpleado,
+                        IdMaestroArticuloSucursal = recA.IdMaestroArticuloSucursal,
                         IdProveedor = recA.IdProveedor,
-                        IdMaestroArticuloSucursal = recA.IdMaestroArticuloSucursal
+                        IdRecepcionArticulos = recA.IdRecepcionArticulos,
+                        Empleado = new Empleado
+                        {
+                            IdEmpleado = recA.IdEmpleado,
+                            IdPersona = empleado.IdPersona,
+                            Persona = new Persona
+                            {
+                                IdPersona = empleado.IdPersona,
+                                Nombres = persona.Nombres,
+                                Apellidos = persona.Apellidos
+                            }
+                        },
+                        Proveedor = new Proveedor
+                        {
+                            IdProveedor = recA.IdProveedor,
+                            Nombre = proveedor.Nombre,
+                            Apellidos = proveedor.Apellidos
+                        }
                     }
-                    ).ToListAsync();
+                ).ToListAsync();
+                return lista;
             }
             catch (Exception ex)
             {
