@@ -207,7 +207,7 @@ namespace bd.swrm.web.Controllers.API
                                 return new Response
                                 {
                                     IsSuccess = false,
-                                    Message = String.Format("La Cantidad no puede ser menor que la existencia real de Artículos ({0})", existenciaArticuloProveeduria.Existencia)
+                                    Message = String.Format("La Cantidad no puede ser menor que la existencia real de Artï¿½culos ({0})", existenciaArticuloProveeduria.Existencia)
                                 };
                             }
                             else
@@ -221,7 +221,7 @@ namespace bd.swrm.web.Controllers.API
                             return new Response
                             {
                                 IsSuccess = false,
-                                Message = "La Cantidad no está en el rango del Mínimo y Máximo"
+                                Message = "La Cantidad no estï¿½ en el rango del Mï¿½nimo y Mï¿½ximo"
                             };
                         }
                         
@@ -301,7 +301,7 @@ namespace bd.swrm.web.Controllers.API
                     return new Response
                     {
                         IsSuccess = false,
-                        Message = "La Cantidad no está en el rango del Mínimo y Máximo"
+                        Message = "La Cantidad no estÃ¡ en el rango del MÃ­nimo y MÃ¡ximo"
                     };
                 }
                 
@@ -391,7 +391,7 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
         }
-
+        
         //Get: api/ListarRecepcionadosAltas
         [HttpGet]
         [Route("ListarRecepcionAltas")]
