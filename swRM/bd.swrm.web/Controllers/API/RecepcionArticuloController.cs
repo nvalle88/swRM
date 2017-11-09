@@ -199,6 +199,32 @@ namespace bd.swrm.web.Controllers.API
                 {
                     try
                     {
+                        var existenciaArticuloProveeduria = await db.ExistenciaArticuloProveeduria.SingleOrDefaultAsync(c => c.IdArticulo == recepcionArticulo.IdArticulo);
+                        if (await db.AltaProveeduria.CountAsync(c=> c.IdArticulo == recepcionArticulo.IdArticulo) > 0)
+                        {
+                            if (recepcionArticulo.Cantidad < existenciaArticuloProveeduria.Existencia)
+                            {
+                                return new Response
+                                {
+                                    IsSuccess = false,
+                                    Message = String.Format("La Cantidad no puede ser menor que la existencia real de Artículos ({0})", existenciaArticuloProveeduria.Existencia)
+                                };
+                            }
+                            else
+                                existenciaArticuloProveeduria.Existencia = recepcionArticulo.Cantidad >= recepcionArticuloActualizar.Cantidad ? (recepcionArticulo.Cantidad - recepcionArticuloActualizar.Cantidad) + existenciaArticuloProveeduria.Existencia : recepcionArticulo.Cantidad - existenciaArticuloProveeduria.Existencia;
+                        }
+                        else
+                            existenciaArticuloProveeduria.Existencia = recepcionArticulo.Cantidad;
+
+                        if (recepcionArticulo.MaestroArticuloSucursal.Minimo > recepcionArticulo.Cantidad || recepcionArticulo.MaestroArticuloSucursal.Maximo < recepcionArticulo.Cantidad)
+                        {
+                            return new Response
+                            {
+                                IsSuccess = false,
+                                Message = "La Cantidad no está en el rango del Mínimo y Máximo"
+                            };
+                        }
+                        
                         recepcionArticuloActualizar.Fecha = recepcionArticulo.Fecha;
                         recepcionArticuloActualizar.Cantidad = recepcionArticulo.Cantidad;
                         recepcionArticuloActualizar.IdEmpleado = recepcionArticulo.IdEmpleado;
@@ -270,10 +296,23 @@ namespace bd.swrm.web.Controllers.API
                     };
                 }
 
+                if (recepcionArticulo.MaestroArticuloSucursal.Minimo > recepcionArticulo.Cantidad || recepcionArticulo.MaestroArticuloSucursal.Maximo < recepcionArticulo.Cantidad)
+                {
+                    return new Response
+                    {
+                        IsSuccess = false,
+                        Message = "La Cantidad no está en el rango del Mínimo y Máximo"
+                    };
+                }
+                
                 db.Entry(recepcionArticulo.Articulo).State = EntityState.Unchanged;
                 db.Entry(recepcionArticulo.MaestroArticuloSucursal).State = EntityState.Unchanged;
                 db.Entry(recepcionArticulo).State = EntityState.Added;
                 await db.SaveChangesAsync();
+
+                db.ExistenciaArticuloProveeduria.Add(new ExistenciaArticuloProveeduria { IdArticulo = recepcionArticulo.IdArticulo, Existencia = recepcionArticulo.Cantidad });
+                await db.SaveChangesAsync();
+
                 return new Response
                 {
                     IsSuccess = true,
@@ -555,6 +594,5 @@ namespace bd.swrm.web.Controllers.API
                 return new List<RecepcionArticulos>();
             }
         }
-
     }
 }
