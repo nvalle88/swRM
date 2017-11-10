@@ -125,7 +125,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     try
                     {
-                        existenciaArticuloProveeduriaActualizar.Existencia = existenciaArticuloProveeduriaActualizar.Existencia + existenciaArticuloProveeduria.Existencia;
+                        existenciaArticuloProveeduriaActualizar.Existencia = existenciaArticuloProveeduria.Existencia;
                         db.ExistenciaArticuloProveeduria.Update(existenciaArticuloProveeduriaActualizar);
                         await db.SaveChangesAsync();
 

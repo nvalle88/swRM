@@ -48,9 +48,6 @@ namespace bd.swrm.entidades.Negocio
         public int IdProveedor { get; set; }
         public virtual Proveedor Proveedor { get; set; }
 
-        
-
-
-
+        public virtual ICollection<AltaProveeduria> AltaProveeduria { get; set; }
     }
 }
