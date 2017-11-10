@@ -207,7 +207,7 @@ namespace bd.swrm.web.Controllers.API
                                 return new Response
                                 {
                                     IsSuccess = false,
-                                    Message = String.Format("La Cantidad no puede ser menor que la existencia real de Art�culos ({0})", existenciaArticuloProveeduria.Existencia)
+                                    Message = String.Format("La Cantidad no puede ser menor que la existencia real de Artículos ({0})", existenciaArticuloProveeduria.Existencia)
                                 };
                             }
                             else
