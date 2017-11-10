@@ -1264,6 +1264,12 @@ namespace bd.swrm.datos
                     .WithMany(p => p.AltaProveeduria)
                     .HasForeignKey(d => d.IdArticulo)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.IdRecepcionArticulosNavigation)
+                    .WithMany(p => p.AltaProveeduria)
+                    .HasForeignKey(d => d.IdRecepcionArticulos)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_AltaProveeduria_RecepcionArticulos");
             });
 
             modelBuilder.Entity<BajaProveeduria>(entity =>
