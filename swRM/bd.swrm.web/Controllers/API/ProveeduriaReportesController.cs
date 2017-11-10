@@ -17,7 +17,7 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/RecepcionArticulo")]
+    [Route("api/ProveeduriaReportes")]
     public class ProveeduriaReportesController : Controller
     {
         private readonly SwRMDbContext db;
@@ -30,7 +30,7 @@ namespace bd.swrm.web.Controllers.API
         //Get: api/ProveeduriaAltasReporte
         [HttpGet]
         [Route("ProveeduriaAltasReporte")]
-        public async Task<List<RecepcionArticulos>> ProveeduriaAltasReporte()
+        public async Task<List<RecepcionArticulos>> GetProveeduriaAltasReporte()
         {
             try
             {
@@ -132,7 +132,7 @@ namespace bd.swrm.web.Controllers.API
         //Get: api/ProveeduriaBajasReporte
         [HttpGet]
         [Route("ProveeduriaBajasReporte")]
-        public async Task<List<RecepcionArticulos>> ProveeduriaBajasReporte()
+        public async Task<List<RecepcionArticulos>> GetProveeduriaBajasReporte()
         {
             try
             {
@@ -233,30 +233,46 @@ namespace bd.swrm.web.Controllers.API
         //Get: api/EstadisticasConsumoAreaReporte
         [HttpGet]
         [Route("EstadisticasConsumoAreaReporte")]
-        public async Task<List<RecepcionArticulos>> EstadisticasConsumoAreaReporte()
+        public async Task<List<SolicitudProveeduriaDetalle>> GetEstadisticasConsumoAreaReporte()
         {
             try
             {
                 var lista = await (
 
-                    from recA in db.RecepcionArticulos
+                    from SPD in db.SolicitudProveeduriaDetalle
 
-                    join articulo in db.Articulo on recA.IdArticulo equals articulo.IdArticulo
+                    join articulo in db.Articulo on SPD.IdArticulo equals articulo.IdArticulo
                     join modelo in db.Modelo on articulo.IdModelo equals modelo.IdModelo
                     join subClaseArticulo in db.SubClaseArticulo on articulo.IdSubClaseArticulo equals subClaseArticulo.IdSubClaseArticulo
                     join claseArticulo in db.ClaseArticulo on subClaseArticulo.IdClaseArticulo equals claseArticulo.IdClaseArticulo
                     join tipoArticulo in db.TipoArticulo on claseArticulo.IdTipoArticulo equals tipoArticulo.IdTipoArticulo
-                    join proveedor in db.Proveedor on recA.IdProveedor equals proveedor.IdProveedor
-                    join empleado in db.Empleado on recA.IdEmpleado equals empleado.IdEmpleado
-                    join persona in db.Persona on empleado.IdPersona equals persona.IdPersona
 
-                    join maestroSuc in db.MaestroArticuloSucursal on recA.IdMaestroArticuloSucursal equals maestroSuc.IdMaestroArticuloSucursal
-                    join sucursal in db.Sucursal on maestroSuc.IdSucursal equals sucursal.IdSucursal
+                    join MAS in db.MaestroArticuloSucursal on SPD.IdMaestroArticuloSucursal equals MAS.IdMaestroArticuloSucursal
+                    join sucursal in db.Sucursal on MAS.IdSucursal equals sucursal.IdSucursal
+                    join estado in db.Estado on SPD.IdEstado equals estado.IdEstado
 
-                    where recA.Cantidad <= maestroSuc.Minimo
-
-                    select new RecepcionArticulos
+                    select new SolicitudProveeduriaDetalle
                     {
+                        IdSolicitudProveeduriaDetalle = SPD.IdSolicitudProveeduriaDetalle,
+                        FechaSolicitud = SPD.FechaSolicitud,
+                        FechaAprobada = SPD.FechaAprobada,
+                        CantidadSolicitada = SPD.CantidadSolicitada,
+                        CantidadAprobada = SPD.CantidadAprobada,
+                        IdSolicitudProveeduria = SPD.IdSolicitudProveeduria,
+                        IdEstado = SPD.IdEstado,
+                        Estado = new Estado
+                        {
+                            Nombre = estado.Nombre
+                        },
+                        IdMaestroArticuloSucursal = SPD.IdMaestroArticuloSucursal,
+                        MaestroArticuloSucursal = new MaestroArticuloSucursal
+                        {
+                            Sucursal = new Sucursal
+                            {
+                                Nombre = sucursal.Nombre
+                            }
+                        },
+                        IdArticulo = SPD.IdArticulo,
                         Articulo = new Articulo
                         {
                             Nombre = articulo.Nombre,
@@ -285,37 +301,6 @@ namespace bd.swrm.web.Controllers.API
                                 IdModelo = articulo.IdModelo != null ? (int)articulo.IdModelo : -1,
                                 Nombre = modelo.Nombre
                             }
-                        },
-                        Cantidad = recA.Cantidad,
-                        Fecha = recA.Fecha,
-                        IdArticulo = recA.IdArticulo,
-                        IdEmpleado = recA.IdEmpleado,
-                        IdMaestroArticuloSucursal = recA.IdMaestroArticuloSucursal,
-                        IdProveedor = recA.IdProveedor,
-                        IdRecepcionArticulos = recA.IdRecepcionArticulos,
-                        Empleado = new Empleado
-                        {
-                            IdEmpleado = recA.IdEmpleado,
-                            IdPersona = empleado.IdPersona,
-                            Persona = new Persona
-                            {
-                                IdPersona = empleado.IdPersona,
-                                Nombres = persona.Nombres,
-                                Apellidos = persona.Apellidos
-                            }
-                        },
-                        Proveedor = new Proveedor
-                        {
-                            IdProveedor = recA.IdProveedor,
-                            Nombre = proveedor.Nombre,
-                            Apellidos = proveedor.Apellidos
-                        },
-                        MaestroArticuloSucursal = new MaestroArticuloSucursal
-                        {
-                            Sucursal = new Sucursal
-                            {
-                                Nombre = sucursal.Nombre
-                            }
                         }
                     }
                 ).ToListAsync();
@@ -333,14 +318,14 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<RecepcionArticulos>();
+                return new List<SolicitudProveeduriaDetalle>();
             }
         }
 
         //Get: api/AlertaVencimientoReporte
         [HttpGet]
         [Route("AlertaVencimientoReporte")]
-        public async Task<List<RecepcionArticulos>> AlertaVencimientoReporte()
+        public async Task<List<RecepcionArticulos>> GetAlertaVencimientoReporte()
         {
             try
             {
@@ -449,7 +434,7 @@ namespace bd.swrm.web.Controllers.API
         //Get: api/ConsolidadoInventarioReporte
         [HttpGet]
         [Route("ConsolidadoInventarioReporte")]
-        public async Task<List<RecepcionArticulos>> ConsolidadoInventarioReporte()
+        public async Task<List<RecepcionArticulos>> GetConsolidadoInventarioReporte()
         {
             try
             {
@@ -465,6 +450,11 @@ namespace bd.swrm.web.Controllers.API
                     join proveedor in db.Proveedor on recA.IdProveedor equals proveedor.IdProveedor
                     join empleado in db.Empleado on recA.IdEmpleado equals empleado.IdEmpleado
                     join persona in db.Persona on empleado.IdPersona equals persona.IdPersona
+
+                    where !(
+                        from alta in db.AltaProveeduria
+                        select alta.IdArticulo
+                    ).Contains(recA.IdArticulo)
 
                     select new RecepcionArticulos
                     {
@@ -544,25 +534,67 @@ namespace bd.swrm.web.Controllers.API
         //Get: api/ConsolidadoSolicitudReporte
         [HttpGet]
         [Route("ConsolidadoSolicitudReporte")]
-        public async Task<List<RecepcionArticulos>> ConsolidadoSolicitudReporte()
+        public async Task<List<SolicitudProveeduriaDetalle>> GetConsolidadoSolicitudReporte()
         {
             try
             {
                 var lista = await (
 
-                    from recA in db.RecepcionArticulos
+                    from SPD in db.SolicitudProveeduriaDetalle
 
-                    join articulo in db.Articulo on recA.IdArticulo equals articulo.IdArticulo
+                    join articulo in db.Articulo on SPD.IdArticulo equals articulo.IdArticulo
                     join modelo in db.Modelo on articulo.IdModelo equals modelo.IdModelo
                     join subClaseArticulo in db.SubClaseArticulo on articulo.IdSubClaseArticulo equals subClaseArticulo.IdSubClaseArticulo
                     join claseArticulo in db.ClaseArticulo on subClaseArticulo.IdClaseArticulo equals claseArticulo.IdClaseArticulo
                     join tipoArticulo in db.TipoArticulo on claseArticulo.IdTipoArticulo equals tipoArticulo.IdTipoArticulo
-                    join proveedor in db.Proveedor on recA.IdProveedor equals proveedor.IdProveedor
-                    join empleado in db.Empleado on recA.IdEmpleado equals empleado.IdEmpleado
+
+                    join MAS in db.MaestroArticuloSucursal on SPD.IdMaestroArticuloSucursal equals MAS.IdMaestroArticuloSucursal
+                    join sucursal in db.Sucursal on MAS.IdSucursal equals sucursal.IdSucursal
+                    join estado in db.Estado on SPD.IdEstado equals estado.IdEstado
+                    join sp in db.SolicitudProveeduria on SPD.IdSolicitudProveeduria equals sp.IdSolicitudProveeduria
+                    join empleado in db.Empleado on sp.IdEmpleado equals empleado.IdEmpleado
                     join persona in db.Persona on empleado.IdPersona equals persona.IdPersona
 
-                    select new RecepcionArticulos
+                    select new SolicitudProveeduriaDetalle
                     {
+                        IdSolicitudProveeduriaDetalle = SPD.IdSolicitudProveeduriaDetalle,
+                        FechaSolicitud = SPD.FechaSolicitud,
+                        FechaAprobada = SPD.FechaAprobada,
+                        CantidadSolicitada = SPD.CantidadSolicitada,
+                        CantidadAprobada = SPD.CantidadAprobada,
+                        IdSolicitudProveeduria = SPD.IdSolicitudProveeduria,
+                        SolicitudProveeduria = new SolicitudProveeduria
+                        {
+                            IdSolicitudProveeduria = sp.IdSolicitudProveeduria,
+                            IdEmpleado = sp.IdEmpleado,
+                            Empleado = new Empleado
+                            {
+                                IdEmpleado = empleado.IdEmpleado,
+                                IdPersona =  empleado.IdPersona,
+                                Persona = new Persona
+                                {
+                                    IdPersona = persona.IdPersona,
+                                    Nombres = persona.Nombres,
+                                    Apellidos = persona.Apellidos
+                                }
+                            }
+                        },
+                        IdEstado = SPD.IdEstado,
+                        Estado = new Estado
+                        {
+                            Nombre = estado.Nombre
+                        },
+                        IdMaestroArticuloSucursal = SPD.IdMaestroArticuloSucursal,
+                        MaestroArticuloSucursal = new MaestroArticuloSucursal
+                        {
+                            Maximo = MAS.Maximo,
+                            Minimo = MAS.Minimo,
+                            Sucursal = new Sucursal
+                            {
+                                Nombre = sucursal.Nombre
+                            }
+                        },
+                        IdArticulo = SPD.IdArticulo,
                         Articulo = new Articulo
                         {
                             Nombre = articulo.Nombre,
@@ -591,31 +623,7 @@ namespace bd.swrm.web.Controllers.API
                                 IdModelo = articulo.IdModelo != null ? (int)articulo.IdModelo : -1,
                                 Nombre = modelo.Nombre
                             }
-                        },
-                        Cantidad = recA.Cantidad,
-                        Fecha = recA.Fecha,
-                        IdArticulo = recA.IdArticulo,
-                        IdEmpleado = recA.IdEmpleado,
-                        IdMaestroArticuloSucursal = recA.IdMaestroArticuloSucursal,
-                        IdProveedor = recA.IdProveedor,
-                        IdRecepcionArticulos = recA.IdRecepcionArticulos,
-                        Empleado = new Empleado
-                        {
-                            IdEmpleado = recA.IdEmpleado,
-                            IdPersona = empleado.IdPersona,
-                            Persona = new Persona
-                            {
-                                IdPersona = empleado.IdPersona,
-                                Nombres = persona.Nombres,
-                                Apellidos = persona.Apellidos
-                            }
-                        },
-                        Proveedor = new Proveedor
-                        {
-                            IdProveedor = recA.IdProveedor,
-                            Nombre = proveedor.Nombre,
-                            Apellidos = proveedor.Apellidos
-                        }
+                        }                        
                     }
                 ).ToListAsync();
                 return lista;
@@ -639,7 +647,7 @@ namespace bd.swrm.web.Controllers.API
         //Get: api/ProveeduriaMinMaxReporte
         [HttpGet]
         [Route("ProveeduriaMinMaxReporte")]
-        public async Task<List<RecepcionArticulos>> ProveeduriaMinMaxReporte()
+        public async Task<List<RecepcionArticulos>> GetProveeduriaMinMaxReporte()
         {
             try
             {
