@@ -73,9 +73,9 @@ namespace bd.swrm.datos
         public virtual DbSet<TipoSangre> TipoSangre { get; set; }
         public virtual DbSet<Dependencia> Dependencia { get; set; }
         public virtual DbSet<AltaProveeduria> AltaProveeduria { get; set; }
-
         public virtual DbSet<BajaProveeduria> BajaProveeduria { get; set; }
         public virtual DbSet<FacturasPorAltaProveeduria> FacturasPorAltaProveeduria { get; set; }
+        public virtual DbSet<ExistenciaArticuloProveeduria> ExistenciaArticuloProveeduria { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -1304,7 +1304,22 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdAlta)
                     .HasConstraintName("FK_FacturasPorAltaProveeduria_AltaProveeduria");
             });
+            
+            modelBuilder.Entity<ExistenciaArticuloProveeduria>(entity =>
+            {
+                entity.HasKey(e => e.IdArticulo)
+                    .HasName("PK_ExistenciaArticuloProveeduria");
 
+                entity.Property(e => e.IdArticulo).ValueGeneratedNever();
+
+                entity.Property(e => e.Existencia).HasColumnName("existencia");
+
+                entity.HasOne(d => d.Articulo)
+                    .WithOne(p => p.ExistenciaArticuloProveeduria)
+                    .HasForeignKey<ExistenciaArticuloProveeduria>(d => d.IdArticulo)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_ExistenciaArticuloProveeduria_Articulo");
+            });
 
             foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             {
