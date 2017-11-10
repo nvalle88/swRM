@@ -15,7 +15,7 @@ namespace bd.swrm.entidades.Negocio
 
         //Propiedades Virtuales Referencias a otras clases
 
-        [Display(Name = "Sub clase de artículo:")]
+        [Display(Name = "Sub clase de artÃ­culo:")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int IdSubClaseArticulo { get; set; }
         public virtual SubClaseArticulo SubClaseArticulo { get; set; }
@@ -43,6 +43,7 @@ namespace bd.swrm.entidades.Negocio
         public virtual ICollection<DetalleFactura> DetalleFactura { get; set; }
 
         public virtual ICollection<TranferenciaArticulo> TranferenciaArticulo { get; set; }
-
+        
+        public virtual ExistenciaArticuloProveeduria ExistenciaArticuloProveeduria { get; set; }
     }
 }
