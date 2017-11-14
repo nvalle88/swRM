@@ -640,7 +640,7 @@ namespace bd.swrm.web.Controllers.API
                     UserName = "",
 
                 });
-                return new List<RecepcionArticulos>();
+                return new List<SolicitudProveeduriaDetalle>();
             }
         }
 
