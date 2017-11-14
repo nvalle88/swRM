@@ -13,6 +13,7 @@ using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
 using bd.log.guardar.Utiles;
 using bd.swrm.entidades.Utils;
+using bd.swrm.entidades.Comparadores;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -310,7 +311,12 @@ namespace bd.swrm.web.Controllers.API
                 db.Entry(recepcionArticulo).State = EntityState.Added;
                 await db.SaveChangesAsync();
 
-                db.ExistenciaArticuloProveeduria.Add(new ExistenciaArticuloProveeduria { IdArticulo = recepcionArticulo.IdArticulo, Existencia = recepcionArticulo.Cantidad });
+                var existenciaArticuloProveeduria = await db.ExistenciaArticuloProveeduria.SingleOrDefaultAsync(c => c.IdArticulo == recepcionArticulo.IdArticulo);
+                if (existenciaArticuloProveeduria != null)
+                    existenciaArticuloProveeduria.Existencia += recepcionArticulo.Cantidad;
+                else
+                    db.ExistenciaArticuloProveeduria.Add(new ExistenciaArticuloProveeduria { IdArticulo = recepcionArticulo.IdArticulo, Existencia = recepcionArticulo.Cantidad });
+
                 await db.SaveChangesAsync();
 
                 return new Response
@@ -391,6 +397,42 @@ namespace bd.swrm.web.Controllers.API
                 };
             }
         }
-                
+
+        [HttpGet]
+        [Route("ListarArticulosAlta")]
+        public async Task<List<RecepcionArticulos>> GetArticulosBaja()
+        {
+            try
+            {
+                var listaArticulosRecepcionados = await GetRecepcionArticulo();
+                return (from recArt in listaArticulosRecepcionados
+                                          join altaProv in db.AltaProveeduria on recArt.IdRecepcionArticulos equals altaProv.IdRecepcionArticulos
+                                          select recArt
+                                         ).Distinct(new ArticuloAltaExistenciaComparador()).Join(await db.ExistenciaArticuloProveeduria.ToListAsync(), c => c.IdArticulo, p => p.IdArticulo, (c, p) => new RecepcionArticulos
+                                         {
+                                             Articulo = c.Articulo,
+                                             Cantidad = p.Existencia,
+                                             IdArticulo = c.IdArticulo,
+                                             IdEmpleado = c.IdEmpleado,
+                                             IdMaestroArticuloSucursal = c.IdMaestroArticuloSucursal,
+                                             IdProveedor = c.IdProveedor,
+                                             IdRecepcionArticulos = c.IdRecepcionArticulos
+                                         }).ToList();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                {
+                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
+                    ExceptionTrace = ex,
+                    Message = Mensaje.Excepcion,
+                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
+                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
+                    UserName = "",
+
+                });
+                return new List<RecepcionArticulos>();
+            }
+        }
     }
 }
