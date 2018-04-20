@@ -26,8 +26,7 @@ namespace bd.swrm.web.Controllers.API
         {
             this.db = db;
         }
-
-        // GET: api/RecepcionActivoFijo
+        
         [HttpGet]
         [Route("ListarRecepcionActivoFijo")]
         public async Task<List<RecepcionActivoFijoDetalle>> GetRecepcionActivoFijo()
@@ -75,6 +74,7 @@ namespace bd.swrm.web.Controllers.API
                                                               join empleadMant in db.Empleado on mant.IdEmpleado equals empleadMant.IdEmpleado
                                                               where mant.IdActivoFijo == af.IdActivoFijo
                                                               select new MantenimientoActivoFijo { IdMantenimientoActivoFijo = mant.IdMantenimientoActivoFijo, FechaDesde = mant.FechaDesde, FechaHasta = mant.FechaHasta, FechaMantenimiento = mant.FechaMantenimiento, Observaciones = mant.Observaciones, Valor = mant.Valor, Empleado = empleadMant, IdEmpleado = empleadMant.IdEmpleado }).ToList()
+
                               let listaFacturasProveedor = (from provFactura in db.Proveedor
                                                             join fact in db.Factura on provFactura.IdProveedor equals fact.IdProveedor
                                                             where provFactura.IdProveedor == prov.IdProveedor
@@ -84,7 +84,6 @@ namespace bd.swrm.web.Controllers.API
                                                         join afaf in db.ActivoFijo on afadd.idActivoFijoOrigen equals afaf.IdActivoFijo
                                                         where afadd.idActivoFijoOrigen == af.IdActivoFijo
                                                         select new ActivosFijosAdicionados { idAdicion = afadd.idAdicion, idActivoFijoOrigen = afadd.idActivoFijoOrigen, idActivoFijoDestino = afadd.idActivoFijoDestino, fechaAdicion = afadd.fechaAdicion }).ToList()
-
 
                               select new RecepcionActivoFijoDetalle
                               {
@@ -100,34 +99,18 @@ namespace bd.swrm.web.Controllers.API
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new List<RecepcionActivoFijoDetalle>();
             }
         }
-
-        // GET: api/RecepcionActivoFijo/5
+        
         [HttpGet("{id}")]
         public async Task<Response> GetRecepcionActivoFijoDetalle([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
                 var recepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Proveedor)
@@ -149,39 +132,12 @@ namespace bd.swrm.web.Controllers.API
                     .Include(c => c.ActivoFijo.MantenimientoActivoFijo)
                     .Where(c=> c.IdRecepcionActivoFijoDetalle == id).SingleOrDefaultAsync();
 
-                if (recepcionActivoFijoDetalle == null)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.RegistroNoEncontrado,
-                    };
-                }
-
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio,
-                    Resultado = recepcionActivoFijoDetalle,
-                };
+                return new Response { IsSuccess = recepcionActivoFijoDetalle != null, Message = recepcionActivoFijoDetalle != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = recepcionActivoFijoDetalle };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
 
@@ -194,19 +150,9 @@ namespace bd.swrm.web.Controllers.API
             ModelState.Remove("ActivoFijo.IdCodigoActivoFijo");
 
             if (!ModelState.IsValid)
-            {
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ModeloInvalido
-                };
-            }
+                return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-            return new Response
-            {
-                IsSuccess = true,
-                Message = Mensaje.Satisfactorio
-            };
+            return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
         }
 
         [HttpPut("EstadoActivoFijo/{id}")]
@@ -223,47 +169,19 @@ namespace bd.swrm.web.Controllers.API
                         recepcionActivoFijoDetalleActualizar.IdEstado = recepcionActivoFijoDetalleActualizar.Estado.IdEstado;
                         db.RecepcionActivoFijoDetalle.Update(recepcionActivoFijoDetalleActualizar);
                         await db.SaveChangesAsync();
-
-                        return new Response
-                        {
-                            IsSuccess = true,
-                            Message = Mensaje.Satisfactorio
-                        };
-
+                        return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                     }
                     catch (Exception ex)
                     {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                        {
-                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                            ExceptionTrace = ex,
-                            Message = Mensaje.Excepcion,
-                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                            UserName = "",
-
-                        });
-                        return new Response
-                        {
-                            IsSuccess = false,
-                            Message = Mensaje.Error
-                        };
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                        return new Response { IsSuccess = false, Message = Mensaje.Error };
                     }
                 }
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
             }
             catch (Exception)
             {
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Excepcion
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
 
@@ -278,43 +196,19 @@ namespace bd.swrm.web.Controllers.API
                 {
                     recepcionActivoFijoDetalle.Estado = await db.Estado.SingleOrDefaultAsync(c => c.Nombre == "Desaprobado");
                     recepcionActivoFijoDetalle.IdEstado = recepcionActivoFijoDetalle.Estado.IdEstado;
-
                     db.RecepcionActivoFijoDetalle.Update(recepcionActivoFijoDetalle);
                     await db.SaveChangesAsync();
-
-                    return new Response
-                    {
-                        IsSuccess = true,
-                        Message = Mensaje.Satisfactorio
-                    };
+                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.RegistroNoEncontrado
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        // POST: api/RecepcionActivoFijo
+        
         [HttpPost]
         [Route("InsertarRecepcionActivoFijo")]
         public async Task<Response> PostRecepcionActivoFijo([FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
@@ -326,13 +220,7 @@ namespace bd.swrm.web.Controllers.API
                 ModelState.Remove("ActivoFijo.IdCodigoActivoFijo");
 
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
                 var respuesta = Existe(recepcionActivoFijoDetalle);
                 if (!respuesta.IsSuccess)
@@ -354,38 +242,14 @@ namespace bd.swrm.web.Controllers.API
 
                     db.RecepcionActivoFijoDetalle.Add(recepcionActivoFijoDetalle);
                     await db.SaveChangesAsync();
-
-                    return new Response
-                    {
-                        IsSuccess = true,
-                        Message = Mensaje.Satisfactorio,
-                        Resultado = recepcionActivoFijoDetalle
-                    };
+                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = recepcionActivoFijoDetalle };
                 }
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
 
@@ -395,13 +259,8 @@ namespace bd.swrm.web.Controllers.API
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
                 var recepcionActivoFijoDetalleActualizar = await db.RecepcionActivoFijoDetalle.Include(c=> c.Estado).Include(c=> c.RecepcionActivoFijo).Include(c=> c.ActivoFijo).ThenInclude(c=> c.CodigoActivoFijo).SingleOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
                 if (recepcionActivoFijoDetalleActualizar != null)
                 {
@@ -431,30 +290,16 @@ namespace bd.swrm.web.Controllers.API
 
                     db.RecepcionActivoFijoDetalle.Update(recepcionActivoFijoDetalleActualizar);
                     await db.SaveChangesAsync();
-
-                    return new Response
-                    {
-                        IsSuccess = true,
-                        Message = Mensaje.Satisfactorio
-                    };
+                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
             catch (Exception)
             {
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Excepcion
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
-
-        // PUT: api/AsignarPoliza/5
+        
         [HttpPost]
         [Route("AsignarPoliza")]
         public async Task<Response> AsignarPoliza([FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
@@ -469,47 +314,19 @@ namespace bd.swrm.web.Controllers.API
                         ActualizarActivoFijoDetalle.NumeroPoliza = recepcionActivoFijoDetalle.NumeroPoliza;
                         db.RecepcionActivoFijoDetalle.Update(ActualizarActivoFijoDetalle);
                         await db.SaveChangesAsync();
-
-                        return new Response
-                        {
-                            IsSuccess = true,
-                            Message = Mensaje.ModeloInvalido,
-                        };
-
+                        return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                     }
                     catch (Exception ex)
                     {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                        {
-                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                            ExceptionTrace = ex,
-                            Message = Mensaje.Excepcion,
-                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                            UserName = "",
-
-                        });
-                        return new Response
-                        {
-                            IsSuccess = false,
-                            Message = Mensaje.Error,
-                        };
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                        return new Response { IsSuccess = false, Message = Mensaje.Error };
                     }
                 }
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
             }
             catch (Exception)
             {
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Excepcion
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
 
@@ -530,23 +347,7 @@ namespace bd.swrm.web.Controllers.API
             && p.ActivoFijo.IdUnidadMedida == unidadMedidaActivoFijo
             && p.RecepcionActivoFijo.Fondo == fondoRecepcion
             && p.RecepcionActivoFijo.OrdenCompra == ordenCompraRecepcion).FirstOrDefault();
-            if (loglevelrespuesta != null)
-            {
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.ExisteRegistro,
-                    Resultado = null,
-                };
-
-            }
-
-            return new Response
-            {
-                IsSuccess = false,
-                Resultado = loglevelrespuesta,
-            };
+            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
-
     }
 }

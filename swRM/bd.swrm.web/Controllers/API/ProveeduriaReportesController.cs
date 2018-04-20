@@ -26,18 +26,15 @@ namespace bd.swrm.web.Controllers.API
         {
             this.db = db;
         }
-
-        //Get: api/ProveeduriaAltasReporte
+        
         [HttpGet]
         [Route("ProveeduriaAltasReporte")]
         public async Task<List<RecepcionArticulos>> GetProveeduriaAltasReporte()
         {
             try
             {
-                var lista = await (
-
+                return await (
                         from recA in db.RecepcionArticulos
-
                         join articulo in db.Articulo on recA.IdArticulo equals articulo.IdArticulo
                         join modelo in db.Modelo on articulo.IdModelo equals modelo.IdModelo
                         join subClaseArticulo in db.SubClaseArticulo on articulo.IdSubClaseArticulo equals subClaseArticulo.IdSubClaseArticulo
@@ -72,18 +69,10 @@ namespace bd.swrm.web.Controllers.API
                                     {
                                         IdClaseArticulo = subClaseArticulo.IdClaseArticulo,
                                         Nombre = claseArticulo.Nombre,
-                                        TipoArticulo = new TipoArticulo
-                                        {
-                                            IdTipoArticulo = tipoArticulo.IdTipoArticulo,
-                                            Nombre = tipoArticulo.Nombre
-                                        }
+                                        TipoArticulo = new TipoArticulo { IdTipoArticulo = tipoArticulo.IdTipoArticulo, Nombre = tipoArticulo.Nombre }
                                     }
                                 },
-                                Modelo = new Modelo
-                                {
-                                    IdModelo = articulo.IdModelo != null ? (int)articulo.IdModelo : -1,
-                                    Nombre = modelo.Nombre
-                                }
+                                Modelo = new Modelo { IdModelo = articulo.IdModelo != null ? (int)articulo.IdModelo : -1, Nombre = modelo.Nombre }
                             },
                             Cantidad = recA.Cantidad,
                             Fecha = recA.Fecha,
@@ -109,27 +98,15 @@ namespace bd.swrm.web.Controllers.API
                                 Nombre = proveedor.Nombre,
                                 Apellidos = proveedor.Apellidos
                             }
-                        }
-                              ).ToListAsync();
-                return lista;
+                        }).ToListAsync();
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new List<RecepcionArticulos>();
             }
         }
-
-        //Get: api/ProveeduriaBajasReporte
+        
         [HttpGet]
         [Route("ProveeduriaBajasReporte")]
         public async Task<List<RecepcionArticulos>> GetProveeduriaBajasReporte()
@@ -833,6 +810,5 @@ namespace bd.swrm.web.Controllers.API
                 return new List<RecepcionArticulos>();
             }
         }
-        
     }
 }
