@@ -50,7 +50,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var libroActivoFijo = await db.LibroActivoFijo.SingleOrDefaultAsync(m => m.IdLibroActivoFijo == id);
+                var libroActivoFijo = await db.LibroActivoFijo.Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais).SingleOrDefaultAsync(m => m.IdLibroActivoFijo == id);
                 return new Response { IsSuccess = libroActivoFijo != null, Message = libroActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = libroActivoFijo };
             }
             catch (Exception ex)

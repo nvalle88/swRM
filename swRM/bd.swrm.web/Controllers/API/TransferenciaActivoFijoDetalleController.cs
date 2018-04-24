@@ -62,17 +62,40 @@ namespace bd.swrm.web.Controllers.API
         
         [HttpPost]
         [Route("InsertarTransferenciaActivoFijoDetalle")]
-        public async Task<Response> PostTransferenciaActivoFijoDetalle([FromBody]TransferenciaActivoFijoDetalle _TransferenciaActivoFijoDetalle)
+        public async Task<Response> PostTransferenciaActivoFijoDetalle([FromBody]TransferenciaActivoFijoDetalle transferenciaActivoFijoDetalle)
         {
             try
             {
+                ModelState.Remove("IdTransferenciaActivoFijo");
+                ModelState.Remove("ActivoFijo.IdCiudad");
+                ModelState.Remove("ActivoFijo.IdModelo");
+                ModelState.Remove("ActivoFijo.Ubicacion");
+                ModelState.Remove("ActivoFijo.IdUnidadMedida");
+                ModelState.Remove("ActivoFijo.IdCodigoActivoFijo");
+                ModelState.Remove("ActivoFijo.IdSubClaseActivoFijo");
+                ModelState.Remove("ActivoFijo.LibroActivoFijo.Sucursal.Nombre");
+                ModelState.Remove("ActivoFijo.LibroActivoFijo.Sucursal.Ciudad.Nombre");
+                ModelState.Remove("ActivoFijo.LibroActivoFijo.Sucursal.Ciudad.Provincia.Nombre");
+                ModelState.Remove("ActivoFijo.Serie");
+                ModelState.Remove("ActivoFijo.Nombre");
+
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.TransferenciaActivoFijoDetalle.AnyAsync(p => p.IdActivoFijo == _TransferenciaActivoFijoDetalle.IdActivoFijo && p.IdTransferenciaActivoFijo == _TransferenciaActivoFijoDetalle.IdTransferenciaActivoFijo))
+                if (!await db.TransferenciaActivoFijoDetalle.AnyAsync(p => p.IdActivoFijo == transferenciaActivoFijoDetalle.IdActivoFijo && p.IdTransferenciaActivoFijo == transferenciaActivoFijoDetalle.IdTransferenciaActivoFijo))
                 {
-                    db.TransferenciaActivoFijoDetalle.Add(_TransferenciaActivoFijoDetalle);
+                    db.Entry(transferenciaActivoFijoDetalle.ActivoFijo).State = EntityState.Unchanged;
+                    db.TransferenciaActivoFijoDetalle.Add(transferenciaActivoFijoDetalle);
                     await db.SaveChangesAsync();
+
+                    var activosFijosActualizar = await db.ActivoFijo.Where(x => x.IdActivoFijo == transferenciaActivoFijoDetalle.IdActivoFijo).FirstOrDefaultAsync();
+                    if (activosFijosActualizar != null)
+                    {
+                        activosFijosActualizar.IdLibroActivoFijo = transferenciaActivoFijoDetalle.ActivoFijo.IdLibroActivoFijo;
+                        activosFijosActualizar.IdCiudad = transferenciaActivoFijoDetalle.ActivoFijo.LibroActivoFijo.Sucursal.IdCiudad;
+                        activosFijosActualizar.Ubicacion = transferenciaActivoFijoDetalle.TransferenciaActivoFijo.Destino;
+                        await db.SaveChangesAsync();
+                    }
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
                 return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };

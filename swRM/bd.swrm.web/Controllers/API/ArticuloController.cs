@@ -50,7 +50,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var articulo = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var articulo = await db.Articulo.Include(c=> c.SubClaseArticulo).ThenInclude(c=> c.ClaseArticulo).ThenInclude(c=> c.TipoArticulo).Include(c=> c.Modelo).ThenInclude(c=> c.Marca).SingleOrDefaultAsync(m => m.IdArticulo == id);
                 return new Response { IsSuccess = articulo != null, Message = articulo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = articulo };
             }
             catch (Exception ex)
@@ -109,6 +109,8 @@ namespace bd.swrm.web.Controllers.API
 
                 if (!await db.Articulo.AnyAsync(c => c.Nombre.ToUpper().Trim() == articulo.Nombre.ToUpper().Trim()))
                 {
+                    db.Entry(articulo.Modelo).State = EntityState.Unchanged;
+                    db.Entry(articulo.SubClaseArticulo).State = EntityState.Unchanged;
                     db.Articulo.Add(articulo);
                     await db.SaveChangesAsync();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };

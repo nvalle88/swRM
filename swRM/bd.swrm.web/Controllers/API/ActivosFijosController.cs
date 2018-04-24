@@ -33,7 +33,14 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.ActivoFijo.ToListAsync();
+                return await db.ActivoFijo
+                    .Include(c => c.SubClaseActivoFijo).ThenInclude(c => c.ClaseActivoFijo).ThenInclude(c => c.TipoActivoFijo)
+                    .Include(c => c.LibroActivoFijo).ThenInclude(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais)
+                    .Include(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais)
+                    .Include(c => c.UnidadMedida)
+                    .Include(c => c.CodigoActivoFijo)
+                    .Include(c => c.Modelo).ThenInclude(c => c.Marca)
+                    .ToListAsync();
             }
             catch (Exception ex)
             {
@@ -50,7 +57,14 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var _marca = await db.ActivoFijo.SingleOrDefaultAsync(m => m.IdActivoFijo == id);
+                var _marca = await db.ActivoFijo
+                    .Include(c=> c.SubClaseActivoFijo).ThenInclude(c=> c.ClaseActivoFijo).ThenInclude(c=> c.TipoActivoFijo)
+                    .Include(c=> c.LibroActivoFijo).ThenInclude(c=> c.Sucursal).ThenInclude(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais)
+                    .Include(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais)
+                    .Include(c=> c.UnidadMedida)
+                    .Include(c=> c.CodigoActivoFijo)
+                    .Include(c=> c.Modelo).ThenInclude(c=> c.Marca)
+                    .SingleOrDefaultAsync(m => m.IdActivoFijo == id);
                 return new Response { IsSuccess = _marca != null, Message = _marca != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = _marca };
             }
             catch (Exception ex)
@@ -88,16 +102,22 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var _ActivosFijosActualizar = await db.ActivoFijo.Where(x => x.IdActivoFijo == id).FirstOrDefaultAsync();
-                if (_ActivosFijosActualizar != null)
+                var activosFijosActualizar = await db.ActivoFijo.Where(x => x.IdActivoFijo == id).FirstOrDefaultAsync();
+                if (activosFijosActualizar != null)
                 {
                     try
                     {
-                        _ActivosFijosActualizar.Nombre = activosFijos.Nombre;
-                        _ActivosFijosActualizar.Serie = activosFijos.Serie;
-                        _ActivosFijosActualizar.ValorCompra = activosFijos.ValorCompra;
-                        _ActivosFijosActualizar.Ubicacion = activosFijos.Ubicacion;
-                        db.ActivoFijo.Update(_ActivosFijosActualizar);
+                        activosFijosActualizar.IdSubClaseActivoFijo = activosFijos.IdSubClaseActivoFijo;
+                        activosFijosActualizar.IdLibroActivoFijo = activosFijos.IdLibroActivoFijo;
+                        activosFijosActualizar.IdCiudad = activosFijos.IdCiudad;
+                        activosFijosActualizar.IdUnidadMedida = activosFijos.IdUnidadMedida;
+                        activosFijosActualizar.IdCodigoActivoFijo = activosFijos.IdCodigoActivoFijo;
+                        activosFijosActualizar.IdModelo = activosFijos.IdModelo;
+                        activosFijosActualizar.Nombre = activosFijos.Nombre;
+                        activosFijosActualizar.Serie = activosFijos.Serie;
+                        activosFijosActualizar.ValorCompra = activosFijos.ValorCompra;
+                        activosFijosActualizar.Ubicacion = activosFijos.Ubicacion;
+                        db.ActivoFijo.Update(activosFijosActualizar);
                         await db.SaveChangesAsync();
                         return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                     }

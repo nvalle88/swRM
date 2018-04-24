@@ -51,9 +51,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var subClaseActivoFijo = await db.SubClaseActivoFijo.SingleOrDefaultAsync(m => m.IdSubClaseActivoFijo == id);
-                subClaseActivoFijo.ClaseActivoFijo = await db.ClaseActivoFijo.SingleOrDefaultAsync(c => c.IdClaseActivoFijo == subClaseActivoFijo.IdClaseActivoFijo);
-                subClaseActivoFijo.ClaseActivoFijo.TipoActivoFijo = await db.TipoActivoFijo.SingleOrDefaultAsync(c => c.IdTipoActivoFijo == subClaseActivoFijo.ClaseActivoFijo.IdTipoActivoFijo);
+                var subClaseActivoFijo = await db.SubClaseActivoFijo.Include(c=> c.ClaseActivoFijo).ThenInclude(c=> c.TipoActivoFijo).SingleOrDefaultAsync(m => m.IdSubClaseActivoFijo == id);
                 return new Response { IsSuccess = subClaseActivoFijo != null, Message = subClaseActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = subClaseActivoFijo };
             }
             catch (Exception ex)

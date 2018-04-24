@@ -2,6 +2,7 @@ namespace bd.swrm.entidades.Negocio
 {
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
+    using System.ComponentModel.DataAnnotations.Schema;
 
     public partial class CodigoActivoFijo
     {
@@ -17,6 +18,12 @@ namespace bd.swrm.entidades.Negocio
         [Display(Name = "Código de barras:")]
         [StringLength(20, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string CodigoBarras { get; set; }
+
+        [NotMapped]
+        public string TAF { get; set; }
+
+        [NotMapped]
+        public string CAF { get; set; }
 
         //Propiedades Virtuales Referencias a otras clases
         public virtual ICollection<ActivoFijo> ActivoFijo { get; set; }

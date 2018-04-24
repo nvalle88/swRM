@@ -110,16 +110,6 @@ namespace bd.swrm.web.Controllers.API
                 {
                     db.CatalogoCuenta.Add(catalogoCuenta);
                     await db.SaveChangesAsync();
-
-                    if (catalogoCuenta.IdCatalogoCuentaHijo == 0)
-                    {
-                        catalogoCuenta = db.CatalogoCuenta.FirstOrDefault();
-                        if (catalogoCuenta != null)
-                        {
-                            catalogoCuenta.IdCatalogoCuentaHijo = catalogoCuenta.IdCatalogoCuenta;
-                            await db.SaveChangesAsync();
-                        }
-                    }
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
                 return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };

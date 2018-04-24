@@ -51,8 +51,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var claseArticulo = await db.ClaseArticulo.SingleOrDefaultAsync(m => m.IdClaseArticulo == id);
-                claseArticulo.TipoArticulo = await db.TipoArticulo.SingleOrDefaultAsync(c => c.IdTipoArticulo == claseArticulo.IdTipoArticulo);
+                var claseArticulo = await db.ClaseArticulo.Include(c=> c.TipoArticulo).SingleOrDefaultAsync(m => m.IdClaseArticulo == id);
                 return new Response { IsSuccess = claseArticulo != null, Message = claseArticulo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = claseArticulo };
             }
             catch (Exception ex)

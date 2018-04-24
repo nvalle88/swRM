@@ -33,7 +33,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.MotivoAsiento.OrderBy(x => x.Descripcion).ToListAsync();
+                return await db.MotivoAsiento.Include(c=> c.ConfiguracionContabilidad).OrderBy(x => x.Descripcion).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -50,7 +50,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var motivoAsiento = await db.MotivoAsiento.SingleOrDefaultAsync(m => m.IdMotivoAsiento == id);
+                var motivoAsiento = await db.MotivoAsiento.Include(c => c.ConfiguracionContabilidad).SingleOrDefaultAsync(m => m.IdMotivoAsiento == id);
                 return new Response { IsSuccess = motivoAsiento != null, Message = motivoAsiento != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = motivoAsiento };
             }
             catch (Exception ex)
@@ -76,6 +76,7 @@ namespace bd.swrm.web.Controllers.API
                         try
                         {
                             motivoAsientoActualizar.Descripcion = motivoAsiento.Descripcion;
+                            motivoAsientoActualizar.IdConfiguracionContabilidad = motivoAsiento.IdConfiguracionContabilidad;
                             db.MotivoAsiento.Update(motivoAsientoActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };

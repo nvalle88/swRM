@@ -107,13 +107,9 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.MantenimientoActivoFijo.AnyAsync(p => p.FechaMantenimiento == mantenimientoActivoFijo.FechaMantenimiento && p.IdEmpleado == mantenimientoActivoFijo.IdEmpleado && p.IdActivoFijo == mantenimientoActivoFijo.IdActivoFijo))
-                {
-                    db.MantenimientoActivoFijo.Add(mantenimientoActivoFijo);
-                    await db.SaveChangesAsync();
-                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
-                }
-                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
+                db.MantenimientoActivoFijo.Add(mantenimientoActivoFijo);
+                await db.SaveChangesAsync();
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
             catch (Exception ex)
             {

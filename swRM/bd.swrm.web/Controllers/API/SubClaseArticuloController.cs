@@ -50,9 +50,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var subClaseArticulo = await db.SubClaseArticulo.SingleOrDefaultAsync(m => m.IdSubClaseArticulo == id);
-                subClaseArticulo.ClaseArticulo = await db.ClaseArticulo.SingleOrDefaultAsync(c => c.IdClaseArticulo == subClaseArticulo.IdClaseArticulo);
-                subClaseArticulo.ClaseArticulo.TipoArticulo = await db.TipoArticulo.SingleOrDefaultAsync(c => c.IdTipoArticulo == subClaseArticulo.ClaseArticulo.IdTipoArticulo);
+                var subClaseArticulo = await db.SubClaseArticulo.Include(c=> c.ClaseArticulo).ThenInclude(c=> c.TipoArticulo).SingleOrDefaultAsync(m => m.IdSubClaseArticulo == id);
                 return new Response { IsSuccess = subClaseArticulo != null, Message = subClaseArticulo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = subClaseArticulo };
             }
             catch (Exception ex)
@@ -78,6 +76,7 @@ namespace bd.swrm.web.Controllers.API
                         try
                         {
                             SubClaseArticuloActualizar.Nombre = subClaseArticulo.Nombre;
+                            SubClaseArticuloActualizar.IdClaseArticulo = subClaseArticulo.IdClaseArticulo;
                             db.SubClaseArticulo.Update(SubClaseArticuloActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
@@ -108,6 +107,7 @@ namespace bd.swrm.web.Controllers.API
 
                 if (!await db.SubClaseArticulo.AnyAsync(c => c.Nombre.ToUpper().Trim() == subClaseArticulo.Nombre.ToUpper().Trim()))
                 {
+                    db.Entry(subClaseArticulo.ClaseArticulo).State = EntityState.Unchanged;
                     db.SubClaseArticulo.Add(subClaseArticulo);
                     await db.SaveChangesAsync();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };

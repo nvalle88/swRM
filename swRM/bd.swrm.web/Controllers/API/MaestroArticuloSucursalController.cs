@@ -65,6 +65,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
+                ModelState.Remove("Sucursal.Nombre");
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
@@ -100,6 +101,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
+                ModelState.Remove("Sucursal.Nombre");
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 

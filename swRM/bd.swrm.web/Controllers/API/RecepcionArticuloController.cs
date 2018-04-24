@@ -138,16 +138,16 @@ namespace bd.swrm.web.Controllers.API
                 {
                     try
                     {
-                        var existenciaArticuloProveeduria = await db.ExistenciaArticuloProveeduria.SingleOrDefaultAsync(c => c.IdArticulo == recepcionArticulo.IdArticulo);
-                        if (await db.AltaProveeduria.CountAsync(c=> c.IdArticulo == recepcionArticulo.IdArticulo) > 0)
-                        {
-                            if (recepcionArticulo.Cantidad < existenciaArticuloProveeduria.Existencia)
-                                return new Response { IsSuccess = false, Message = String.Format("La Cantidad no puede ser menor que la existencia real de Artículos ({0})", existenciaArticuloProveeduria.Existencia) };
-                            else
-                                existenciaArticuloProveeduria.Existencia = recepcionArticulo.Cantidad >= recepcionArticuloActualizar.Cantidad ? (recepcionArticulo.Cantidad - recepcionArticuloActualizar.Cantidad) + existenciaArticuloProveeduria.Existencia : recepcionArticulo.Cantidad - existenciaArticuloProveeduria.Existencia;
-                        }
-                        else
-                            existenciaArticuloProveeduria.Existencia = recepcionArticulo.Cantidad;
+                        //var existenciaArticuloProveeduria = await db.ExistenciaArticuloProveeduria.SingleOrDefaultAsync(c => c.IdArticulo == recepcionArticulo.IdArticulo);
+                        //if (await db.AltaProveeduria.CountAsync(c=> c.IdArticulo == recepcionArticulo.IdArticulo) > 0)
+                        //{
+                        //    if (recepcionArticulo.Cantidad < existenciaArticuloProveeduria.Existencia)
+                        //        return new Response { IsSuccess = false, Message = String.Format("La Cantidad no puede ser menor que la existencia real de Artículos ({0})", existenciaArticuloProveeduria.Existencia) };
+                        //    else
+                        //        existenciaArticuloProveeduria.Existencia = recepcionArticulo.Cantidad >= recepcionArticuloActualizar.Cantidad ? (recepcionArticulo.Cantidad - recepcionArticuloActualizar.Cantidad) + existenciaArticuloProveeduria.Existencia : recepcionArticulo.Cantidad - existenciaArticuloProveeduria.Existencia;
+                        //}
+                        //else
+                        //    existenciaArticuloProveeduria.Existencia = recepcionArticulo.Cantidad;
 
                         if (recepcionArticulo.MaestroArticuloSucursal.Minimo > recepcionArticulo.Cantidad || recepcionArticulo.MaestroArticuloSucursal.Maximo < recepcionArticulo.Cantidad)
                             return new Response { IsSuccess = false, Message = "La Cantidad no está en el rango del Mínimo y Máximo" };
@@ -182,6 +182,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
+                ModelState.Remove("MaestroArticuloSucursal.Sucursal.Nombre");
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
@@ -190,14 +191,15 @@ namespace bd.swrm.web.Controllers.API
 
                 db.Entry(recepcionArticulo.Articulo).State = EntityState.Unchanged;
                 db.Entry(recepcionArticulo.MaestroArticuloSucursal).State = EntityState.Unchanged;
-                db.Entry(recepcionArticulo).State = EntityState.Added;
+                db.Entry(recepcionArticulo.Proveedor).State = EntityState.Unchanged;
+                db.RecepcionArticulos.Add(recepcionArticulo);
                 await db.SaveChangesAsync();
 
-                var existenciaArticuloProveeduria = await db.ExistenciaArticuloProveeduria.SingleOrDefaultAsync(c => c.IdArticulo == recepcionArticulo.IdArticulo);
-                if (existenciaArticuloProveeduria != null)
-                    existenciaArticuloProveeduria.Existencia += recepcionArticulo.Cantidad;
-                else
-                    db.ExistenciaArticuloProveeduria.Add(new ExistenciaArticuloProveeduria { IdArticulo = recepcionArticulo.IdArticulo, Existencia = recepcionArticulo.Cantidad });
+                //var existenciaArticuloProveeduria = await db.ExistenciaArticuloProveeduria.SingleOrDefaultAsync(c => c.IdArticulo == recepcionArticulo.IdArticulo);
+                //if (existenciaArticuloProveeduria != null)
+                //    existenciaArticuloProveeduria.Existencia += recepcionArticulo.Cantidad;
+                //else
+                //    db.ExistenciaArticuloProveeduria.Add(new ExistenciaArticuloProveeduria { IdArticulo = recepcionArticulo.IdArticulo, Existencia = recepcionArticulo.Cantidad });
 
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };

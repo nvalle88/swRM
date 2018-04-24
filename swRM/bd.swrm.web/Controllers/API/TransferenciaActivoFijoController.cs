@@ -62,16 +62,16 @@ namespace bd.swrm.web.Controllers.API
         
         [HttpPost]
         [Route("InsertarTransferenciaActivoFijo")]
-        public async Task<Response> PostTransferenciaActivoFijo([FromBody]TransferenciaActivoFijo _TransferenciaActivoFijo)
+        public async Task<Response> PostTransferenciaActivoFijo([FromBody]TransferenciaActivoFijo transferenciaActivoFijo)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.TransferenciaActivoFijo.AnyAsync(p => p.IdEmpleado == _TransferenciaActivoFijo.IdEmpleado && p.IdEmpleadoRecibo == _TransferenciaActivoFijo.IdEmpleadoRecibo && p.IdMotivoTransferencia == _TransferenciaActivoFijo.IdMotivoTransferencia && p.FechaTransferencia == _TransferenciaActivoFijo.FechaTransferencia && p.Destino == _TransferenciaActivoFijo.Destino && p.Origen == _TransferenciaActivoFijo.Origen && p.Observaciones == _TransferenciaActivoFijo.Observaciones))
+                if (!await db.TransferenciaActivoFijo.AnyAsync(p => p.IdEmpleadoRegistra == transferenciaActivoFijo.IdEmpleadoRegistra && p.IdEmpleadoResponsableEnvio == transferenciaActivoFijo.IdEmpleadoResponsableEnvio && p.IdEmpleadoResponsableRecibo == transferenciaActivoFijo.IdEmpleadoResponsableRecibo && p.IdEmpleadoRecibo == transferenciaActivoFijo.IdEmpleadoResponsableRecibo && p.IdMotivoTransferencia == transferenciaActivoFijo.IdMotivoTransferencia && p.FechaTransferencia == transferenciaActivoFijo.FechaTransferencia && p.Destino == transferenciaActivoFijo.Destino && p.Origen == transferenciaActivoFijo.Origen && p.Observaciones == transferenciaActivoFijo.Observaciones))
                 {
-                    db.TransferenciaActivoFijo.Add(_TransferenciaActivoFijo);
+                    db.TransferenciaActivoFijo.Add(transferenciaActivoFijo);
                     await db.SaveChangesAsync();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
@@ -85,34 +85,38 @@ namespace bd.swrm.web.Controllers.API
         }
         
         [HttpPut("{id}")]
-        public async Task<Response> PutTransferenciaActivoFijo([FromRoute] int id, [FromBody]TransferenciaActivoFijo _TransferenciaActivoFijo)
+        public async Task<Response> PutTransferenciaActivoFijo([FromRoute] int id, [FromBody]TransferenciaActivoFijo transferenciaActivoFijo)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var _TransferenciaActivoFijoActualizar = await db.TransferenciaActivoFijo.Where(x => x.IdTransferenciaActivoFijo == id).FirstOrDefaultAsync();
-                if (_TransferenciaActivoFijoActualizar != null)
+                if (!await db.TransferenciaActivoFijo.Where(p => p.IdEmpleadoRegistra == transferenciaActivoFijo.IdEmpleadoRegistra && p.IdEmpleadoResponsableEnvio == transferenciaActivoFijo.IdEmpleadoResponsableEnvio && p.IdEmpleadoResponsableRecibo == transferenciaActivoFijo.IdEmpleadoResponsableRecibo && p.IdEmpleadoRecibo == transferenciaActivoFijo.IdEmpleadoResponsableRecibo && p.IdMotivoTransferencia == transferenciaActivoFijo.IdMotivoTransferencia && p.FechaTransferencia == transferenciaActivoFijo.FechaTransferencia && p.Destino == transferenciaActivoFijo.Destino && p.Origen == transferenciaActivoFijo.Origen && p.Observaciones == transferenciaActivoFijo.Observaciones).AnyAsync(c => c.IdTransferenciaActivoFijo != transferenciaActivoFijo.IdTransferenciaActivoFijo))
                 {
-                    try
+                    var transferenciaActivoFijoActualizar = await db.TransferenciaActivoFijo.Where(x => x.IdTransferenciaActivoFijo == id).FirstOrDefaultAsync();
+                    if (transferenciaActivoFijoActualizar != null)
                     {
-                        _TransferenciaActivoFijoActualizar.IdEmpleado = _TransferenciaActivoFijo.IdEmpleado;
-                        _TransferenciaActivoFijoActualizar.IdEmpleadoRecibo = _TransferenciaActivoFijo.IdEmpleadoRecibo;
-                        _TransferenciaActivoFijoActualizar.IdMotivoTransferencia = _TransferenciaActivoFijo.IdMotivoTransferencia;
-                        _TransferenciaActivoFijoActualizar.FechaTransferencia = _TransferenciaActivoFijo.FechaTransferencia;
-                        _TransferenciaActivoFijoActualizar.Origen = _TransferenciaActivoFijo.Origen;
-                        _TransferenciaActivoFijoActualizar.Destino = _TransferenciaActivoFijo.Destino;
-                        _TransferenciaActivoFijoActualizar.Observaciones = _TransferenciaActivoFijo.Observaciones;
-                        
-                        db.TransferenciaActivoFijo.Update(_TransferenciaActivoFijoActualizar);
-                        await db.SaveChangesAsync();
-                        return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
-                    }
-                    catch (Exception ex)
-                    {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                        return new Response { IsSuccess = false, Message = Mensaje.Error };
+                        try
+                        {
+                            transferenciaActivoFijoActualizar.IdEmpleadoRegistra = transferenciaActivoFijo.IdEmpleadoRegistra;
+                            transferenciaActivoFijoActualizar.IdEmpleadoResponsableEnvio = transferenciaActivoFijo.IdEmpleadoResponsableEnvio;
+                            transferenciaActivoFijoActualizar.IdEmpleadoResponsableRecibo = transferenciaActivoFijo.IdEmpleadoResponsableRecibo;
+                            transferenciaActivoFijoActualizar.IdEmpleadoRecibo = transferenciaActivoFijo.IdEmpleadoRecibo;
+                            transferenciaActivoFijoActualizar.IdMotivoTransferencia = transferenciaActivoFijo.IdMotivoTransferencia;
+                            transferenciaActivoFijoActualizar.FechaTransferencia = transferenciaActivoFijo.FechaTransferencia;
+                            transferenciaActivoFijoActualizar.Origen = transferenciaActivoFijo.Origen;
+                            transferenciaActivoFijoActualizar.Destino = transferenciaActivoFijo.Destino;
+                            transferenciaActivoFijoActualizar.Observaciones = transferenciaActivoFijo.Observaciones;
+                            db.TransferenciaActivoFijo.Update(transferenciaActivoFijoActualizar);
+                            await db.SaveChangesAsync();
+                            return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                        }
+                        catch (Exception ex)
+                        {
+                            await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                            return new Response { IsSuccess = false, Message = Mensaje.Error };
+                        }
                     }
                 }
                 return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
@@ -146,11 +150,9 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(TransferenciaActivoFijo _TransferenciaActivoFijo)
+        public Response Existe(TransferenciaActivoFijo transferenciaActivoFijo)
         {
-            var loglevelrespuesta = db.TransferenciaActivoFijo.Where(p => p.IdEmpleado == _TransferenciaActivoFijo.IdEmpleado && p.IdEmpleadoRecibo == _TransferenciaActivoFijo.IdEmpleadoRecibo && p.IdMotivoTransferencia == _TransferenciaActivoFijo.IdMotivoTransferencia
-                                        && p.FechaTransferencia == _TransferenciaActivoFijo.FechaTransferencia && p.Destino == _TransferenciaActivoFijo.Destino && p.Origen == _TransferenciaActivoFijo.Origen
-                                        && p.Observaciones == _TransferenciaActivoFijo.Observaciones).FirstOrDefault();
+            var loglevelrespuesta = db.TransferenciaActivoFijo.Where(p => p.IdEmpleadoRegistra == transferenciaActivoFijo.IdEmpleadoRegistra && p.IdEmpleadoResponsableEnvio == transferenciaActivoFijo.IdEmpleadoResponsableEnvio && p.IdEmpleadoResponsableRecibo == transferenciaActivoFijo.IdEmpleadoResponsableRecibo && p.IdEmpleadoRecibo == transferenciaActivoFijo.IdEmpleadoResponsableRecibo && p.IdMotivoTransferencia == transferenciaActivoFijo.IdMotivoTransferencia && p.FechaTransferencia == transferenciaActivoFijo.FechaTransferencia && p.Destino == transferenciaActivoFijo.Destino && p.Origen == transferenciaActivoFijo.Origen && p.Observaciones == transferenciaActivoFijo.Observaciones).FirstOrDefault();
             return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }

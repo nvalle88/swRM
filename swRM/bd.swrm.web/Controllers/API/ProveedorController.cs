@@ -76,6 +76,9 @@ namespace bd.swrm.web.Controllers.API
                         try
                         {
                             ProveedorActualizar.Nombre = proveedor.Nombre;
+                            ProveedorActualizar.Apellidos = proveedor.Apellidos;
+                            ProveedorActualizar.Identificacion = proveedor.Identificacion;
+                            ProveedorActualizar.Direccion = proveedor.Direccion;
                             db.Proveedor.Update(ProveedorActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };

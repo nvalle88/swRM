@@ -169,12 +169,12 @@ namespace bd.swrm.datos
 
                 entity.Property(e => e.ValorH).HasColumnType("decimal");
 
-                entity.HasOne(d => d.IdCatalogoCuentaDNavigation)
+                entity.HasOne(d => d.CatalogoCuentaD)
                     .WithMany(p => p.ConfiguracionContabilidadIdCatalogoCuentaDNavigation)
                     .HasForeignKey(d => d.IdCatalogoCuentaD)
                     .HasConstraintName("RefCatalogoCuenta467");
 
-                entity.HasOne(d => d.IdCatalogoCuentaHNavigation)
+                entity.HasOne(d => d.CatalogoCuentaH)
                     .WithMany(p => p.ConfiguracionContabilidadIdCatalogoCuentaHNavigation)
                     .HasForeignKey(d => d.IdCatalogoCuentaH)
                     .HasConstraintName("RefCatalogoCuenta468");
@@ -249,7 +249,7 @@ namespace bd.swrm.datos
 
                 entity.Property(e => e.IdConfiguracionContabilidad).HasColumnName("idConfiguracionContabilidad");
 
-                entity.HasOne(d => d.IdConfiguracionContabilidadNavigation)
+                entity.HasOne(d => d.ConfiguracionContabilidad)
                     .WithMany(p => p.MotivoAsiento)
                     .HasForeignKey(d => d.IdConfiguracionContabilidad)
                     .OnDelete(DeleteBehavior.Restrict)
@@ -298,8 +298,8 @@ namespace bd.swrm.datos
 
                 entity.Property(e => e.IdCatalogoCuentaHijo).HasColumnName("idCatalogoCuentaHijo");
 
-                entity.HasOne(d => d.IdCatalogoCuentaHijoNavigation)
-                    .WithMany(p => p.InverseIdCatalogoCuentaHijoNavigation)
+                entity.HasOne(d => d.CatalogoCuentaHijo)
+                    .WithMany(p => p.CatalogosCuenta)
                     .HasForeignKey(d => d.IdCatalogoCuentaHijo)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("RefCatalogoCuenta466");
@@ -899,7 +899,6 @@ namespace bd.swrm.datos
                     .HasMaxLength(20);
             });
 
-
             modelBuilder.Entity<TranferenciaArticulo>(entity =>
             {
                 entity.HasKey(e => e.IdTranferenciaArticulo)
@@ -923,7 +922,6 @@ namespace bd.swrm.datos
 
                 entity.Property(e => e.Fecha).HasMaxLength(10);
 
-
                 entity.HasOne(d => d.Articulo)
                     .WithMany(p => p.TranferenciaArticulo)
                     .HasForeignKey(d => d.IdArticulo)
@@ -943,20 +941,52 @@ namespace bd.swrm.datos
                 entity.HasKey(e => e.IdTransferenciaActivoFijo)
                     .HasName("PK_TransferenciaActivoFijo");
 
-                entity.HasIndex(e => e.IdEmpleado)
+                entity.HasIndex(e => e.IdEmpleadoRegistra)
+                    .HasName("Ref15169");
+
+                entity.HasIndex(e => e.IdEmpleadoResponsableEnvio)
                     .HasName("IX_TransferenciaActivoFijo_IdEmpleado");
+
+                entity.HasIndex(e => e.IdEmpleadoResponsableRecibo)
+                    .HasName("Ref15171");
 
                 entity.Property(e => e.Destino)
                     .IsRequired()
                     .HasMaxLength(50);
 
+                entity.Property(e => e.IdMotivoTransferencia).HasColumnName("idMotivoTransferencia");
+
+                entity.Property(e => e.Observaciones).HasColumnType("text");
+
                 entity.Property(e => e.Origen).HasMaxLength(50);
 
-                entity.Property(e => e.Destino).HasMaxLength(50);
+                entity.HasOne(d => d.EmpleadoRecibo)
+                    .WithMany(p => p.TransferenciaActivoFijoIdEmpleadoReciboNavigation)
+                    .HasForeignKey(d => d.IdEmpleadoRecibo)
+                    .HasConstraintName("FK_TransferenciaActivoFijo_Empleado3");
+
+                entity.HasOne(d => d.EmpleadoRegistra)
+                    .WithMany(p => p.TransferenciaActivoFijoIdEmpleadoRegistraNavigation)
+                    .HasForeignKey(d => d.IdEmpleadoRegistra)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_TransferenciaActivoFijo_Empleado");
+
+                entity.HasOne(d => d.EmpleadoResponsableEnvio)
+                    .WithMany(p => p.TransferenciaActivoFijoIdEmpleadoResponsableEnvioNavigation)
+                    .HasForeignKey(d => d.IdEmpleadoResponsableEnvio)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_TransferenciaActivoFijo_Empleado1");
+
+                entity.HasOne(d => d.EmpleadoResponsableRecibo)
+                    .WithMany(p => p.TransferenciaActivoFijoIdEmpleadoResponsableReciboNavigation)
+                    .HasForeignKey(d => d.IdEmpleadoResponsableRecibo)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_TransferenciaActivoFijo_Empleado2");
 
                 entity.HasOne(d => d.MotivoTransferencia)
-                  .WithMany(p => p.TransferenciaActivoFijo)
-                  .HasForeignKey(d => d.IdMotivoTransferencia);
+                    .WithMany(p => p.TransferenciaActivoFijo)
+                    .HasForeignKey(d => d.IdMotivoTransferencia)
+                    .HasConstraintName("FK_TransferenciaActivoFijo_MotivoTransferencia");
             });
 
             modelBuilder.Entity<TransferenciaActivoFijoDetalle>(entity =>
