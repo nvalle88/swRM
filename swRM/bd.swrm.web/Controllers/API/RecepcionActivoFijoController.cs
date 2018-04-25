@@ -13,6 +13,7 @@ using bd.swrm.entidades.Enumeradores;
 using bd.log.guardar.Enumeradores;
 using bd.log.guardar.Utiles;
 using bd.swrm.entidades.Utils;
+using System.Linq.Expressions;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -31,9 +32,21 @@ namespace bd.swrm.web.Controllers.API
         [Route("ListarRecepcionActivoFijo")]
         public async Task<List<RecepcionActivoFijoDetalle>> GetRecepcionActivoFijo()
         {
+            return await ListadoRecepcionActivoFijo();
+        }
+
+        [HttpGet]
+        [Route("ListarRecepcionActivoFijoPorEstado/{estado}")]
+        public async Task<List<RecepcionActivoFijoDetalle>> GetRecepcionActivoFijoPorEstado(string estado)
+        {
+            return await ListadoRecepcionActivoFijo(c=> c.Estado.Nombre == estado);
+        }
+
+        private async Task<List<RecepcionActivoFijoDetalle>> ListadoRecepcionActivoFijo(Expression<Func<RecepcionActivoFijoDetalle, bool>> predicado = null)
+        {
             try
             {
-                return await (from recAFD in db.RecepcionActivoFijoDetalle
+                var lista = (from recAFD in db.RecepcionActivoFijoDetalle
                               join recAF in db.RecepcionActivoFijo on recAFD.IdRecepcionActivoFijo equals recAF.IdRecepcionActivoFijo
                               join af in db.ActivoFijo on recAFD.IdActivoFijo equals af.IdActivoFijo
                               join est in db.Estado on recAFD.IdEstado equals est.IdEstado
@@ -69,7 +82,7 @@ namespace bd.swrm.web.Controllers.API
                               //join factura in db.Factura on resAFA.IdFactura equals factura.IdFactura
                               //into tmp1
                               //from resFac in tmp1.DefaultIfEmpty()
-                              
+
                               //let listaMantenimientoActivo = (from mant in db.MantenimientoActivoFijo
                               //                                join empleadMant in db.Empleado on mant.IdEmpleado equals empleadMant.IdEmpleado
                               //                                where mant.IdActivoFijo == af.IdActivoFijo
@@ -84,7 +97,7 @@ namespace bd.swrm.web.Controllers.API
                               //                          join afaf in db.ActivoFijo on afadd.idActivoFijoOrigen equals afaf.IdActivoFijo
                               //                          where afadd.idActivoFijoOrigen == af.IdActivoFijo
                               //                          select new ActivosFijosAdicionados { idAdicion = afadd.idAdicion, idActivoFijoOrigen = afadd.idActivoFijoOrigen, idActivoFijoDestino = afadd.idActivoFijoDestino, fechaAdicion = afadd.fechaAdicion }).ToList()
-
+                              
                               select new RecepcionActivoFijoDetalle
                               {
                                   IdRecepcionActivoFijoDetalle = recAFD.IdRecepcionActivoFijoDetalle,
@@ -95,7 +108,8 @@ namespace bd.swrm.web.Controllers.API
                                   RecepcionActivoFijo = new RecepcionActivoFijo { Fondo = recAF.Fondo, OrdenCompra = recAF.OrdenCompra, Cantidad = recAF.Cantidad, ValidacionTecnica = recAF.ValidacionTecnica, FechaRecepcion = recAF.FechaRecepcion, IdSubClaseActivoFijo = recAF.IdSubClaseActivoFijo, SubClaseActivoFijo = new SubClaseActivoFijo { IdSubClaseActivoFijo = subCAf.IdSubClaseActivoFijo, Nombre = subCAf.Nombre, IdClaseActivoFijo = subCAf.IdClaseActivoFijo, ClaseActivoFijo = new ClaseActivoFijo { IdClaseActivoFijo = cAF.IdClaseActivoFijo, Nombre = cAF.Nombre, IdTipoActivoFijo = cAF.IdTipoActivoFijo, TipoActivoFijo = new TipoActivoFijo { IdTipoActivoFijo = tAF.IdTipoActivoFijo, Nombre = tAF.Nombre } } }, IdProveedor = recAF.IdProveedor, Proveedor = new Proveedor { IdProveedor = prov.IdProveedor, Nombre = prov.Nombre, Apellidos = prov.Apellidos/*, Factura = listaFacturasProveedor*/ }, Empleado = new Empleado { IdEmpleado = emp.IdEmpleado, IdPersona = emp.IdPersona, Persona = new Persona { IdPersona = pers.IdPersona, Nombres = pers.Nombres, Apellidos = pers.Apellidos, Identificacion = pers.Identificacion, CorreoPrivado = pers.CorreoPrivado, FechaNacimiento = pers.FechaNacimiento, LugarTrabajo = pers.LugarTrabajo, TelefonoCasa = pers.TelefonoCasa, TelefonoPrivado = pers.TelefonoPrivado } }, IdMotivoRecepcion = recAF.IdMotivoRecepcion, MotivoRecepcion = new MotivoRecepcion { IdMotivoRecepcion = motRec.IdMotivoRecepcion, Descripcion = motRec.Descripcion } },
                                   ActivoFijo = new ActivoFijo { Nombre = af.Nombre, Serie = af.Serie, Ubicacion = af.Ubicacion, ValorCompra = af.ValorCompra, LibroActivoFijo = new LibroActivoFijo { IdLibroActivoFijo = libAF.IdLibroActivoFijo, IdSucursal = libAF.IdSucursal, Sucursal = new Sucursal { IdSucursal = suc.IdSucursal, IdCiudad = suc.IdCiudad, Nombre = suc.Nombre, Ciudad = new Ciudad { IdCiudad = ciud.IdCiudad, Nombre = ciud.Nombre, IdProvincia = ciud.IdProvincia, Provincia = new Provincia { IdProvincia = provin.IdProvincia, Nombre = provin.Nombre, IdPais = provin.IdPais, Pais = new Pais { IdPais = pais.IdPais, Nombre = pais.Nombre } } } } }, IdCodigoActivoFijo = af.IdCodigoActivoFijo, CodigoActivoFijo = new CodigoActivoFijo { IdCodigoActivoFijo = codAF.IdCodigoActivoFijo, Codigosecuencial = codAF.Codigosecuencial, CodigoBarras = codAF.CodigoBarras }, IdUnidadMedida = af.IdUnidadMedida, UnidadMedida = new UnidadMedida { IdUnidadMedida = um.IdUnidadMedida, Nombre = um.Nombre }, IdModelo = af.IdModelo, Modelo = new Modelo { IdModelo = mod.IdModelo, Nombre = mod.Nombre, IdMarca = mod.IdMarca, Marca = new Marca { IdMarca = marca.IdMarca, Nombre = marca.Nombre }, }, /*MantenimientoActivoFijo = listaMantenimientoActivo, ActivosFijosAlta = resAFA != null ? new ActivosFijosAlta { IdActivoFijo = resAFA.IdActivoFijo, IdFactura = resAFA.IdFactura, FechaAlta = resAFA.FechaAlta, Factura = resFac != null ? new Factura { IdFactura = resFac.IdFactura, Numero = resFac.Numero } : null } : null, ActivosFijosBaja = resAFB != null ? new ActivosFijosBaja { IdActivo = resAFB.IdActivo, FechaBaja = resAFB.FechaBaja, IdMotivoBaja = resAFB.IdMotivoBaja, ActivoFijoMotivoBaja = resMotivoBaja != null? new ActivoFijoMotivoBaja { IdActivoFijoMotivoBaja = resMotivoBaja.IdActivoFijoMotivoBaja, Nombre = resMotivoBaja.Nombre } : null } : null*/},
                                   Estado = new Estado { Nombre = est.Nombre }
-                              }).ToListAsync();
+                              });
+                return await (predicado != null ? lista.Where(predicado).ToListAsync() : lista.ToListAsync());
             }
             catch (Exception ex)
             {
@@ -103,7 +117,7 @@ namespace bd.swrm.web.Controllers.API
                 return new List<RecepcionActivoFijoDetalle>();
             }
         }
-        
+
         [HttpGet("{id}")]
         public async Task<Response> GetRecepcionActivoFijoDetalle([FromRoute] int id)
         {
