@@ -26,8 +26,7 @@ namespace bd.swrm.web.Controllers.API
         {
             this.db = db;
         }
-
-        // GET: api/ListarArticulos
+        
         [HttpGet]
         [Route("ListarArticulos")]
         public async Task<List<Articulo>> GetArticulo()
@@ -38,144 +37,82 @@ namespace bd.swrm.web.Controllers.API
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new List<Articulo>();
             }
         }
 
-        // GET: api/Articulo/5
+        [HttpGet]
+        [Route("ListarArticulosPorSubClase/{idSubClaseArticulo}")]
+        public async Task<List<Articulo>> GetArticuloPorSubClase(int idSubClaseArticulo)
+        {
+            try
+            {
+                return await db.Articulo.Where(c=> c.IdSubClaseArticulo == idSubClaseArticulo).OrderBy(x => x.Nombre).Include(c => c.SubClaseArticulo).ThenInclude(c => c.ClaseArticulo).ThenInclude(c => c.TipoArticulo).Include(c => c.UnidadMedida).Include(c => c.Modelo).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<Articulo>();
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<Response> GetArticulo([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var articulo = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
-
-                if (articulo == null)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.RegistroNoEncontrado,
-                    };
-                }
-
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio,
-                    Resultado = articulo,
-                };
+                var articulo = await db.Articulo.Include(c=> c.SubClaseArticulo).ThenInclude(c=> c.ClaseArticulo).ThenInclude(c=> c.TipoArticulo).Include(c=> c.Modelo).ThenInclude(c=> c.Marca).SingleOrDefaultAsync(m => m.IdArticulo == id);
+                return new Response { IsSuccess = articulo != null, Message = articulo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = articulo };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        // PUT: api/Articulo/5
+        
         [HttpPut("{id}")]
         public async Task<Response> PutArticulo([FromRoute] int id, [FromBody] Articulo articulo)
         {
             try
             {
                 if (!ModelState.IsValid)
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
+                if (!await db.Articulo.Where(c => c.Nombre.ToUpper().Trim() == articulo.Nombre.ToUpper().Trim()).AnyAsync(c => c.IdArticulo != articulo.IdArticulo))
                 {
-                    return new Response
+                    var articuloActualizar = await db.Articulo.Where(x => x.IdArticulo == id).FirstOrDefaultAsync();
+                    if (articuloActualizar != null)
                     {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
-
-                var articuloActualizar = await db.Articulo.Where(x => x.IdArticulo == id).FirstOrDefaultAsync();
-                if (articuloActualizar != null)
-                {
-                    try
-                    {
-                        articuloActualizar.Nombre = articulo.Nombre;
-                        articuloActualizar.IdSubClaseArticulo = articulo.IdSubClaseArticulo;
-                        articuloActualizar.IdUnidadMedida = articulo.IdUnidadMedida;
-                        articuloActualizar.IdModelo = articulo.IdModelo;
-                        db.Articulo.Update(articuloActualizar);
-                        await db.SaveChangesAsync();
-
-                        return new Response
+                        try
                         {
-                            IsSuccess = true,
-                            Message = Mensaje.Satisfactorio,
-                        };
-
-                    }
-                    catch (Exception ex)
-                    {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                            articuloActualizar.Nombre = articulo.Nombre;
+                            articuloActualizar.IdSubClaseArticulo = articulo.IdSubClaseArticulo;
+                            articuloActualizar.IdUnidadMedida = articulo.IdUnidadMedida;
+                            articuloActualizar.IdModelo = articulo.IdModelo;
+                            db.Articulo.Update(articuloActualizar);
+                            await db.SaveChangesAsync();
+                            return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                        }
+                        catch (Exception ex)
                         {
-                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                            ExceptionTrace = ex.Message,
-                            Message = Mensaje.Excepcion,
-                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                            UserName = "",
-
-                        });
-                        return new Response
-                        {
-                            IsSuccess = false,
-                            Message = Mensaje.Error,
-                        };
+                            await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                            return new Response { IsSuccess = false, Message = Mensaje.Error };
+                        }
                     }
                 }
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
             }
             catch (Exception)
             {
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Excepcion
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
-
-        // POST: api/Articulo
+        
         [HttpPost]
         [Route("InsertarArticulo")]
         public async Task<Response> PostArticulo([FromBody] Articulo articulo)
@@ -183,131 +120,53 @@ namespace bd.swrm.web.Controllers.API
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = Existe(articulo);
-                if (!respuesta.IsSuccess)
+                if (!await db.Articulo.AnyAsync(c => c.Nombre.ToUpper().Trim() == articulo.Nombre.ToUpper().Trim()))
                 {
+                    db.Entry(articulo.Modelo).State = EntityState.Unchanged;
+                    db.Entry(articulo.SubClaseArticulo).State = EntityState.Unchanged;
                     db.Articulo.Add(articulo);
                     await db.SaveChangesAsync();
-                    return new Response
-                    {
-                        IsSuccess = true,
-                        Message = Mensaje.Satisfactorio
-                    };
+                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
-
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        // DELETE: api/Articulo/5
+        
         [HttpDelete("{id}")]
         public async Task<Response> DeleteArticulo([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
                 var respuesta = await db.Articulo.SingleOrDefaultAsync(m => m.IdArticulo == id);
                 if (respuesta == null)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.RegistroNoEncontrado,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
+
                 db.Articulo.Remove(respuesta);
                 await db.SaveChangesAsync();
-
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio,
-                };
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
-        }
-
-        private bool ArticuloExists(string nombre)
-        {
-            return db.Articulo.Any(e => e.Nombre == nombre);
         }
 
         public Response Existe(Articulo articulo)
         {
             var bdd = articulo.Nombre.ToUpper().TrimEnd().TrimStart();
             var loglevelrespuesta = db.Articulo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
-            if (loglevelrespuesta != null)
-            {
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.ExisteRegistro,
-                    Resultado = null,
-                };
-
-            }
-
-            return new Response
-            {
-                IsSuccess = false,
-                Resultado = loglevelrespuesta,
-            };
+            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }
 }

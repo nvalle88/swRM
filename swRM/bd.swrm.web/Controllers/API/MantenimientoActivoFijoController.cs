@@ -26,8 +26,7 @@ namespace bd.swrm.web.Controllers.API
         {
             this.db = db;
         }
-
-        // GET: api/ListarMantenimientosActivoFijo
+        
         [HttpGet]
         [Route("ListarMantenimientosActivoFijo")]
         public async Task<List<MantenimientoActivoFijo>> GetMantenimientoActivoFijo()
@@ -38,150 +37,67 @@ namespace bd.swrm.web.Controllers.API
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new List<MantenimientoActivoFijo>();
             }
         }
-
-        // GET: api/MantenimientoActivoFijo/5
+        
         [HttpGet("{id}")]
         public async Task<Response> GetMantenimientoActivoFijo([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var MantenimientoActivoFijo = await db.MantenimientoActivoFijo.SingleOrDefaultAsync(m => m.IdMantenimientoActivoFijo == id);
-
-                if (MantenimientoActivoFijo == null)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.RegistroNoEncontrado,
-                    };
-                }
-
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio,
-                    Resultado = MantenimientoActivoFijo,
-                };
+                var mantenimientoActivoFijo = await db.MantenimientoActivoFijo.SingleOrDefaultAsync(m => m.IdMantenimientoActivoFijo == id);
+                return new Response { IsSuccess = mantenimientoActivoFijo != null, Message = mantenimientoActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = mantenimientoActivoFijo };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        // PUT: api/MantenimientoActivoFijo/5
+        
         [HttpPut("{id}")]
         public async Task<Response> PutMantenimientoActivoFijo([FromRoute] int id, [FromBody] MantenimientoActivoFijo mantenimientoActivoFijo)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var MantenimientoActivoFijoActualizar = await db.MantenimientoActivoFijo.Where(x => x.IdMantenimientoActivoFijo == id).FirstOrDefaultAsync();
-                if (MantenimientoActivoFijoActualizar != null)
+                var mantenimientoActivoFijoActualizar = await db.MantenimientoActivoFijo.Where(x => x.IdMantenimientoActivoFijo == id).FirstOrDefaultAsync();
+                if (mantenimientoActivoFijoActualizar != null)
                 {
                     try
                     {
-                        MantenimientoActivoFijoActualizar.FechaMantenimiento = mantenimientoActivoFijo.FechaMantenimiento;
-                        MantenimientoActivoFijoActualizar.FechaDesde = mantenimientoActivoFijo.FechaDesde;
-                        MantenimientoActivoFijoActualizar.FechaHasta = mantenimientoActivoFijo.FechaHasta;
-                        MantenimientoActivoFijoActualizar.Valor = mantenimientoActivoFijo.Valor;
-                        MantenimientoActivoFijoActualizar.Observaciones = mantenimientoActivoFijo.Observaciones;
-                        MantenimientoActivoFijoActualizar.IdEmpleado = mantenimientoActivoFijo.IdEmpleado;
-                        MantenimientoActivoFijoActualizar.IdActivoFijo = mantenimientoActivoFijo.IdActivoFijo;
-                        db.MantenimientoActivoFijo.Update(MantenimientoActivoFijoActualizar);
+                        mantenimientoActivoFijoActualizar.FechaMantenimiento = mantenimientoActivoFijo.FechaMantenimiento;
+                        mantenimientoActivoFijoActualizar.FechaDesde = mantenimientoActivoFijo.FechaDesde;
+                        mantenimientoActivoFijoActualizar.FechaHasta = mantenimientoActivoFijo.FechaHasta;
+                        mantenimientoActivoFijoActualizar.Valor = mantenimientoActivoFijo.Valor;
+                        mantenimientoActivoFijoActualizar.Observaciones = mantenimientoActivoFijo.Observaciones;
+                        mantenimientoActivoFijoActualizar.IdEmpleado = mantenimientoActivoFijo.IdEmpleado;
+                        mantenimientoActivoFijoActualizar.IdActivoFijo = mantenimientoActivoFijo.IdActivoFijo;
+                        db.MantenimientoActivoFijo.Update(mantenimientoActivoFijoActualizar);
                         await db.SaveChangesAsync();
-
-                        return new Response
-                        {
-                            IsSuccess = true,
-                            Message = Mensaje.ModeloInvalido,
-                        };
-
+                        return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                     }
                     catch (Exception ex)
                     {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                        {
-                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                            ExceptionTrace = ex.Message,
-                            Message = Mensaje.Excepcion,
-                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                            UserName = "",
-
-                        });
-                        return new Response
-                        {
-                            IsSuccess = false,
-                            Message = Mensaje.Error,
-                        };
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                        return new Response { IsSuccess = false, Message = Mensaje.Error };
                     }
                 }
-
-
-
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
             }
             catch (Exception)
             {
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Excepcion
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
-
-        // POST: api/MantenimientoActivoFijo
+        
         [HttpPost]
         [Route("InsertarMantenimientoActivoFijo")]
         public async Task<Response> PostMantenimientoActivoFijo([FromBody] MantenimientoActivoFijo mantenimientoActivoFijo)
@@ -189,126 +105,47 @@ namespace bd.swrm.web.Controllers.API
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = Existe(mantenimientoActivoFijo);
-                if (!respuesta.IsSuccess)
-                {
-                    db.MantenimientoActivoFijo.Add(mantenimientoActivoFijo);
-                    await db.SaveChangesAsync();
-                    return new Response
-                    {
-                        IsSuccess = true,
-                        Message = Mensaje.Satisfactorio
-                    };
-                }
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
-
+                db.MantenimientoActivoFijo.Add(mantenimientoActivoFijo);
+                await db.SaveChangesAsync();
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        // DELETE: api/MantenimientoActivoFijo/5
+        
         [HttpDelete("{id}")]
         public async Task<Response> DeleteMantenimientoActivoFijo([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
                 var respuesta = await db.MantenimientoActivoFijo.SingleOrDefaultAsync(m => m.IdMantenimientoActivoFijo == id);
                 if (respuesta == null)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.RegistroNoEncontrado,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
+
                 db.MantenimientoActivoFijo.Remove(respuesta);
                 await db.SaveChangesAsync();
-
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio,
-                };
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
 
         public Response Existe(MantenimientoActivoFijo mantenimientoActivoFijo)
         {
             var bdd = mantenimientoActivoFijo.FechaMantenimiento;
-            var MantenimientoActivoFijoRespuesta = db.MantenimientoActivoFijo.Where(p => p.FechaMantenimiento == bdd && p.IdEmpleado == mantenimientoActivoFijo.IdEmpleado && p.IdActivoFijo == mantenimientoActivoFijo.IdActivoFijo).FirstOrDefault();
-            if (MantenimientoActivoFijoRespuesta != null)
-            {
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.ExisteRegistro,
-                    Resultado = null,
-                };
-
-            }
-
-            return new Response
-            {
-                IsSuccess = false,
-                Resultado = MantenimientoActivoFijoRespuesta,
-            };
+            var loglevelrespuesta = db.MantenimientoActivoFijo.Where(p => p.FechaMantenimiento == bdd && p.IdEmpleado == mantenimientoActivoFijo.IdEmpleado && p.IdActivoFijo == mantenimientoActivoFijo.IdActivoFijo).FirstOrDefault();
+            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }
 }

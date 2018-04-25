@@ -53,7 +53,7 @@ namespace bd.swrm.entidades.Negocio
 
         //Propiedades Virtuales Referencias a otras clases
 
-        [Display(Name = "Árticulo:")]
+        [Display(Name = "Artículo:")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int IdArticulo { get; set; }
         public virtual Articulo Articulo { get; set; }

@@ -26,8 +26,7 @@ namespace bd.swrm.web.Controllers.API
         {
             this.db = db;
         }
-
-        // GET: api/ActivosFijosAdicionados
+        
         [HttpGet]
         [Route("ListarActivosFijosAdicionados")]
         public async Task<List<ActivosFijosAdicionados>> GetActivosFijosAdicionados()
@@ -38,253 +37,111 @@ namespace bd.swrm.web.Controllers.API
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new List<ActivosFijosAdicionados>();
             }
         }
-
-        // GET: api/ActivosFijosAdicionados/5
+        
         [HttpGet("{id}")]
         public async Task<Response> GetActivosFijosAdicionados([FromRoute]int id)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var _ActivosFijosAdicionados = await db.ActivosFijosAdicionados.SingleOrDefaultAsync(m => m.idAdicion == id);
-
-                if (_ActivosFijosAdicionados == null)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.RegistroNoEncontrado,
-                    };
-                }
-
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio,
-                    Resultado = _ActivosFijosAdicionados,
-                };
+                var activosFijosAdicionados = await db.ActivosFijosAdicionados.SingleOrDefaultAsync(m => m.idAdicion == id);
+                return new Response { IsSuccess = activosFijosAdicionados != null, Message = activosFijosAdicionados != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = activosFijosAdicionados };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
-            }
-        }
-
-        // POST: api/ActivosFijosAdicionados
-        [HttpPost]
-        [Route("InsertarActivosFijosAdicionados")]
-        public async Task<Response> PostMarca([FromBody]ActivosFijosAdicionados _ActivosFijosAdicionados)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido
-                    };
-                }
-
-                var respuesta = Existe(_ActivosFijosAdicionados);
-                if (!respuesta.IsSuccess)
-                {
-                    db.ActivosFijosAdicionados.Add(_ActivosFijosAdicionados);
-                    await db.SaveChangesAsync();
-                    return new Response
-                    {
-                        IsSuccess = true,
-                        Message = Mensaje.Satisfactorio
-                    };
-                }
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
-
-            }
-            catch (Exception ex)
-            {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
-            }
-        }
-
-        // PUT: api/ActivosFijosAdicionados/5
-        [HttpPut("{id}")]
-        public async Task<Response> PutActivosFijosAdicionados([FromRoute] int id, [FromBody]ActivosFijosAdicionados _ActivosFijosAdicionados)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido
-                    };
-                }
-
-                var _ActivosFijosAdicionadosActualizar = await db.ActivosFijosAdicionados.Where(x => x.idAdicion == id).FirstOrDefaultAsync();
-                if (_ActivosFijosAdicionadosActualizar != null)
-                {
-                    try
-                    {
-                        _ActivosFijosAdicionadosActualizar.idActivoFijoOrigen = _ActivosFijosAdicionados.idActivoFijoOrigen;
-                        _ActivosFijosAdicionadosActualizar.idActivoFijoDestino = _ActivosFijosAdicionados.idActivoFijoDestino;
-                        
-                        db.ActivosFijosAdicionados.Update(_ActivosFijosAdicionadosActualizar);
-                        await db.SaveChangesAsync();
-
-                        return new Response
-                        {
-                            IsSuccess = true,
-                            Message = Mensaje.Satisfactorio,
-                        };
-
-                    }
-                    catch (Exception ex)
-                    {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                        {
-                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                            ExceptionTrace = ex.Message,
-                            Message = Mensaje.Excepcion,
-                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                            UserName = "",
-
-                        });
-                        return new Response
-                        {
-                            IsSuccess = false,
-                            Message = Mensaje.Error,
-                        };
-                    }
-                }
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
-            }
-            catch (Exception)
-            {
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Excepcion
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
         
-        // DELETE: api/ApiWithActions/5
+        [HttpPost]
+        [Route("InsertarActivosFijosAdicionados")]
+        public async Task<Response> PostMarca([FromBody]ActivosFijosAdicionados activosFijosAdicionados)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
+                if (!await db.ActivosFijosAdicionados.AnyAsync(c => c.idActivoFijoOrigen == activosFijosAdicionados.idActivoFijoOrigen && c.idActivoFijoDestino == activosFijosAdicionados.idActivoFijoDestino))
+                {
+                    db.ActivosFijosAdicionados.Add(activosFijosAdicionados);
+                    await db.SaveChangesAsync();
+                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                }
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+        
+        [HttpPut("{id}")]
+        public async Task<Response> PutActivosFijosAdicionados([FromRoute] int id, [FromBody]ActivosFijosAdicionados activosFijosAdicionados)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
+                if (!await db.ActivosFijosAdicionados.Where(c => c.idActivoFijoOrigen == activosFijosAdicionados.idActivoFijoOrigen && c.idActivoFijoDestino == activosFijosAdicionados.idActivoFijoDestino).AnyAsync(c => c.idAdicion != activosFijosAdicionados.idAdicion))
+                {
+                    var activosFijosAdicionadosActualizar = await db.ActivosFijosAdicionados.Where(x => x.idAdicion == id).FirstOrDefaultAsync();
+                    if (activosFijosAdicionadosActualizar != null)
+                    {
+                        try
+                        {
+                            activosFijosAdicionadosActualizar.idActivoFijoOrigen = activosFijosAdicionados.idActivoFijoOrigen;
+                            activosFijosAdicionadosActualizar.idActivoFijoDestino = activosFijosAdicionados.idActivoFijoDestino;
+                            activosFijosAdicionadosActualizar.fechaAdicion = activosFijosAdicionados.fechaAdicion;
+                            db.ActivosFijosAdicionados.Update(activosFijosAdicionadosActualizar);
+                            await db.SaveChangesAsync();
+                            return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                        }
+                        catch (Exception ex)
+                        {
+                            await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                            return new Response { IsSuccess = false, Message = Mensaje.Error };
+                        }
+                    }
+                }
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
+            }
+            catch (Exception)
+            {
+                return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
+            }
+        }
+        
         [HttpDelete("{id}")]
         public async Task<Response> DeleteActivosFijosAdicionados([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
                 var respuesta = await db.ActivosFijosAdicionados.SingleOrDefaultAsync(m => m.idAdicion == id);
                 if (respuesta == null)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.RegistroNoEncontrado,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
+
                 db.ActivosFijosAdicionados.Remove(respuesta);
                 await db.SaveChangesAsync();
-
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio,
-                };
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
-        }
-
-        private bool ActivosFijosAdicionadosExists(int id)
-        {
-            return db.ActivosFijosAdicionados.Any(e => e.idAdicion == id);
         }
 
         public Response Existe(ActivosFijosAdicionados _ActivosFijosAdicionados)
@@ -292,22 +149,7 @@ namespace bd.swrm.web.Controllers.API
             var bdd = _ActivosFijosAdicionados.idActivoFijoOrigen;
             var _bdd = _ActivosFijosAdicionados.idActivoFijoDestino;
             var loglevelrespuesta = db.ActivosFijosAdicionados.Where(p => p.idActivoFijoOrigen == bdd && p.idActivoFijoDestino == _bdd).FirstOrDefault();
-            
-            if (loglevelrespuesta != null)
-            {
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.ExisteRegistro,
-                    Resultado = null,
-                };
-            }
-
-            return new Response
-            {
-                IsSuccess = false,
-                Resultado = loglevelrespuesta,
-            };
+            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }
 }

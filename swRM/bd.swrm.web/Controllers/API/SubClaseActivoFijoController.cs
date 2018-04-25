@@ -27,8 +27,7 @@ namespace bd.swrm.web.Controllers.API
         {
             this.db = db;
         }
-
-        // GET: api/ListarSubClasesActivoFijo
+        
         [HttpGet]
         [Route("ListarSubClasesActivoFijo")]
         public async Task<List<SubClaseActivoFijo>> GetClaseActivoFijo()
@@ -39,148 +38,80 @@ namespace bd.swrm.web.Controllers.API
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new List<SubClaseActivoFijo>();
             }
         }
 
-        // GET: api/SubClaseActivoFijo/5
+        [HttpGet]
+        [Route("ListarSubClasesActivoFijoPorClase/{idClaseActivoFijo}")]
+        public async Task<List<SubClaseActivoFijo>> GetClaseActivoFijoPorClase(int idClaseActivoFijo)
+        {
+            try
+            {
+                return await db.SubClaseActivoFijo.Where(c=> c.IdClaseActivoFijo == idClaseActivoFijo).OrderBy(x => x.Nombre).Include(c => c.ClaseActivoFijo).ThenInclude(c => c.TipoActivoFijo).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<SubClaseActivoFijo>();
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<Response> GetSubClaseActivoFijo([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var subClaseActivoFijo = await db.SubClaseActivoFijo.SingleOrDefaultAsync(m => m.IdSubClaseActivoFijo == id);
-                subClaseActivoFijo.ClaseActivoFijo = await db.ClaseActivoFijo.SingleOrDefaultAsync(c => c.IdClaseActivoFijo == subClaseActivoFijo.IdClaseActivoFijo);
-                subClaseActivoFijo.ClaseActivoFijo.TipoActivoFijo = await db.TipoActivoFijo.SingleOrDefaultAsync(c => c.IdTipoActivoFijo == subClaseActivoFijo.ClaseActivoFijo.IdTipoActivoFijo);
-
-                if (subClaseActivoFijo == null)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.RegistroNoEncontrado,
-                    };
-                }
-
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio,
-                    Resultado = subClaseActivoFijo,
-                };
+                var subClaseActivoFijo = await db.SubClaseActivoFijo.Include(c=> c.ClaseActivoFijo).ThenInclude(c=> c.TipoActivoFijo).SingleOrDefaultAsync(m => m.IdSubClaseActivoFijo == id);
+                return new Response { IsSuccess = subClaseActivoFijo != null, Message = subClaseActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = subClaseActivoFijo };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        // PUT: api/SubClaseActivoFijo/5
+        
         [HttpPut("{id}")]
         public async Task<Response> PutSubClaseActivoFijo([FromRoute] int id, [FromBody] SubClaseActivoFijo subClaseActivoFijo)
         {
             try
             {
                 if (!ModelState.IsValid)
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
+                if (!await db.SubClaseActivoFijo.Where(c => c.Nombre.ToUpper().Trim() == subClaseActivoFijo.Nombre.ToUpper().Trim()).AnyAsync(c => c.IdSubClaseActivoFijo != subClaseActivoFijo.IdSubClaseActivoFijo))
                 {
-                    return new Response
+                    var subClaseActivoFijoActualizar = await db.SubClaseActivoFijo.Where(x => x.IdSubClaseActivoFijo == id).FirstOrDefaultAsync();
+                    if (subClaseActivoFijoActualizar != null)
                     {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
-
-                var subClaseActivoFijoActualizar = await db.SubClaseActivoFijo.Where(x => x.IdSubClaseActivoFijo == id).FirstOrDefaultAsync();
-                if (subClaseActivoFijoActualizar != null)
-                {
-                    try
-                    {
-                        subClaseActivoFijoActualizar.Nombre = subClaseActivoFijo.Nombre;
-                        subClaseActivoFijoActualizar.IdClaseActivoFijo = subClaseActivoFijo.IdClaseActivoFijo;
-
-                        db.SubClaseActivoFijo.Update(subClaseActivoFijoActualizar);
-                        await db.SaveChangesAsync();
-
-                        return new Response
+                        try
                         {
-                            IsSuccess = true,
-                            Message = Mensaje.Satisfactorio,
-                        };
-
-                    }
-                    catch (Exception ex)
-                    {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                            subClaseActivoFijoActualizar.Nombre = subClaseActivoFijo.Nombre;
+                            subClaseActivoFijoActualizar.IdClaseActivoFijo = subClaseActivoFijo.IdClaseActivoFijo;
+                            db.SubClaseActivoFijo.Update(subClaseActivoFijoActualizar);
+                            await db.SaveChangesAsync();
+                            return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                        }
+                        catch (Exception ex)
                         {
-                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                            ExceptionTrace = ex.Message,
-                            Message = Mensaje.Excepcion,
-                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                            UserName = "",
-
-                        });
-                        return new Response
-                        {
-                            IsSuccess = false,
-                            Message = Mensaje.Error,
-                        };
+                            await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                            return new Response { IsSuccess = false, Message = Mensaje.Error };
+                        }
                     }
                 }
-
-
-
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
             }
             catch (Exception)
             {
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Excepcion
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
-
-        // POST: api/SubClaseActivoFijo
+        
         [HttpPost]
         [Route("InsertarSubClaseActivoFijo")]
         public async Task<Response> PostSubClaseActivoFijo([FromBody] SubClaseActivoFijo subClaseActivoFijo)
@@ -188,104 +119,44 @@ namespace bd.swrm.web.Controllers.API
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido
-                    };
-                }
-                
-                var respuesta = Existe(subClaseActivoFijo);
-                if (!respuesta.IsSuccess)
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
+                if (!await db.SubClaseActivoFijo.AnyAsync(c => c.Nombre.ToUpper().Trim() == subClaseActivoFijo.Nombre.ToUpper().Trim()))
                 {
                     db.Entry(subClaseActivoFijo.ClaseActivoFijo).State = EntityState.Unchanged;
                     db.SubClaseActivoFijo.Add(subClaseActivoFijo);
                     await db.SaveChangesAsync();
-                    return new Response
-                    {
-                        IsSuccess = true,
-                        Message = Mensaje.Satisfactorio
-                    };
+                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
-
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        // DELETE: api/SubClaseActivoFijo/5
+        
         [HttpDelete("{id}")]
         public async Task<Response> DeleteSubClaseActivoFijo([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
                 var respuesta = await db.SubClaseActivoFijo.SingleOrDefaultAsync(m => m.IdSubClaseActivoFijo == id);
                 if (respuesta == null)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.RegistroNoEncontrado,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
+
                 db.SubClaseActivoFijo.Remove(respuesta);
                 await db.SaveChangesAsync();
-
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio,
-                };
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
 
@@ -293,22 +164,7 @@ namespace bd.swrm.web.Controllers.API
         {
             var bdd = subClaseActivoFijo.Nombre.ToUpper().TrimEnd().TrimStart();
             var loglevelrespuesta = db.SubClaseActivoFijo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
-            if (loglevelrespuesta != null)
-            {
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.ExisteRegistro,
-                    Resultado = null,
-                };
-
-            }
-
-            return new Response
-            {
-                IsSuccess = false,
-                Resultado = loglevelrespuesta,
-            };
+            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }
 }

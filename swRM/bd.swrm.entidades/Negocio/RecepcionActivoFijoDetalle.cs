@@ -6,10 +6,10 @@ namespace bd.swrm.entidades.Negocio
     {
         [Key]
         public int IdRecepcionActivoFijoDetalle { get; set; }
-
-        [Required(ErrorMessage = "Debe introducir {0}")]
+        
         [Display(Name = "Número de póliza:")]
         [StringLength(50, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
+        [RegularExpression(@"^\d*$", ErrorMessage = "El {0} solo puede contener números.")]
         public string NumeroPoliza { get; set; }
 
         //Propiedades Virtuales Referencias a otras clases

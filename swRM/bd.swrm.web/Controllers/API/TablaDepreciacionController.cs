@@ -26,8 +26,7 @@ namespace bd.swrm.web.Controllers.API
         {
             this.db = db;
         }
-
-        // GET: api/ListarTablaDepreciacion
+        
         [HttpGet]
         [Route("ListarTablaDepreciacion")]
         public async Task<List<TablaDepreciacion>> GetTablaDepreciacion()
@@ -38,276 +37,116 @@ namespace bd.swrm.web.Controllers.API
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new List<TablaDepreciacion>();
             }
         }
-
-        // GET: api/TablaDepreciacion/5
+        
         [HttpGet("{id}")]
         public async Task<Response> GetTablaDepreciacion([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var TablaDepreciacion = await db.TablaDepreciacion.SingleOrDefaultAsync(m => m.IdTablaDepreciacion == id);
-
-                if (TablaDepreciacion == null)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.RegistroNoEncontrado,
-                    };
-                }
-
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio,
-                    Resultado = TablaDepreciacion,
-                };
+                var tablaDepreciacion = await db.TablaDepreciacion.SingleOrDefaultAsync(m => m.IdTablaDepreciacion == id);
+                return new Response { IsSuccess = tablaDepreciacion != null, Message = tablaDepreciacion != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = tablaDepreciacion };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        // PUT: api/TablaDepreciacion/5
+        
         [HttpPut("{id}")]
-        public async Task<Response> PutTablaDepreciacion([FromRoute] int id, [FromBody] TablaDepreciacion TablaDepreciacion)
+        public async Task<Response> PutTablaDepreciacion([FromRoute] int id, [FromBody] TablaDepreciacion tablaDepreciacion)
         {
             try
             {
                 if (!ModelState.IsValid)
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
+                if (!await db.TablaDepreciacion.Where(c => c.IndiceDepreciacion == tablaDepreciacion.IndiceDepreciacion).AnyAsync(c => c.IdTablaDepreciacion != tablaDepreciacion.IdTablaDepreciacion))
                 {
-                    return new Response
+                    var tablaDepreciacionActualizar = await db.TablaDepreciacion.Where(x => x.IdTablaDepreciacion == id).FirstOrDefaultAsync();
+                    if (tablaDepreciacionActualizar != null)
                     {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
-
-                var TablaDepreciacionActualizar = await db.TablaDepreciacion.Where(x => x.IdTablaDepreciacion == id).FirstOrDefaultAsync();
-                if (TablaDepreciacionActualizar != null)
-                {
-                    try
-                    {
-                        TablaDepreciacionActualizar.IdTablaDepreciacion = TablaDepreciacion.IdTablaDepreciacion;
-                        db.TablaDepreciacion.Update(TablaDepreciacionActualizar);
-                        await db.SaveChangesAsync();
-
-                        return new Response
+                        try
                         {
-                            IsSuccess = true,
-                            Message = Mensaje.ModeloInvalido,
-                        };
-
-                    }
-                    catch (Exception ex)
-                    {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                            tablaDepreciacionActualizar.IdTablaDepreciacion = tablaDepreciacion.IdTablaDepreciacion;
+                            db.TablaDepreciacion.Update(tablaDepreciacionActualizar);
+                            await db.SaveChangesAsync();
+                            return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                        }
+                        catch (Exception ex)
                         {
-                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                            ExceptionTrace = ex.Message,
-                            Message = Mensaje.Excepcion,
-                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                            UserName = "",
-
-                        });
-                        return new Response
-                        {
-                            IsSuccess = false,
-                            Message = Mensaje.Error,
-                        };
+                            await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                            return new Response { IsSuccess = false, Message = Mensaje.Error };
+                        }
                     }
                 }
-
-
-
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
             }
             catch (Exception)
             {
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Excepcion
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
-
-        // POST: api/TablaDepreciacion
+        
         [HttpPost]
         [Route("InsertarTablaDepreciacion")]
-        public async Task<Response> PostTablaDepreciacion([FromBody] TablaDepreciacion TablaDepreciacion)
+        public async Task<Response> PostTablaDepreciacion([FromBody] TablaDepreciacion tablaDepreciacion)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = Existe(TablaDepreciacion);
-                if (!respuesta.IsSuccess)
+                if (!await db.TablaDepreciacion.AnyAsync(c => c.IndiceDepreciacion == tablaDepreciacion.IndiceDepreciacion))
                 {
-                    db.TablaDepreciacion.Add(TablaDepreciacion);
+                    db.TablaDepreciacion.Add(tablaDepreciacion);
                     await db.SaveChangesAsync();
-                    return new Response
-                    {
-                        IsSuccess = true,
-                        Message = Mensaje.Satisfactorio
-                    };
+                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
-
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        // DELETE: api/TablaDepreciacion/5
+        
         [HttpDelete("{id}")]
         public async Task<Response> DeleteTablaDepreciacion([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
                 var respuesta = await db.TablaDepreciacion.SingleOrDefaultAsync(m => m.IdTablaDepreciacion == id);
                 if (respuesta == null)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.RegistroNoEncontrado,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
+
                 db.TablaDepreciacion.Remove(respuesta);
                 await db.SaveChangesAsync();
-
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio,
-                };
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
-        }
-
-        private bool TablaDepreciacionExists(int id)
-        {
-            return db.TablaDepreciacion.Any(e => e.IdTablaDepreciacion == id);
         }
 
         public Response Existe(TablaDepreciacion TablaDepreciacion)
         {
-            var bdd = TablaDepreciacion.IdTablaDepreciacion;
-            var TablaDepreciacionRespuesta = db.TablaDepreciacion.Where(p => p.IdTablaDepreciacion == bdd).FirstOrDefault();
-            if (TablaDepreciacionRespuesta != null)
-            {
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.ExisteRegistro,
-                    Resultado = null,
-                };
-
-            }
-
-            return new Response
-            {
-                IsSuccess = false,
-                Resultado = TablaDepreciacionRespuesta,
-            };
+            var bdd = TablaDepreciacion.IndiceDepreciacion;
+            var loglevelrespuesta = db.TablaDepreciacion.Where(p => p.IndiceDepreciacion == bdd).FirstOrDefault();
+            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }
 }

@@ -26,8 +26,7 @@ namespace bd.swrm.web.Controllers.API
         {
             this.db = db;
         }
-
-        // GET: api/ListarTipoActivoFijos
+        
         [HttpGet]
         [Route("ListarTipoActivoFijos")]
         public async Task<List<TipoActivoFijo>> GetTipoActivoFijo()
@@ -38,276 +37,116 @@ namespace bd.swrm.web.Controllers.API
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new List<TipoActivoFijo>();
             }
         }
-
-        // GET: api/TipoActivoFijo/5
+        
         [HttpGet("{id}")]
         public async Task<Response> GetTipoActivoFijo([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var TipoActivoFijo = await db.TipoActivoFijo.SingleOrDefaultAsync(m => m.IdTipoActivoFijo == id);
-
-                if (TipoActivoFijo == null)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.RegistroNoEncontrado,
-                    };
-                }
-
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio,
-                    Resultado = TipoActivoFijo,
-                };
+                var tipoActivoFijo = await db.TipoActivoFijo.SingleOrDefaultAsync(m => m.IdTipoActivoFijo == id);
+                return new Response { IsSuccess = tipoActivoFijo != null, Message = tipoActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = tipoActivoFijo };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = ex.Message
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        // PUT: api/TipoActivoFijo/5
+        
         [HttpPut("{id}")]
-        public async Task<Response> PutTipoActivoFijo([FromRoute] int id, [FromBody] TipoActivoFijo TipoActivoFijo)
+        public async Task<Response> PutTipoActivoFijo([FromRoute] int id, [FromBody] TipoActivoFijo tipoActivoFijo)
         {
             try
             {
                 if (!ModelState.IsValid)
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
+                if (!await db.TipoActivoFijo.Where(c => c.Nombre.ToUpper().Trim() == tipoActivoFijo.Nombre.ToUpper().Trim()).AnyAsync(c => c.IdTipoActivoFijo != tipoActivoFijo.IdTipoActivoFijo))
                 {
-                    return new Response
+                    var TipoActivoFijoActualizar = await db.TipoActivoFijo.Where(x => x.IdTipoActivoFijo == id).FirstOrDefaultAsync();
+                    if (TipoActivoFijoActualizar != null)
                     {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
-
-                var TipoActivoFijoActualizar = await db.TipoActivoFijo.Where(x => x.IdTipoActivoFijo == id).FirstOrDefaultAsync();
-                if (TipoActivoFijoActualizar != null)
-                {
-                    try
-                    {
-                        TipoActivoFijoActualizar.Nombre = TipoActivoFijo.Nombre;
-                        db.TipoActivoFijo.Update(TipoActivoFijoActualizar);
-                        await db.SaveChangesAsync();
-
-                        return new Response
+                        try
                         {
-                            IsSuccess = true,
-                            Message = Mensaje.ModeloInvalido,
-                        };
-
-                    }
-                    catch (Exception ex)
-                    {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer
+                            TipoActivoFijoActualizar.Nombre = tipoActivoFijo.Nombre;
+                            db.TipoActivoFijo.Update(TipoActivoFijoActualizar);
+                            await db.SaveChangesAsync();
+                            return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                        }
+                        catch (Exception ex)
                         {
-                            ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                            ExceptionTrace = ex.Message,
-                            Message = Mensaje.Excepcion,
-                            LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                            LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                            UserName = "",
-
-                        });
-                        return new Response
-                        {
-                            IsSuccess = false,
-                            Message = Mensaje.Error,
-                        };
+                            await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                            return new Response { IsSuccess = false, Message = Mensaje.Error };
+                        }
                     }
                 }
-
-
-
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
             }
             catch (Exception)
             {
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Excepcion
-                };
+                return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
-
-        // POST: api/TipoActivoFijo
+        
         [HttpPost]
         [Route("InsertarTipoActivoFijo")]
-        public async Task<Response> PostTipoActivoFijo([FromBody] TipoActivoFijo TipoActivoFijo)
+        public async Task<Response> PostTipoActivoFijo([FromBody] TipoActivoFijo tipoActivoFijo)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = Existe(TipoActivoFijo);
-                if (!respuesta.IsSuccess)
+                if (!await db.TipoActivoFijo.AnyAsync(c => c.Nombre.ToUpper().Trim() == tipoActivoFijo.Nombre.ToUpper().Trim()))
                 {
-                    db.TipoActivoFijo.Add(TipoActivoFijo);
+                    db.TipoActivoFijo.Add(tipoActivoFijo);
                     await db.SaveChangesAsync();
-                    return new Response
-                    {
-                        IsSuccess = true,
-                        Message = Mensaje.Satisfactorio
-                    };
+                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
-
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.ExisteRegistro,
-                };
-
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        // DELETE: api/TipoActivoFijo/5
+        
         [HttpDelete("{id}")]
         public async Task<Response> DeleteTipoActivoFijo([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.ModeloInvalido,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
                 var respuesta = await db.TipoActivoFijo.SingleOrDefaultAsync(m => m.IdTipoActivoFijo == id);
                 if (respuesta == null)
-                {
-                    return new Response
-                    {
-                        IsSuccess = false,
-                        Message = Mensaje.RegistroNoEncontrado,
-                    };
-                }
+                    return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
+
                 db.TipoActivoFijo.Remove(respuesta);
                 await db.SaveChangesAsync();
-
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.Satisfactorio,
-                };
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex.Message,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-
-                });
-                return new Response
-                {
-                    IsSuccess = false,
-                    Message = Mensaje.Error,
-                };
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
-        }
-
-        private bool TipoActivoFijoExists(string nombre)
-        {
-            return db.TipoActivoFijo.Any(e => e.Nombre == nombre);
         }
 
         public Response Existe(TipoActivoFijo TipoActivoFijo)
         {
             var bdd = TipoActivoFijo.Nombre.ToUpper().TrimEnd().TrimStart();
-            var TipoActivoFijoRespuesta = db.TipoActivoFijo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
-            if (TipoActivoFijoRespuesta != null)
-            {
-                return new Response
-                {
-                    IsSuccess = true,
-                    Message = Mensaje.ExisteRegistro,
-                    Resultado = null,
-                };
-
-            }
-
-            return new Response
-            {
-                IsSuccess = false,
-                Resultado = TipoActivoFijoRespuesta,
-            };
+            var loglevelrespuesta = db.TipoActivoFijo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }
 }

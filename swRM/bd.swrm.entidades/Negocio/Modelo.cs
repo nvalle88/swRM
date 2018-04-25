@@ -19,8 +19,10 @@ namespace bd.swrm.entidades.Negocio
         //Propiedades Virtuales Referencias a otras clases
 
         [Display(Name = "Marca:")]
+        [Required(ErrorMessage = "Debe seleccionar la {0} ")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int IdMarca { get; set; }
+
         public virtual Marca Marca { get; set; }
 
         public virtual ICollection<ActivoFijo> ActivoFijo { get; set; }
