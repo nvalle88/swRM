@@ -17,41 +17,41 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/MotivoTransferencia")]
-    public class MotivoTransferenciaController : Controller
+    [Route("api/ConfiguracionContabilidad")]
+    public class ConfiguracionContabilidadController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public MotivoTransferenciaController(SwRMDbContext db)
+        public ConfiguracionContabilidadController(SwRMDbContext db)
         {
             this.db = db;
         }
-        
+
         [HttpGet]
-        [Route("ListarMotivoTransferencia")]
-        public async Task<List<MotivoTransferencia>> GetMotivoTransferencia()
+        [Route("ListarConfiguracionContabilidad")]
+        public async Task<List<ConfiguracionContabilidad>> GetConfiguracionContabilidad()
         {
             try
             {
-                return await db.MotivoTransferencia.OrderBy(x => x.Motivo_Transferencia).ToListAsync();
+                return await db.ConfiguracionContabilidad.Include(c=> c.CatalogoCuentaD).Include(c=> c.CatalogoCuentaH).ToListAsync();
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new List<MotivoTransferencia>();
+                return new List<ConfiguracionContabilidad>();
             }
         }
-        
+
         [HttpGet("{id}")]
-        public async Task<Response> GetMotivoTransferencia([FromRoute] int id)
+        public async Task<Response> GetConfiguracionContabilidad([FromRoute]int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var _motivoTransferencia = await db.MotivoTransferencia.SingleOrDefaultAsync(m => m.IdMotivoTransferencia == id);
-                return new Response { IsSuccess = _motivoTransferencia != null, Message = _motivoTransferencia != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = _motivoTransferencia };
+                var configuracionContabilidad = await db.ConfiguracionContabilidad.Include(c => c.CatalogoCuentaD).Include(c => c.CatalogoCuentaH).SingleOrDefaultAsync(m => m.IdConfiguracionContabilidad == id);
+                return new Response { IsSuccess = configuracionContabilidad != null, Message = configuracionContabilidad != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = configuracionContabilidad };
             }
             catch (Exception ex)
             {
@@ -59,19 +59,19 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
+
         [HttpPost]
-        [Route("InsertarMotivoTransferencia")]
-        public async Task<Response> PostMotivoTransferencia([FromBody]MotivoTransferencia _motivoTransferencia)
+        [Route("InsertarConfiguracionContabilidad")]
+        public async Task<Response> PostConfiguracionContabilidad([FromBody]ConfiguracionContabilidad configuracionContabilidad)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.MotivoTransferencia.AnyAsync(c => c.Motivo_Transferencia.ToUpper().Trim() == _motivoTransferencia.Motivo_Transferencia.ToUpper().Trim()))
+                if (!await db.ConfiguracionContabilidad.AnyAsync(c => c.IdCatalogoCuentaD == configuracionContabilidad.IdCatalogoCuentaD && c.IdCatalogoCuentaH == configuracionContabilidad.IdCatalogoCuentaH))
                 {
-                    db.MotivoTransferencia.Add(_motivoTransferencia);
+                    db.ConfiguracionContabilidad.Add(configuracionContabilidad);
                     await db.SaveChangesAsync();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
@@ -83,24 +83,27 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
+
         [HttpPut("{id}")]
-        public async Task<Response> PutMotivoTransferencia([FromRoute] int id, [FromBody]MotivoTransferencia _motivoTransferencia)
+        public async Task<Response> PutConfiguracionContabilidad([FromRoute] int id, [FromBody]ConfiguracionContabilidad configuracionContabilidad)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.MotivoTransferencia.Where(c => c.Motivo_Transferencia.ToUpper().Trim() == _motivoTransferencia.Motivo_Transferencia.ToUpper().Trim()).AnyAsync(c => c.IdMotivoTransferencia != _motivoTransferencia.IdMotivoTransferencia))
+                if (!await db.ConfiguracionContabilidad.Where(c => c.IdCatalogoCuentaD == configuracionContabilidad.IdCatalogoCuentaD && c.IdCatalogoCuentaH == configuracionContabilidad.IdCatalogoCuentaH).AnyAsync(c => c.IdConfiguracionContabilidad != configuracionContabilidad.IdConfiguracionContabilidad))
                 {
-                    var _motivoTransferenciaActualizar = await db.MotivoTransferencia.Where(x => x.IdMotivoTransferencia == id).FirstOrDefaultAsync();
-                    if (_motivoTransferenciaActualizar != null)
+                    var configuracionContabilidadActualizar = await db.ConfiguracionContabilidad.Where(x => x.IdConfiguracionContabilidad == id).FirstOrDefaultAsync();
+                    if (configuracionContabilidadActualizar != null)
                     {
                         try
                         {
-                            _motivoTransferenciaActualizar.Motivo_Transferencia = _motivoTransferencia.Motivo_Transferencia;
-                            db.MotivoTransferencia.Update(_motivoTransferenciaActualizar);
+                            configuracionContabilidadActualizar.IdCatalogoCuentaD = configuracionContabilidad.IdCatalogoCuentaD;
+                            configuracionContabilidadActualizar.IdCatalogoCuentaH = configuracionContabilidad.IdCatalogoCuentaH;
+                            configuracionContabilidadActualizar.ValorD = configuracionContabilidad.ValorD;
+                            configuracionContabilidadActualizar.ValorH = configuracionContabilidad.ValorH;
+                            db.ConfiguracionContabilidad.Update(configuracionContabilidadActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                         }
@@ -118,20 +121,20 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
-        
+
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteMotivoTransferencia([FromRoute] int id)
+        public async Task<Response> DeleteConfiguracionContabilidad([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = await db.MotivoTransferencia.SingleOrDefaultAsync(m => m.IdMotivoTransferencia == id);
+                var respuesta = await db.ConfiguracionContabilidad.SingleOrDefaultAsync(m => m.IdConfiguracionContabilidad == id);
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                db.MotivoTransferencia.Remove(respuesta);
+                db.ConfiguracionContabilidad.Remove(respuesta);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
@@ -140,13 +143,6 @@ namespace bd.swrm.web.Controllers.API
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
-        }
-
-        public Response Existe(MotivoTransferencia _motivoTransferencia)
-        {
-            var bdd = _motivoTransferencia.Motivo_Transferencia.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.MotivoTransferencia.Where(p => p.Motivo_Transferencia.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
-            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }
 }

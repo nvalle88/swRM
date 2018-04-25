@@ -20,6 +20,5 @@ namespace bd.swrm.entidades.Negocio
         [DataType(DataType.DateTime)]
         [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy hh:mm}", ApplyFormatInEditMode = true)]
         public DateTime fechaAdicion { get; set; }
-        
     }
 }

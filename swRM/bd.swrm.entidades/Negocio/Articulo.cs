@@ -12,10 +12,10 @@ namespace bd.swrm.entidades.Negocio
         [StringLength(50)]
         public string Nombre { get; set; }
 
-
         //Propiedades Virtuales Referencias a otras clases
 
         [Display(Name = "Sub clase de artículo:")]
+        [Required(ErrorMessage = "Debe seleccionar el {0} ")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int IdSubClaseArticulo { get; set; }
         public virtual SubClaseArticulo SubClaseArticulo { get; set; }

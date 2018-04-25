@@ -22,6 +22,7 @@ namespace bd.swrm.entidades.Negocio
         [Required(ErrorMessage = "Debe introducir {0}")]
         [Display(Name = "Identificación:")]
         [StringLength(20, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
+        [RegularExpression(@"^\d*$", ErrorMessage = "La {0} solo puede contener números.")]
         public string Identificacion { get; set; }
 
         [Required(ErrorMessage = "Debe introducir {0}")]
