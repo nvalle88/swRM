@@ -42,7 +42,22 @@ namespace bd.swrm.web.Controllers.API
                 return new List<SubClaseActivoFijo>();
             }
         }
-        
+
+        [HttpGet]
+        [Route("ListarSubClasesActivoFijoPorClase/{idClaseActivoFijo}")]
+        public async Task<List<SubClaseActivoFijo>> GetClaseActivoFijoPorClase(int idClaseActivoFijo)
+        {
+            try
+            {
+                return await db.SubClaseActivoFijo.Where(c=> c.IdClaseActivoFijo == idClaseActivoFijo).OrderBy(x => x.Nombre).Include(c => c.ClaseActivoFijo).ThenInclude(c => c.TipoActivoFijo).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<SubClaseActivoFijo>();
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<Response> GetSubClaseActivoFijo([FromRoute] int id)
         {

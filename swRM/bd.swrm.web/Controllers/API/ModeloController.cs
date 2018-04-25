@@ -41,7 +41,22 @@ namespace bd.swrm.web.Controllers.API
                 return new List<Modelo>();
             }
         }
-        
+
+        [HttpGet]
+        [Route("ListarModelosPorMarca/{idMarca}")]
+        public async Task<List<Modelo>> GetModeloPorMarca(int idMarca)
+        {
+            try
+            {
+                return await db.Modelo.Where(c=> c.IdMarca == idMarca).OrderBy(x => x.Nombre).Include(x => x.Marca).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<Modelo>();
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<Response> GetModelo([FromRoute] int id)
         {

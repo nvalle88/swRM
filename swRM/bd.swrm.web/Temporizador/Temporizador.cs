@@ -27,37 +27,34 @@ namespace bd.swrm.web.Temporizador
         public static void InicializarTemporizador(Timer timer, Action accion, TimeSpan tiempoEsperaFuncionCallBack, TimeSpan periodoEsperaFuncionCallBack)
         {
             db = db ?? CreateDbContext();
-            timer = new Timer((c) => {
-                accion();
-            }, accion, tiempoEsperaFuncionCallBack, periodoEsperaFuncionCallBack);
+            timer = new Timer((c) => { accion(); }, accion, tiempoEsperaFuncionCallBack, periodoEsperaFuncionCallBack);
         }
 
         public static async Task ComprobarActivosFijosAlta()
         {
             try
             {
-                var lista = await db.RecepcionActivoFijoDetalle.Where(c => c.Estado.Nombre == "Alta").Include(c => c.ActivoFijo.DepreciacionActivoFijo).ToListAsync();
-                if (lista.Count == 0)
+                var listaRecepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle.Where(c => c.Estado.Nombre == "Alta").Include(c => c.ActivoFijo.DepreciacionActivoFijo).ToListAsync();
+                if (listaRecepcionActivoFijoDetalle.Count == 0)
                     timerDepreciacion.Dispose();
                 else
                 {
-                    foreach (var item in lista)
+                    foreach (var recepcionActivoFijoDetalle in listaRecepcionActivoFijoDetalle)
                     {
-                        var depreciacionActivoFijo = item?.ActivoFijo?.DepreciacionActivoFijo?.FirstOrDefault();
+                        var depreciacionActivoFijo = recepcionActivoFijoDetalle?.ActivoFijo?.DepreciacionActivoFijo?.FirstOrDefault();
                         if (depreciacionActivoFijo != null)
                         {
-                            var ll = depreciacionActivoFijo.FechaDepreciacion.Subtract(DateTime.Now).TotalDays;
                             if ((depreciacionActivoFijo.FechaDepreciacion.Subtract(DateTime.Now).TotalDays) * (-1) >= 30)
                             {
-                                //Buscar el indice (indiceDepreciacion) de cada uno de los Activos Fijos contra la Tabla TablaDepreciacion
                                 if (depreciacionActivoFijo.ValorResidual > 1)
                                 {
-                                    var indiceDepreciacion = await db.TablaDepreciacion.FirstOrDefaultAsync();
-                                    depreciacionActivoFijo.DepreciacionAcumulada += indiceDepreciacion.IndiceDepreciacion;
+                                    depreciacionActivoFijo.DepreciacionAcumulada += recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion;
                                     depreciacionActivoFijo.FechaDepreciacion = DateTime.Now;
                                     depreciacionActivoFijo.ValorResidual -= depreciacionActivoFijo.DepreciacionAcumulada;
+
                                     if (depreciacionActivoFijo.ValorResidual <= 0)
                                         depreciacionActivoFijo.ValorResidual = 1;
+
                                     db.Entry(depreciacionActivoFijo.ActivoFijo).State = EntityState.Detached;
                                     db.Entry(depreciacionActivoFijo).State = EntityState.Modified;
                                     await db.SaveChangesAsync();
@@ -69,15 +66,7 @@ namespace bd.swrm.web.Temporizador
             }
             catch (Exception ex)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer
-                {
-                    ApplicationName = Convert.ToString(Aplicacion.SwRm),
-                    ExceptionTrace = ex,
-                    Message = Mensaje.Excepcion,
-                    LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical),
-                    LogLevelShortName = Convert.ToString(LogLevelParameter.ERR),
-                    UserName = "",
-                });
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
             }
         }
 
@@ -89,22 +78,14 @@ namespace bd.swrm.web.Temporizador
                 .Build();
 
             var builder = new DbContextOptionsBuilder<SwRMDbContext>();
-
             var connectionString = configuration.GetConnectionString("SwRMConnection");
-
-            builder.UseSqlServer(connectionString);
-
-            builder.ConfigureWarnings(w =>
-                w.Throw(RelationalEventId.QueryClientEvaluationWarning));
-
+            builder.ConfigureWarnings(w => w.Throw(RelationalEventId.QueryClientEvaluationWarning));
             return new SwRMDbContext(builder.Options);
         }
 
         public static void InicializarTemporizadorDepreciacion()
         {
-            InicializarTemporizador(timerDepreciacion, async () => {
-                await ComprobarActivosFijosAlta();
-            }, new TimeSpan(0, 0, 5), new TimeSpan(24, 0, 0));
+            InicializarTemporizador(timerDepreciacion, async () => { await ComprobarActivosFijosAlta(); }, new TimeSpan(0, 0, 5), new TimeSpan(24, 0, 0));
         }
     }
 }

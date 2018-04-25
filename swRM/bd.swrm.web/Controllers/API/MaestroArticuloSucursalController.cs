@@ -41,7 +41,22 @@ namespace bd.swrm.web.Controllers.API
                 return new List<MaestroArticuloSucursal>();
             }
         }
-        
+
+        [HttpGet]
+        [Route("ListarMaestroArticuloSucursalPorSucursal/{idSucursal}")]
+        public async Task<List<MaestroArticuloSucursal>> GetMaestroArticuloSucursalPorSucursal(int idSucursal)
+        {
+            try
+            {
+                return await db.MaestroArticuloSucursal.Where(c=> c.IdSucursal == idSucursal).OrderBy(c => c.Minimo).ThenBy(c => c.Maximo).Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<MaestroArticuloSucursal>();
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<Response> GetMaestroArticuloSucursal([FromRoute] int id)
         {

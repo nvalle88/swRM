@@ -41,7 +41,22 @@ namespace bd.swrm.web.Controllers.API
                 return new List<LibroActivoFijo>();
             }
         }
-        
+
+        [HttpGet]
+        [Route("ListarLibrosActivoFijoPorSucursal/{idSucursal}")]
+        public async Task<List<LibroActivoFijo>> GetLibroActivoFijoPorSucursal(int idSucursal)
+        {
+            try
+            {
+                return await db.LibroActivoFijo.Where(c=> c.IdSucursal == idSucursal).Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<LibroActivoFijo>();
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<Response> GetLibroActivoFijo([FromRoute] int id)
         {

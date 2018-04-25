@@ -42,6 +42,28 @@ namespace bd.swrm.web.Controllers.API
             return await ListadoRecepcionActivoFijo(c=> c.Estado.Nombre == estado);
         }
 
+        [HttpGet]
+        [Route("ListarRecepcionActivoFijoConPoliza")]
+        public async Task<List<RecepcionActivoFijoDetalle>> GetRecepcionActivoFijoConPoliza()
+        {
+            return await ListadoRecepcionActivoFijo(c => c.Estado.Nombre == "Recepcionado" && c.NumeroPoliza != null);
+        }
+
+        [HttpGet]
+        [Route("ListarRecepcionActivoFijoSinPoliza")]
+        public async Task<List<RecepcionActivoFijoDetalle>> GetRecepcionActivoFijoSinPoliza()
+        {
+            return await ListadoRecepcionActivoFijo(c => c.Estado.Nombre == "Recepcionado" && c.NumeroPoliza == null);
+        }
+
+        [HttpGet]
+        [Route("BienesReporte")]
+        public async Task<List<RecepcionActivoFijoDetalle>> GetBienesReporte()
+        {
+            var listaRecepcionActivoFijo = await ListadoRecepcionActivoFijo(c => c.Estado.Nombre != "Validación Técnica" && c.Estado.Nombre != "Desaprobado");
+            return listaRecepcionActivoFijo.OrderBy(c => c.ActivoFijo.LibroActivoFijo.Sucursal.Ciudad.Provincia.Pais.Nombre).ThenBy(c => c.ActivoFijo.LibroActivoFijo.Sucursal.Ciudad.Provincia.Nombre).ThenBy(c => c.ActivoFijo.LibroActivoFijo.Sucursal.Ciudad.Nombre).ThenBy(c => c.ActivoFijo.LibroActivoFijo.Sucursal.Nombre).ThenBy(c => c.ActivoFijo.LibroActivoFijo.IdSucursal).ThenBy(c => c.RecepcionActivoFijo.Empleado.Persona.Nombres).ThenBy(c => c.RecepcionActivoFijo.Empleado.Persona.Apellidos).ToList();
+        }
+
         private async Task<List<RecepcionActivoFijoDetalle>> ListadoRecepcionActivoFijo(Expression<Func<RecepcionActivoFijoDetalle, bool>> predicado = null)
         {
             try

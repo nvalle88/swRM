@@ -41,7 +41,22 @@ namespace bd.swrm.web.Controllers.API
                 return new List<Articulo>();
             }
         }
-        
+
+        [HttpGet]
+        [Route("ListarArticulosPorSubClase/{idSubClaseArticulo}")]
+        public async Task<List<Articulo>> GetArticuloPorSubClase(int idSubClaseArticulo)
+        {
+            try
+            {
+                return await db.Articulo.Where(c=> c.IdSubClaseArticulo == idSubClaseArticulo).OrderBy(x => x.Nombre).Include(c => c.SubClaseArticulo).ThenInclude(c => c.ClaseArticulo).ThenInclude(c => c.TipoArticulo).Include(c => c.UnidadMedida).Include(c => c.Modelo).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<Articulo>();
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<Response> GetArticulo([FromRoute] int id)
         {
