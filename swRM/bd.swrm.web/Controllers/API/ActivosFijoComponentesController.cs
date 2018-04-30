@@ -17,42 +17,41 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/ActivosFijosAlta")]
-    public class ActivosFijosAltaController : Controller
+    [Route("api/ActivoFijoComponentes")]
+    public class ActivosFijoComponentesController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ActivosFijosAltaController(SwRMDbContext db)
+        public ActivosFijoComponentesController(SwRMDbContext db)
         {
             this.db = db;
         }
-        
+
         [HttpGet]
-        [Route("ListarAltasActivosFijos")]
-        public async Task<List<ActivosFijosAlta>> GetActivosFijosAlta()
+        [Route("ListarActivosFijosComponentes")]
+        public async Task<List<ActivoFijoComponentes>> GetActivosFijosComponentes()
         {
             try
             {
-                return await db.ActivosFijosAlta.Include(x => x.ActivoFijo).ToListAsync();
-                
+                return await db.ActivoFijoComponentes.Include(x => x.ActivoFijoOrigen).Include(x=> x.ActivoFijoComponente).OrderBy(x => x.IdAdicion).ToListAsync();
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new List<ActivosFijosAlta>();
+                return new List<ActivoFijoComponentes>();
             }
         }
-        
+
         [HttpGet("{id}")]
-        public async Task<Response> GetActivosFijosAlta([FromRoute]int id)
+        public async Task<Response> GetActivosFijosComponentes([FromRoute]int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var activosFijosAlta = await db.ActivosFijosAlta.SingleOrDefaultAsync(m => m.IdActivoFijo == id);
-                return new Response { IsSuccess = activosFijosAlta != null, Message = activosFijosAlta != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = activosFijosAlta };
+                var activosFijosComponentes = await db.ActivoFijoComponentes.Include(x => x.ActivoFijoOrigen).Include(x => x.ActivoFijoComponente).SingleOrDefaultAsync(m => m.IdAdicion == id);
+                return new Response { IsSuccess = activosFijosComponentes != null, Message = activosFijosComponentes != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = activosFijosComponentes };
             }
             catch (Exception ex)
             {
@@ -60,22 +59,20 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
+
         [HttpPost]
-        [Route("InsertarActivosFijosAlta")]
-        public async Task<Response> PostActivosFijosAlta([FromBody]ActivosFijosAlta activosFijosAlta)
+        [Route("InsertarActivosFijosComponentes")]
+        public async Task<Response> PostMarca([FromBody]ActivoFijoComponentes activosFijosComponentes)
         {
             try
             {
-                ModelState.Remove("IdFactura");
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.ActivosFijosAlta.AnyAsync(c => c.IdActivoFijo == activosFijosAlta.IdActivoFijo && c.IdFactura == activosFijosAlta.IdFactura))
+                if (!await db.ActivoFijoComponentes.AnyAsync(c => c.IdActivoFijoOrigen == activosFijosComponentes.IdActivoFijoOrigen && c.IdActivoFijoComponente == activosFijosComponentes.IdActivoFijoComponente))
                 {
-                    db.ActivosFijosAlta.Add(activosFijosAlta);
+                    db.ActivoFijoComponentes.Add(activosFijosComponentes);
                     await db.SaveChangesAsync();
-                    Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
                 return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
@@ -86,24 +83,26 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
+
         [HttpPut("{id}")]
-        public async Task<Response> PutActivosFijosAlta([FromRoute] int id, [FromBody]ActivosFijosAlta activosFijosAlta)
+        public async Task<Response> PutActivosFijosComponentes([FromRoute] int id, [FromBody]ActivoFijoComponentes activosFijosComponentes)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.ActivosFijosAlta.Where(c => c.IdActivoFijo == activosFijosAlta.IdActivoFijo && c.IdFactura == activosFijosAlta.IdFactura).AnyAsync(c => c.IdActivoFijo != activosFijosAlta.IdActivoFijo))
+                if (!await db.ActivoFijoComponentes.Where(c => c.IdActivoFijoOrigen == activosFijosComponentes.IdActivoFijoOrigen && c.IdActivoFijoComponente == activosFijosComponentes.IdActivoFijoComponente).AnyAsync(c => c.IdAdicion != activosFijosComponentes.IdAdicion))
                 {
-                    var _ActivosFijosAltaActualizar = await db.ActivosFijosAlta.Where(x => x.IdActivoFijo == id).FirstOrDefaultAsync();
-                    if (_ActivosFijosAltaActualizar != null)
+                    var activosFijosComponentesActualizar = await db.ActivoFijoComponentes.Where(x => x.IdAdicion == id).FirstOrDefaultAsync();
+                    if (activosFijosComponentesActualizar != null)
                     {
                         try
                         {
-                            _ActivosFijosAltaActualizar.FechaAlta = activosFijosAlta.FechaAlta;
-                            db.ActivosFijosAlta.Update(_ActivosFijosAltaActualizar);
+                            activosFijosComponentesActualizar.IdActivoFijoOrigen = activosFijosComponentes.IdActivoFijoOrigen;
+                            activosFijosComponentesActualizar.IdActivoFijoComponente = activosFijosComponentes.IdActivoFijoComponente;
+                            activosFijosComponentesActualizar.FechaAdicion = activosFijosComponentes.FechaAdicion;
+                            db.ActivoFijoComponentes.Update(activosFijosComponentesActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                         }
@@ -123,18 +122,18 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteActivosFijosAlta([FromRoute] int id)
+        public async Task<Response> DeleteActivosFijosComponentes([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = await db.ActivosFijosAlta.SingleOrDefaultAsync(m => m.IdActivoFijo == id);
+                var respuesta = await db.ActivoFijoComponentes.SingleOrDefaultAsync(m => m.IdAdicion == id);
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                db.ActivosFijosAlta.Remove(respuesta);
+                db.ActivoFijoComponentes.Remove(respuesta);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
@@ -145,11 +144,11 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(ActivosFijosAlta _ActivosFijosAlta)
+        public Response Existe(ActivoFijoComponentes activosFijosComponentes)
         {
-            var bdd = _ActivosFijosAlta.IdActivoFijo;
-            var _bdd = _ActivosFijosAlta.IdFactura;
-            var loglevelrespuesta = db.ActivosFijosAlta.Where(p => p.IdActivoFijo == bdd && p.IdFactura == _bdd).FirstOrDefault();
+            var bdd = activosFijosComponentes.IdActivoFijoOrigen;
+            var _bdd = activosFijosComponentes.IdActivoFijoComponente;
+            var loglevelrespuesta = db.ActivoFijoComponentes.Where(p => p.IdActivoFijoOrigen == bdd && p.IdActivoFijoComponente == _bdd).FirstOrDefault();
             return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }

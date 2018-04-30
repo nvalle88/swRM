@@ -17,41 +17,42 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/ActivosFijosAdicionados")]
-    public class ActivosFijosAdicionadosController : Controller
+    [Route("api/AltaActivosFijosDetalles")]
+    public class AltaActivosFijosDetallesController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ActivosFijosAdicionadosController(SwRMDbContext db)
+        public AltaActivosFijosDetallesController(SwRMDbContext db)
         {
             this.db = db;
         }
         
         [HttpGet]
-        [Route("ListarActivosFijosAdicionados")]
-        public async Task<List<ActivosFijosAdicionados>> GetActivosFijosAdicionados()
+        [Route("ListarAltasActivosFijosDetalles")]
+        public async Task<List<AltaActivoFijoDetalle>> GetAltaActivosFijosDetalles()
         {
             try
             {
-                return await db.ActivosFijosAdicionados.OrderBy(x => x.idAdicion).Include(x => x.ActivoFijo).ToListAsync();
+                return await db.AltaActivoFijoDetalle.Include(x => x.ActivoFijo).Include(x=> x.Factura).ToListAsync();
+                
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new List<ActivosFijosAdicionados>();
+                return new List<AltaActivoFijoDetalle>();
             }
         }
         
         [HttpGet("{id}")]
-        public async Task<Response> GetActivosFijosAdicionados([FromRoute]int id)
+        public async Task<Response> GetAltaActivosFijosDetalles([FromRoute]int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var activosFijosAdicionados = await db.ActivosFijosAdicionados.SingleOrDefaultAsync(m => m.idAdicion == id);
-                return new Response { IsSuccess = activosFijosAdicionados != null, Message = activosFijosAdicionados != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = activosFijosAdicionados };
+                var altaActivosFijosDetalles = await db.AltaActivoFijoDetalle.Include(x => x.ActivoFijo).Include(x => x.Factura).SingleOrDefaultAsync(m => m.IdActivoFijoAlta == id);
+                return new Response { IsSuccess = altaActivosFijosDetalles != null, Message = altaActivosFijosDetalles != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = altaActivosFijosDetalles };
             }
             catch (Exception ex)
             {
@@ -61,18 +62,20 @@ namespace bd.swrm.web.Controllers.API
         }
         
         [HttpPost]
-        [Route("InsertarActivosFijosAdicionados")]
-        public async Task<Response> PostMarca([FromBody]ActivosFijosAdicionados activosFijosAdicionados)
+        [Route("InsertarAltaActivoFijoDetalle")]
+        public async Task<Response> PostAltaActivosFijosDetalles([FromBody]AltaActivoFijoDetalle altaActivosFijosDetalles)
         {
             try
             {
+                ModelState.Remove("IdFactura");
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.ActivosFijosAdicionados.AnyAsync(c => c.idActivoFijoOrigen == activosFijosAdicionados.idActivoFijoOrigen && c.idActivoFijoDestino == activosFijosAdicionados.idActivoFijoDestino))
+                if (!await db.AltaActivoFijoDetalle.AnyAsync(c => c.IdActivoFijoAlta == altaActivosFijosDetalles.IdActivoFijoAlta && c.IdFactura == altaActivosFijosDetalles.IdFactura))
                 {
-                    db.ActivosFijosAdicionados.Add(activosFijosAdicionados);
+                    db.AltaActivoFijoDetalle.Add(altaActivosFijosDetalles);
                     await db.SaveChangesAsync();
+                    Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
                 return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
@@ -85,24 +88,24 @@ namespace bd.swrm.web.Controllers.API
         }
         
         [HttpPut("{id}")]
-        public async Task<Response> PutActivosFijosAdicionados([FromRoute] int id, [FromBody]ActivosFijosAdicionados activosFijosAdicionados)
+        public async Task<Response> PutAltaActivosFijosDetalles([FromRoute] int id, [FromBody]AltaActivoFijoDetalle altaActivosFijosDetalles)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.ActivosFijosAdicionados.Where(c => c.idActivoFijoOrigen == activosFijosAdicionados.idActivoFijoOrigen && c.idActivoFijoDestino == activosFijosAdicionados.idActivoFijoDestino).AnyAsync(c => c.idAdicion != activosFijosAdicionados.idAdicion))
+                if (!await db.AltaActivoFijoDetalle.Where(c => c.IdActivoFijoAlta == altaActivosFijosDetalles.IdActivoFijoAlta && c.IdFactura == altaActivosFijosDetalles.IdFactura).AnyAsync(c => c.IdActivoFijoAlta != altaActivosFijosDetalles.IdActivoFijoAlta))
                 {
-                    var activosFijosAdicionadosActualizar = await db.ActivosFijosAdicionados.Where(x => x.idAdicion == id).FirstOrDefaultAsync();
-                    if (activosFijosAdicionadosActualizar != null)
+                    var altaActivosFijosDetallesActualizar = await db.AltaActivoFijoDetalle.Where(x => x.IdActivoFijoAlta == id).FirstOrDefaultAsync();
+                    if (altaActivosFijosDetallesActualizar != null)
                     {
                         try
                         {
-                            activosFijosAdicionadosActualizar.idActivoFijoOrigen = activosFijosAdicionados.idActivoFijoOrigen;
-                            activosFijosAdicionadosActualizar.idActivoFijoDestino = activosFijosAdicionados.idActivoFijoDestino;
-                            activosFijosAdicionadosActualizar.fechaAdicion = activosFijosAdicionados.fechaAdicion;
-                            db.ActivosFijosAdicionados.Update(activosFijosAdicionadosActualizar);
+                            altaActivosFijosDetallesActualizar.FechaAlta = altaActivosFijosDetalles.FechaAlta;
+                            altaActivosFijosDetallesActualizar.IdFactura = altaActivosFijosDetalles.IdFactura;
+                            altaActivosFijosDetallesActualizar.IdActivoFijo = altaActivosFijosDetalles.IdActivoFijo;
+                            db.AltaActivoFijoDetalle.Update(altaActivosFijosDetallesActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                         }
@@ -120,20 +123,20 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
-        
+
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteActivosFijosAdicionados([FromRoute] int id)
+        public async Task<Response> DeleteAltaActivosFijosDetalles([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = await db.ActivosFijosAdicionados.SingleOrDefaultAsync(m => m.idAdicion == id);
+                var respuesta = await db.AltaActivoFijoDetalle.SingleOrDefaultAsync(m => m.IdActivoFijoAlta == id);
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                db.ActivosFijosAdicionados.Remove(respuesta);
+                db.AltaActivoFijoDetalle.Remove(respuesta);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
@@ -144,11 +147,11 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(ActivosFijosAdicionados _ActivosFijosAdicionados)
+        public Response Existe(AltaActivoFijoDetalle altaActivosFijosDetalles)
         {
-            var bdd = _ActivosFijosAdicionados.idActivoFijoOrigen;
-            var _bdd = _ActivosFijosAdicionados.idActivoFijoDestino;
-            var loglevelrespuesta = db.ActivosFijosAdicionados.Where(p => p.idActivoFijoOrigen == bdd && p.idActivoFijoDestino == _bdd).FirstOrDefault();
+            var bdd = altaActivosFijosDetalles.IdActivoFijoAlta;
+            var _bdd = altaActivosFijosDetalles.IdFactura;
+            var loglevelrespuesta = db.AltaActivoFijoDetalle.Where(p => p.IdActivoFijoAlta == bdd && p.IdFactura == _bdd).FirstOrDefault();
             return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }

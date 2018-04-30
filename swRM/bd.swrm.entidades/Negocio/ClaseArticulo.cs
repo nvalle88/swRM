@@ -8,9 +8,9 @@ namespace bd.swrm.entidades.Negocio
         [Key]
         public int IdClaseArticulo { get; set; }
 
-        [Required(ErrorMessage = "Debe introducir {0}")]
+        [Required(ErrorMessage = "Debe introducir la {0}")]
         [Display(Name = "Clase de artículo:")]
-        [StringLength(20, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
+        [StringLength(20, MinimumLength = 2, ErrorMessage = "La {0} no puede tener más de {1} y menos de {2}")]
         public string Nombre { get; set; }
 
         //Propiedades Virtuales Referencias a otras clases

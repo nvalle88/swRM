@@ -244,7 +244,7 @@ namespace bd.swrm.web.Controllers.API
                 return (from recArt in listaArticulosRecepcionados
                                           join altaProv in db.AltaProveeduria on recArt.IdRecepcionArticulos equals altaProv.IdRecepcionArticulos
                                           select recArt
-                                         ).Distinct(new ArticuloAltaExistenciaComparador()).Join(await db.ExistenciaArticuloProveeduria.ToListAsync(), c => c.IdArticulo, p => p.IdArticulo, (c, p) => new RecepcionArticulos
+                                         ).Distinct(new MyComparer<RecepcionArticulos>((x, y)=> { return x.IdArticulo == y.IdArticulo; }, x=> x.IdArticulo.GetHashCode())).Join(await db.ExistenciaArticuloProveeduria.ToListAsync(), c => c.IdArticulo, p => p.IdArticulo, (c, p) => new RecepcionArticulos
                                          {
                                              Articulo = c.Articulo,
                                              Cantidad = p.Existencia,
