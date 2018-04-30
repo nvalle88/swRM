@@ -9,12 +9,12 @@ namespace bd.swrm.entidades.Negocio
         [Key]
         public int IdCodigoActivoFijo { get; set; }
 
-        [Required(ErrorMessage = "Debe introducir {0}")]
+        [Required(ErrorMessage = "Debe introducir el {0}")]
         [Display(Name = "Código secuencial:")]
         [StringLength(20, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string Codigosecuencial { get; set; }
 
-        [Required(ErrorMessage = "Debe introducir {0}")]
+        [Required(ErrorMessage = "Debe introducir el {0}")]
         [Display(Name = "Código de barras:")]
         [StringLength(20, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string CodigoBarras { get; set; }

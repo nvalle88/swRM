@@ -5,6 +5,19 @@ namespace bd.swrm.entidades.Negocio
 
     public partial class ActivoFijo
     {
+        public ActivoFijo()
+        {
+            ActivosFijosComponentes = new HashSet<ActivoFijoComponentes>();
+            ActivosFijosOrigen = new HashSet<ActivoFijoComponentes>();
+            BajaActivosFijosDetalles = new HashSet<BajaActivoFijoDetalle>();
+            AltaActivosFijosDetalles = new HashSet<AltaActivoFijoDetalle>();
+            DepreciacionActivoFijo = new HashSet<DepreciacionActivoFijo>();
+            EmpleadoActivoFijo = new HashSet<EmpleadoActivoFijo>();
+            MantenimientoActivoFijo = new HashSet<MantenimientoActivoFijo>();
+            RecepcionActivoFijoDetalle = new HashSet<RecepcionActivoFijoDetalle>();
+            TransferenciaActivoFijoDetalle = new HashSet<TransferenciaActivoFijoDetalle>();
+        }
+
         [Key]
         public int IdActivoFijo { get; set; }
 
@@ -27,7 +40,6 @@ namespace bd.swrm.entidades.Negocio
         [Display(Name = "Ubicación:")]
         [StringLength(100, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string Ubicacion { get; set; }
-
 
         //Propiedades Virtuales Referencias a otras clases
 
@@ -61,9 +73,9 @@ namespace bd.swrm.entidades.Negocio
         public int IdModelo { get; set; }
         public virtual Modelo Modelo { get; set; }
 
-        public virtual ActivosFijosAlta ActivosFijosAlta { get; set; }
+        public virtual ICollection<AltaActivoFijoDetalle> AltaActivosFijosDetalles { get; set; }
 
-        public virtual ActivosFijosBaja ActivosFijosBaja { get; set; }
+        public virtual ICollection<BajaActivoFijoDetalle> BajaActivosFijosDetalles { get; set; }
 
         public virtual ICollection<EmpleadoActivoFijo> EmpleadoActivoFijo { get; set; }
 
@@ -75,6 +87,8 @@ namespace bd.swrm.entidades.Negocio
 
         public virtual ICollection<TransferenciaActivoFijoDetalle> TransferenciaActivoFijoDetalle { get; set; }
 
-        public virtual ICollection<ActivosFijosAdicionados> ActivosFijosAdicionados { get; set; }
+        public virtual ICollection<ActivoFijoComponentes> ActivosFijosComponentes { get; set; }
+
+        public virtual ICollection<ActivoFijoComponentes> ActivosFijosOrigen { get; set; }
     }
 }

@@ -17,41 +17,41 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/ActivosFijosBaja")]
-    public class ActivosFijosBajaController : Controller
+    [Route("api/BajaActivosFijosDetalles")]
+    public class BajaActivosFijosDetallesController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ActivosFijosBajaController(SwRMDbContext db)
+        public BajaActivosFijosDetallesController(SwRMDbContext db)
         {
             this.db = db;
         }
         
         [HttpGet]
-        [Route("ListarActivosFijosBaja")]
-        public async Task<List<ActivosFijosBaja>> GetActivosFijosBaja()
+        [Route("ListarBajaActivosFijosDetalles")]
+        public async Task<List<BajaActivoFijoDetalle>> GetBajaActivosFijosDetalles()
         {
             try
             {
-                return await db.ActivosFijosBaja.OrderBy(x => x.FechaBaja).ToListAsync();
+                return await db.BajaActivoFijoDetalle.Include(c=> c.ActivoFijo).OrderBy(x => x.FechaBaja).ToListAsync();
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new List<ActivosFijosBaja>();
+                return new List<BajaActivoFijoDetalle>();
             }
         }
         
         [HttpGet("{id}")]
-        public async Task<Response> GetActivosFijosBaja([FromRoute] int id)
+        public async Task<Response> GetBajaActivosFijosDetalles([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var activosFijosBaja = await db.ActivosFijosBaja.SingleOrDefaultAsync(m => m.IdBaja == id);
-                return new Response { IsSuccess = activosFijosBaja != null, Message = activosFijosBaja != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = activosFijosBaja };
+                var bajaActivosFijosDetalles = await db.BajaActivoFijoDetalle.Include(c => c.ActivoFijo).SingleOrDefaultAsync(m => m.IdActivoFijoBaja == id);
+                return new Response { IsSuccess = bajaActivosFijosDetalles != null, Message = bajaActivosFijosDetalles != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = bajaActivosFijosDetalles };
             }
             catch (Exception ex)
             {
@@ -61,20 +61,23 @@ namespace bd.swrm.web.Controllers.API
         }
         
         [HttpPut("{id}")]
-        public async Task<Response> PutActivosFijosBaja([FromRoute] int id, [FromBody] ActivosFijosBaja activosFijosBaja)
+        public async Task<Response> PutBajaActivosFijosDetalles([FromRoute] int id, [FromBody] BajaActivoFijoDetalle bajaActivosFijosDetalles)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var activosFijosBajaActualizar = await db.ActivosFijosBaja.Where(x => x.IdBaja == id).FirstOrDefaultAsync();
-                if (activosFijosBajaActualizar != null)
+                var bajaActivosFijosDetallesActualizar = await db.BajaActivoFijoDetalle.Where(x => x.IdActivoFijoBaja == id).FirstOrDefaultAsync();
+                if (bajaActivosFijosDetallesActualizar != null)
                 {
                     try
                     {
-                        activosFijosBajaActualizar.FechaBaja = activosFijosBaja.FechaBaja;
-                        db.ActivosFijosBaja.Update(activosFijosBajaActualizar);
+                        bajaActivosFijosDetallesActualizar.FechaBaja = bajaActivosFijosDetalles.FechaBaja;
+                        bajaActivosFijosDetallesActualizar.IdMotivoBaja = bajaActivosFijosDetalles.IdMotivoBaja;
+                        bajaActivosFijosDetallesActualizar.IdActivo = bajaActivosFijosDetalles.IdActivo;
+                        bajaActivosFijosDetallesActualizar.MemoOficioResolucion = bajaActivosFijosDetalles.MemoOficioResolucion;
+                        db.BajaActivoFijoDetalle.Update(bajaActivosFijosDetallesActualizar);
                         await db.SaveChangesAsync();
                         return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                     }
@@ -93,8 +96,8 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpPost]
-        [Route("InsertarActivosFijosBaja")]
-        public async Task<Response> PostActivosFijosBaja([FromBody] ActivosFijosBaja activosFijosBaja)
+        [Route("InsertarBajaActivoFijoDetalle")]
+        public async Task<Response> PostBajaActivosFijosDetalles([FromBody] BajaActivoFijoDetalle bajaActivosFijosDetalles)
         {
             try
             {
@@ -102,9 +105,9 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.ActivosFijosBaja.AnyAsync(c => c.IdBaja == activosFijosBaja.IdBaja))
+                if (!await db.BajaActivoFijoDetalle.AnyAsync(c => c.IdActivoFijoBaja == bajaActivosFijosDetalles.IdActivoFijoBaja))
                 {
-                    db.ActivosFijosBaja.Add(activosFijosBaja);
+                    db.BajaActivoFijoDetalle.Add(bajaActivosFijosDetalles);
                     await db.SaveChangesAsync();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
@@ -118,18 +121,18 @@ namespace bd.swrm.web.Controllers.API
         }
         
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteActivosFijosBaja([FromRoute] int id)
+        public async Task<Response> DeleteBajaActivosFijosDetalles([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = await db.ActivosFijosBaja.SingleOrDefaultAsync(m => m.IdBaja == id);
+                var respuesta = await db.BajaActivoFijoDetalle.SingleOrDefaultAsync(m => m.IdActivoFijoBaja == id);
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                db.ActivosFijosBaja.Remove(respuesta);
+                db.BajaActivoFijoDetalle.Remove(respuesta);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
@@ -140,10 +143,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(ActivosFijosBaja activosFijosBaja)
+        public Response Existe(BajaActivoFijoDetalle bajaActivosFijosDetalles)
         {
-            var bdd = activosFijosBaja.IdBaja;
-            var loglevelrespuesta = db.ActivosFijosBaja.Where(p => p.IdBaja == bdd).FirstOrDefault();
+            var bdd = bajaActivosFijosDetalles.IdActivoFijoBaja;
+            var loglevelrespuesta = db.BajaActivoFijoDetalle.Where(p => p.IdActivoFijoBaja == bdd).FirstOrDefault();
             return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }

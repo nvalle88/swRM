@@ -7,15 +7,13 @@ namespace bd.swrm.datos
 {
     public class SwRMDbContext : DbContext
     {
-
         public SwRMDbContext(DbContextOptions<SwRMDbContext> options)
             : base(options)
-        {
-
-        }
+        { }
 
         public virtual DbSet<Articulo> Articulo { get; set; }
         public virtual DbSet<ActivoFijo> ActivoFijo { get; set; }
+        public virtual DbSet<ActivoFijoComponentes> ActivoFijoComponentes { get; set; }
         public virtual DbSet<Ciudad> Ciudad { get; set; }
         public virtual DbSet<ClaseActivoFijo> ClaseActivoFijo { get; set; }
         public virtual DbSet<ClaseArticulo> ClaseArticulo { get; set; }
@@ -57,13 +55,10 @@ namespace bd.swrm.datos
         public virtual DbSet<UnidadMedida> UnidadMedida { get; set; }
         public virtual DbSet<Persona> Persona { get; set; }
         public virtual DbSet<Empleado> Empleado { get; set; }
-        public virtual DbSet<ActivoFijoMotivoBaja> ActivoFijoMotivoBaja { get; set; }
-        public virtual DbSet<ActivosFijosBaja> ActivosFijosBaja { get; set; }
-        public virtual DbSet<ActivosFijosAlta> ActivosFijosAlta { get; set; }
-
-        public virtual DbSet<ActivosFijosAdicionados> ActivosFijosAdicionados { get; set; }
+        public virtual DbSet<MotivoBaja> MotivoBaja { get; set; }
+        public virtual DbSet<BajaActivoFijoDetalle> BajaActivoFijoDetalle { get; set; }
+        public virtual DbSet<AltaActivoFijoDetalle> AltaActivoFijoDetalle { get; set; }
         public virtual DbSet<MotivoTransferencia> MotivoTransferencia { get; set; }
-
         public virtual DbSet<EstadoCivil> EstadoCivil { get; set; }
         public virtual DbSet<Etnia> Etnia { get; set; }
         public virtual DbSet<Genero> Genero { get; set; }
@@ -148,6 +143,24 @@ namespace bd.swrm.datos
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            modelBuilder.Entity<ActivoFijoComponentes>(entity =>
+            {
+                entity.HasKey(e => e.IdAdicion)
+                    .HasName("PK_ActivoFijoComponentes_1");
+
+                entity.HasOne(d => d.ActivoFijoComponente)
+                    .WithMany(p => p.ActivosFijosComponentes)
+                    .HasForeignKey(d => d.IdActivoFijoComponente)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_ActivoFijoComponentes_ActivoFijo1");
+
+                entity.HasOne(d => d.ActivoFijoOrigen)
+                    .WithMany(p => p.ActivosFijosOrigen)
+                    .HasForeignKey(d => d.IdActivoFijoOrigen)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_ActivoFijoComponentes_ActivoFijo");
+            });
+
             modelBuilder.Entity<ConfiguracionContabilidad>(entity =>
             {
                 entity.HasKey(e => e.IdConfiguracionContabilidad)
@@ -212,8 +225,6 @@ namespace bd.swrm.datos
                     .WithMany(p => p.Articulo)
                     .HasForeignKey(d => d.IdUnidadMedida);
             });
-
-
 
             modelBuilder.Entity<Ciudad>(entity =>
             {
@@ -428,12 +439,7 @@ namespace bd.swrm.datos
                     .WithMany(p => p.EmpleadoActivoFijo)
                     .HasForeignKey(d => d.IdActivoFijo)
                     .OnDelete(DeleteBehavior.Restrict);
-
-                
             });
-
-
-
 
             modelBuilder.Entity<Factura>(entity =>
             {
@@ -460,7 +466,6 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdProveedor)
                     .OnDelete(DeleteBehavior.Restrict);
             });
-
 
             modelBuilder.Entity<FondoFinanciamiento>(entity =>
             {
@@ -544,7 +549,6 @@ namespace bd.swrm.datos
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-
             modelBuilder.Entity<Marca>(entity =>
             {
                 entity.HasKey(e => e.IdMarca)
@@ -554,7 +558,6 @@ namespace bd.swrm.datos
                     .IsRequired()
                     .HasMaxLength(50);
             });
-
 
             modelBuilder.Entity<Modelo>(entity =>
             {
@@ -574,7 +577,6 @@ namespace bd.swrm.datos
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-
             modelBuilder.Entity<MotivoRecepcion>(entity =>
             {
                 entity.HasKey(e => e.IdMotivoRecepcion)
@@ -585,8 +587,6 @@ namespace bd.swrm.datos
                     .HasMaxLength(50);
             });
 
-
-
             modelBuilder.Entity<Pais>(entity =>
             {
                 entity.HasKey(e => e.IdPais)
@@ -596,7 +596,6 @@ namespace bd.swrm.datos
                     .IsRequired()
                     .HasMaxLength(50);
             });
-
 
             modelBuilder.Entity<Parroquia>(entity =>
             {
@@ -615,7 +614,6 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdCiudad)
                     .OnDelete(DeleteBehavior.Restrict);
             });
-
 
             modelBuilder.Entity<Proveedor>(entity =>
             {
@@ -657,7 +655,6 @@ namespace bd.swrm.datos
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-
             modelBuilder.Entity<RecepcionActivoFijo>(entity =>
             {
                 entity.HasKey(e => e.IdRecepcionActivoFijo)
@@ -687,7 +684,6 @@ namespace bd.swrm.datos
                 entity.Property(e => e.OrdenCompra)
                     .IsRequired()
                     .HasMaxLength(100);
-
                
                 entity.HasOne(d => d.LibroActivoFijo)
                     .WithMany(p => p.RecepcionActivoFijo)
@@ -715,7 +711,6 @@ namespace bd.swrm.datos
 
                 entity.HasIndex(e => e.IdActivoFijo)
                     .HasName("IX_RecepcionActivoFijoDetalle_IdActivoFijo");
-
                
                 entity.HasIndex(e => e.IdRecepcionActivoFijo)
                     .HasName("IX_RecepcionActivoFijoDetalle_IdRecepcionActivoFijo");
@@ -728,7 +723,6 @@ namespace bd.swrm.datos
                     .WithMany(p => p.RecepcionActivoFijoDetalle)
                     .HasForeignKey(d => d.IdActivoFijo)
                     .OnDelete(DeleteBehavior.Restrict);
-
                
                 entity.HasOne(d => d.RecepcionActivoFijo)
                     .WithMany(p => p.RecepcionActivoFijoDetalle)
@@ -757,7 +751,6 @@ namespace bd.swrm.datos
                     .WithMany(p => p.RecepcionArticulos)
                     .HasForeignKey(d => d.IdArticulo)
                     .OnDelete(DeleteBehavior.Restrict);
-
                
                 entity.HasOne(d => d.MaestroArticuloSucursal)
                     .WithMany(p => p.RecepcionArticulos)
@@ -770,8 +763,6 @@ namespace bd.swrm.datos
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-
-
             modelBuilder.Entity<SolicitudProveeduria>(entity =>
             {
                 entity.HasKey(e => e.IdSolicitudProveeduria)
@@ -779,8 +770,6 @@ namespace bd.swrm.datos
 
                 entity.HasIndex(e => e.IdEmpleado)
                     .HasName("IX_SolicitudProveeduria_IdEmpleado");
-
-               
             });
 
             modelBuilder.Entity<SolicitudProveeduriaDetalle>(entity =>
@@ -802,8 +791,6 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdArticulo)
                     .OnDelete(DeleteBehavior.Restrict);
 
-              
-
                 entity.HasOne(d => d.MaestroArticuloSucursal)
                     .WithMany(p => p.SolicitudProveeduriaDetalle)
                     .HasForeignKey(d => d.IdMaestroArticuloSucursal)
@@ -814,7 +801,6 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdSolicitudProveeduria)
                     .OnDelete(DeleteBehavior.Restrict);
             });
-
 
             modelBuilder.Entity<SubClaseActivoFijo>(entity =>
             {
@@ -1108,9 +1094,9 @@ namespace bd.swrm.datos
                     .HasName("PK_UnidadMedida");
             });
 
-            modelBuilder.Entity<ActivoFijoMotivoBaja>(entity =>
+            modelBuilder.Entity<MotivoBaja>(entity =>
             {
-                entity.HasKey(e => e.IdActivoFijoMotivoBaja)
+                entity.HasKey(e => e.IdMotivoBaja)
                     .HasName("PK_ActivoFijoMotivoBaja");
 
                 entity.Property(e => e.Nombre)
@@ -1118,53 +1104,48 @@ namespace bd.swrm.datos
                     .HasMaxLength(100);
             });
 
-            modelBuilder.Entity<ActivosFijosBaja>(entity =>
+            modelBuilder.Entity<BajaActivoFijoDetalle>(entity =>
             {
-                entity.HasKey(e => e.IdBaja)
+                entity.HasKey(e => e.IdActivoFijoBaja)
                     .HasName("PK_ActivosFijosBaja");
 
-                entity.Property(e => e.FechaBaja)
-                    .IsRequired();
+                entity.Property(e => e.FechaBaja).HasColumnType("datetime");
 
-                entity.HasOne(d => d.ActivoFijoMotivoBaja)
-                    .WithMany(p => p.ActivosFijosBaja)
+                entity.Property(e => e.MemoOficioResolucion)
+                    .HasColumnName("memoOficioResolucion")
+                    .HasMaxLength(50);
+
+                entity.HasOne(d => d.ActivoFijo)
+                    .WithMany(p => p.BajaActivosFijosDetalles)
+                    .HasForeignKey(d => d.IdActivo)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_BajaActivoFijoDetalle_ActivoFijo");
+
+                entity.HasOne(d => d.MotivoBaja)
+                    .WithMany(p => p.BajaActivosFijosDetalles)
                     .HasForeignKey(d => d.IdMotivoBaja)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_ActivosFijosBaja_ActivoFijoMotivoBaja");
+            }); 
 
-                entity.HasOne(a => a.ActivoFijo)
-                    .WithOne(b => b.ActivosFijosBaja)
-                    .HasForeignKey<ActivosFijosBaja>(b => b.IdActivo);
-
-            });
-
-            modelBuilder.Entity<ActivosFijosAlta>(entity =>
+            modelBuilder.Entity<AltaActivoFijoDetalle>(entity =>
             {
-                entity.HasKey(e => e.IdActivoFijo)
-                    .HasName("PK_ActivoFijo");
+                entity.HasKey(e => e.IdActivoFijoAlta)
+                    .HasName("PK_ActivosFijosAlta_1");
 
-                entity.Property(e => e.FechaAlta)
-                    .IsRequired();
+                entity.Property(e => e.FechaAlta).HasColumnType("datetime");
 
-                entity.HasOne(a => a.ActivoFijo)
-                    .WithOne(b => b.ActivosFijosAlta)
-                    .HasForeignKey<ActivosFijosAlta>(b => b.IdActivoFijo);
+                entity.HasOne(d => d.ActivoFijo)
+                    .WithMany(p => p.AltaActivosFijosDetalles)
+                    .HasForeignKey(d => d.IdActivoFijo)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_AltaActivoFijoDetalle_ActivoFijo");
+
+                entity.HasOne(d => d.Factura)
+                    .WithMany(p => p.AltaActivosFijosDetalles)
+                    .HasForeignKey(d => d.IdFactura)
+                    .HasConstraintName("FK_ActivosFijosAlta_Factura");
             });
-
-
-            modelBuilder.Entity<ActivosFijosAdicionados>(entity =>
-            {
-                entity.HasKey(e => e.idAdicion)
-                    .HasName("PK_AcitvosFijosAdicionados_1");
-
-                entity.Property(e => e.fechaAdicion)
-                    .IsRequired();
-                
-                entity.HasOne(a => a.ActivoFijo)
-                    .WithMany(b => b.ActivosFijosAdicionados)
-                    .HasForeignKey(b => b.idActivoFijoOrigen);
-
-            });
-
 
             modelBuilder.Entity<EstadoCivil>(entity =>
             {
@@ -1362,35 +1343,5 @@ namespace bd.swrm.datos
                 relationship.DeleteBehavior = DeleteBehavior.Restrict;
             }            
         }
-
-        //protected override void OnModelCreating(ModelBuilder builder)
-        //{
-
-        //    foreach (var relationship in builder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
-        //    {
-        //        relationship.DeleteBehavior = DeleteBehavior.Restrict;
-        //    }
-
-        //    base.OnModelCreating(builder);
-
-        //    // Customize the ASP.NET Identity model and override the defaults if needed.
-        //    // For example, you can rename the ASP.NET Identity table names and more.
-        //    // Add your customizations after calling base.OnModelCreating(builder);
-        //}
-
-
-        public void EnsureSeedData()
-        {
-
-        }
-
-      
     }
-
 }
-
-
-
-
-
-

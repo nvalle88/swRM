@@ -17,41 +17,41 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/ActivoFijoMotivoBaja")]
-    public class ActivoFijoMotivoBajaController : Controller
+    [Route("api/MotivoBaja")]
+    public class MotivoBajaController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ActivoFijoMotivoBajaController(SwRMDbContext db)
+        public MotivoBajaController(SwRMDbContext db)
         {
             this.db = db;
         }
         
         [HttpGet]
-        [Route("ListarActivoFijoMotivoBaja")]
-        public async Task<List<ActivoFijoMotivoBaja>> GetActivoFijoMotivoBaja()
+        [Route("ListarMotivoBaja")]
+        public async Task<List<MotivoBaja>> GetMotivoBaja()
         {
             try
             {
-                return await db.ActivoFijoMotivoBaja.OrderBy(x => x.Nombre).ToListAsync();
+                return await db.MotivoBaja.OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new List<ActivoFijoMotivoBaja>();
+                return new List<MotivoBaja>();
             }
         }
         
         [HttpGet("{id}")]
-        public async Task<Response> GetActivoFijoMotivoBaja([FromRoute] int id)
+        public async Task<Response> GetMotivoBaja([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var activoFijoMotivoBaja = await db.ActivoFijoMotivoBaja.SingleOrDefaultAsync(m => m.IdActivoFijoMotivoBaja == id);
-                return new Response { IsSuccess = activoFijoMotivoBaja != null, Message = activoFijoMotivoBaja != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = activoFijoMotivoBaja };
+                var motivoBaja = await db.MotivoBaja.SingleOrDefaultAsync(m => m.IdMotivoBaja == id);
+                return new Response { IsSuccess = motivoBaja != null, Message = motivoBaja != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = motivoBaja };
             }
             catch (Exception ex)
             {
@@ -61,22 +61,22 @@ namespace bd.swrm.web.Controllers.API
         }
         
         [HttpPut("{id}")]
-        public async Task<Response> PutActivoFijoMotivoBaja([FromRoute] int id, [FromBody] ActivoFijoMotivoBaja activoFijoMotivoBaja)
+        public async Task<Response> PutMotivoBaja([FromRoute] int id, [FromBody] MotivoBaja motivoBaja)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.ActivoFijoMotivoBaja.Where(c => c.Nombre.ToUpper().Trim() == activoFijoMotivoBaja.Nombre.ToUpper().Trim()).AnyAsync(c => c.IdActivoFijoMotivoBaja != activoFijoMotivoBaja.IdActivoFijoMotivoBaja))
+                if (!await db.MotivoBaja.Where(c => c.Nombre.ToUpper().Trim() == motivoBaja.Nombre.ToUpper().Trim()).AnyAsync(c => c.IdMotivoBaja != motivoBaja.IdMotivoBaja))
                 {
-                    var ActivoFijoMotivoBajaActualizar = await db.ActivoFijoMotivoBaja.Where(x => x.IdActivoFijoMotivoBaja == id).FirstOrDefaultAsync();
-                    if (ActivoFijoMotivoBajaActualizar != null)
+                    var motivoBajaActualizar = await db.MotivoBaja.Where(x => x.IdMotivoBaja == id).FirstOrDefaultAsync();
+                    if (motivoBajaActualizar != null)
                     {
                         try
                         {
-                            ActivoFijoMotivoBajaActualizar.Nombre = activoFijoMotivoBaja.Nombre;
-                            db.ActivoFijoMotivoBaja.Update(ActivoFijoMotivoBajaActualizar);
+                            motivoBajaActualizar.Nombre = motivoBaja.Nombre;
+                            db.MotivoBaja.Update(motivoBajaActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                         }
@@ -96,17 +96,17 @@ namespace bd.swrm.web.Controllers.API
         }
         
         [HttpPost]
-        [Route("InsertarActivoFijoMotivoBaja")]
-        public async Task<Response> PostActivoFijoMotivoBaja([FromBody] ActivoFijoMotivoBaja activoFijoMotivoBaja)
+        [Route("InsertarMotivoBaja")]
+        public async Task<Response> PostMotivoBaja([FromBody] MotivoBaja motivoBaja)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.ActivoFijoMotivoBaja.AnyAsync(c => c.Nombre.ToUpper().Trim() == activoFijoMotivoBaja.Nombre.ToUpper().Trim()))
+                if (!await db.MotivoBaja.AnyAsync(c => c.Nombre.ToUpper().Trim() == motivoBaja.Nombre.ToUpper().Trim()))
                 {
-                    db.ActivoFijoMotivoBaja.Add(activoFijoMotivoBaja);
+                    db.MotivoBaja.Add(motivoBaja);
                     await db.SaveChangesAsync();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
@@ -120,18 +120,18 @@ namespace bd.swrm.web.Controllers.API
         }
         
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteActivoFijoMotivoBaja([FromRoute] int id)
+        public async Task<Response> DeleteMotivoBaja([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = await db.ActivoFijoMotivoBaja.SingleOrDefaultAsync(m => m.IdActivoFijoMotivoBaja == id);
+                var respuesta = await db.MotivoBaja.SingleOrDefaultAsync(m => m.IdMotivoBaja == id);
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                db.ActivoFijoMotivoBaja.Remove(respuesta);
+                db.MotivoBaja.Remove(respuesta);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
@@ -142,10 +142,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(ActivoFijoMotivoBaja activoFijoMotivoBaja)
+        public Response Existe(MotivoBaja motivoBaja)
         {
-            var bdd = activoFijoMotivoBaja.Nombre.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.ActivoFijoMotivoBaja.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            var bdd = motivoBaja.Nombre.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.MotivoBaja.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
             return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }

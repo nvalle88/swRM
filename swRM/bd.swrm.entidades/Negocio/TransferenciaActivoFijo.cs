@@ -38,7 +38,7 @@ namespace bd.swrm.entidades.Negocio
         public int IdMotivoTransferencia { get; set; }
         public virtual MotivoTransferencia MotivoTransferencia { get; set; }
 
-        [Required(ErrorMessage = "Debe introducir {0}")]
+        [Required(ErrorMessage = "Debe introducir la {0}")]
         [Display(Name = "Fecha de transferencia:")]
         [DataType(DataType.DateTime)]
         [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy hh:mm}", ApplyFormatInEditMode = true)]
@@ -49,7 +49,7 @@ namespace bd.swrm.entidades.Negocio
         public string Origen { get; set; }
 
         [Display(Name = "Destino:")]
-        [Required(ErrorMessage = "Debe introducir {0}")]
+        [Required(ErrorMessage = "Debe introducir el {0}")]
         [StringLength(50, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string Destino { get; set; }
 
