@@ -179,6 +179,24 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
+        [HttpGet("EstadoActivoFijo/{id}")]
+        public async Task<Response> GetEstadoActivoFijo([FromRoute] int id)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
+                var recepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle.Include(c => c.Estado).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == id);
+                return new Response { IsSuccess = recepcionActivoFijoDetalle != null && recepcionActivoFijoDetalle.Estado != null, Message = recepcionActivoFijoDetalle != null && recepcionActivoFijoDetalle.Estado != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = recepcionActivoFijoDetalle?.Estado };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+
         [HttpPut("EstadoActivoFijo/{id}")]
         public async Task<Response> PutModificarEstadoActivoFijo([FromRoute] int id, [FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
         {
@@ -252,6 +270,9 @@ namespace bd.swrm.web.Controllers.API
                     ModelState.Remove("ActivoFijo.CodigoActivoFijo.Codigosecuencial");
                 }
 
+                if (recepcionActivoFijoDetalle.ActivoFijo.CodigoActivoFijo == null)
+                    recepcionActivoFijoDetalle.ActivoFijo.CodigoActivoFijo = new CodigoActivoFijo();
+
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
@@ -264,9 +285,7 @@ namespace bd.swrm.web.Controllers.API
                 db.Entry(recepcionActivoFijoDetalle.RecepcionActivoFijo.MotivoRecepcion).State = EntityState.Unchanged;
                 db.Entry(recepcionActivoFijoDetalle.RecepcionActivoFijo.Proveedor).State = EntityState.Unchanged;
                 db.Entry(recepcionActivoFijoDetalle.Estado).State = EntityState.Unchanged;
-
                 db.RecepcionActivoFijoDetalle.Add(recepcionActivoFijoDetalle);
-                db.EmpleadoActivoFijo.Add(new EmpleadoActivoFijo { IdActivoFijo = recepcionActivoFijoDetalle.IdActivoFijo, IdEmpleado = recepcionActivoFijoDetalle.RecepcionActivoFijo.IdEmpleado, FechaAsignacion = DateTime.Now });
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = recepcionActivoFijoDetalle };
             }
@@ -285,6 +304,7 @@ namespace bd.swrm.web.Controllers.API
                 ModelState.Remove("id");
                 ModelState.Remove("ActivoFijo.LibroActivoFijo.Sucursal.Nombre");
                 ModelState.Remove("RecepcionActivoFijo.LibroActivoFijo.Sucursal.Nombre");
+                ModelState.Remove("ActivoFijo.CodigoActivoFijo.CodigoBarras");
 
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
@@ -312,6 +332,7 @@ namespace bd.swrm.web.Controllers.API
                     recepcionActivoFijoDetalleActualizar.ActivoFijo.IdUnidadMedida = recepcionActivoFijoDetalle.ActivoFijo.IdUnidadMedida;
                     recepcionActivoFijoDetalleActualizar.ActivoFijo.IdCodigoActivoFijo = recepcionActivoFijoDetalle.ActivoFijo.IdCodigoActivoFijo;
                     recepcionActivoFijoDetalleActualizar.ActivoFijo.IdModelo = recepcionActivoFijoDetalle.ActivoFijo.IdModelo;
+                    recepcionActivoFijoDetalleActualizar.ActivoFijo.Depreciacion = recepcionActivoFijoDetalle.ActivoFijo.Depreciacion;
                     recepcionActivoFijoDetalleActualizar.IdEstado = recepcionActivoFijoDetalle.IdEstado;
 
                     if (!recepcionActivoFijoDetalle.RecepcionActivoFijo.ValidacionTecnica)
@@ -324,7 +345,6 @@ namespace bd.swrm.web.Controllers.API
                         recepcionActivoFijoDetalleActualizar.ActivoFijo.CodigoActivoFijo.CodigoBarras = null;
                         recepcionActivoFijoDetalleActualizar.ActivoFijo.CodigoActivoFijo.Codigosecuencial = null;
                     }
-
                     db.RecepcionActivoFijoDetalle.Update(recepcionActivoFijoDetalleActualizar);
                     await db.SaveChangesAsync();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
@@ -336,7 +356,46 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
-        
+
+        [HttpDelete("{id}")]
+        public async Task<Response> DeleteRecepcionActivoFijo([FromRoute] int id)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
+                var respuesta = await db.RecepcionActivoFijoDetalle.Include(c=> c.ActivoFijo).ThenInclude(c=> c.CodigoActivoFijo).Include(c=> c.RecepcionActivoFijo).SingleOrDefaultAsync(m => m.IdRecepcionActivoFijoDetalle == id);
+                if (respuesta == null)
+                    return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
+
+                if (respuesta.ActivoFijo.CodigoActivoFijo != null)
+                    db.CodigoActivoFijo.Remove(respuesta.ActivoFijo.CodigoActivoFijo);
+
+                db.ActivoFijoComponentes.RemoveRange(db.ActivoFijoComponentes.Where(c => c.IdActivoFijoOrigen == respuesta.IdActivoFijo));
+                db.EmpleadoActivoFijo.RemoveRange(db.EmpleadoActivoFijo.Where(c => c.IdActivoFijo == respuesta.IdActivoFijo));
+                db.DepreciacionActivoFijo.RemoveRange(db.DepreciacionActivoFijo.Where(c => c.IdActivoFijo == respuesta.IdActivoFijo));
+                var transferenciasActivoFijoDetalle = db.TransferenciaActivoFijoDetalle.Include(c=> c.TransferenciaActivoFijo).Where(c => c.IdActivoFijo == respuesta.IdActivoFijo);
+                foreach (var item in transferenciasActivoFijoDetalle)
+                {
+                    db.TransferenciaActivoFijo.Remove(item.TransferenciaActivoFijo);
+                    db.TransferenciaActivoFijoDetalle.Remove(item);
+                }
+                db.AltaActivoFijoDetalle.RemoveRange(db.AltaActivoFijoDetalle.Where(c => c.IdActivoFijo == respuesta.IdActivoFijo));
+                db.BajaActivoFijoDetalle.RemoveRange(db.BajaActivoFijoDetalle.Where(c => c.IdActivoFijo == respuesta.IdActivoFijo));
+                db.RecepcionActivoFijo.Remove(respuesta.RecepcionActivoFijo);
+                db.ActivoFijo.Remove(respuesta.ActivoFijo);
+                db.RecepcionActivoFijoDetalle.RemoveRange(db.RecepcionActivoFijoDetalle.Where(c=> c.IdActivoFijo == respuesta.IdActivoFijo));
+                await db.SaveChangesAsync();
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+
         [HttpPost]
         [Route("AsignarPoliza")]
         public async Task<Response> AsignarPoliza([FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)

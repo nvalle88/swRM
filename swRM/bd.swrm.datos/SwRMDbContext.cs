@@ -14,6 +14,7 @@ namespace bd.swrm.datos
         public virtual DbSet<Articulo> Articulo { get; set; }
         public virtual DbSet<ActivoFijo> ActivoFijo { get; set; }
         public virtual DbSet<ActivoFijoComponentes> ActivoFijoComponentes { get; set; }
+        public virtual DbSet<ActivoFijoDocumento> ActivoFijoDocumento { get; set; }
         public virtual DbSet<Ciudad> Ciudad { get; set; }
         public virtual DbSet<ClaseActivoFijo> ClaseActivoFijo { get; set; }
         public virtual DbSet<ClaseArticulo> ClaseArticulo { get; set; }
@@ -265,6 +266,26 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdConfiguracionContabilidad)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("RefConfiguracionContabilidad469");
+            });
+
+            modelBuilder.Entity<ActivoFijoDocumento>(entity =>
+            {
+                entity.HasKey(e => e.IdActivoFijoDocumento)
+                    .HasName("PK_ActivoFijoDocumento");
+
+                entity.Property(e => e.Nombre)
+                    .IsRequired()
+                    .HasColumnType("varchar(50)");
+
+                entity.Property(e => e.Url)
+                    .IsRequired()
+                    .HasColumnType("varchar(1024)");
+
+                entity.HasOne(d => d.ActivoFijo)
+                    .WithMany(p => p.ActivoFijoDocumento)
+                    .HasForeignKey(d => d.IdActivo)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_ActivoFijoDocumento_ActivoFijo");
             });
 
             modelBuilder.Entity<ClaseActivoFijo>(entity =>
@@ -1117,7 +1138,7 @@ namespace bd.swrm.datos
 
                 entity.HasOne(d => d.ActivoFijo)
                     .WithMany(p => p.BajaActivosFijosDetalles)
-                    .HasForeignKey(d => d.IdActivo)
+                    .HasForeignKey(d => d.IdActivoFijo)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_BajaActivoFijoDetalle_ActivoFijo");
 
