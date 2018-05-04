@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using bd.swrm.datos;
 using System.Threading;
 using System;
+using bd.swrm.servicios.Interfaces;
+using bd.swrm.servicios.Servicios;
 
 namespace bd.swrm.web
 {
@@ -27,12 +29,10 @@ namespace bd.swrm.web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             // Add framework services.
             services.AddMvc().AddJsonOptions(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
-            services.AddDbContext<SwRMDbContext>(options =>
-              options.UseSqlServer(Configuration.GetConnectionString("SwRMConnection")));
-
+            services.AddDbContext<SwRMDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("SwRMConnection")));
+            services.AddSingleton<IUploadFileService, UploadFileService>();
             Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
         }
 

@@ -30,7 +30,7 @@ namespace bd.swrm.entidades.Negocio
         [Display(Name = "Activo Fijo:")]
         [Required(ErrorMessage = "Debe seleccionar el {0}")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
-        public int IdActivo { get; set; }
+        public int IdActivoFijo { get; set; }
         public virtual ActivoFijo ActivoFijo { get; set; }
     }
 }

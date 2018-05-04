@@ -9,6 +9,7 @@ namespace bd.swrm.entidades.Negocio
         {
             ActivosFijosComponentes = new HashSet<ActivoFijoComponentes>();
             ActivosFijosOrigen = new HashSet<ActivoFijoComponentes>();
+            ActivoFijoDocumento = new HashSet<ActivoFijoDocumento>();
             BajaActivosFijosDetalles = new HashSet<BajaActivoFijoDetalle>();
             AltaActivosFijosDetalles = new HashSet<AltaActivoFijoDetalle>();
             DepreciacionActivoFijo = new HashSet<DepreciacionActivoFijo>();
@@ -21,17 +22,17 @@ namespace bd.swrm.entidades.Negocio
         [Key]
         public int IdActivoFijo { get; set; }
 
-        [Required(ErrorMessage = "Debe introducir {0}")]
+        [Required(ErrorMessage = "Debe introducir el {0}")]
         [Display(Name = "Activo fijo:")]
         [StringLength(100, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string Nombre { get; set; }
 
-        [Required(ErrorMessage = "Debe introducir {0}")]
+        [Required(ErrorMessage = "Debe introducir el {0}")]
         [Display(Name = "Serie:")]
         [StringLength(50, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string Serie { get; set; }
 
-        [Required(ErrorMessage = "Debe introducir {0}")]
+        [Required(ErrorMessage = "Debe introducir el {0}")]
         [Display(Name = "Valor de compra:")]
         [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal ValorCompra { get; set; }
@@ -40,6 +41,10 @@ namespace bd.swrm.entidades.Negocio
         [Display(Name = "Ubicación:")]
         [StringLength(100, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string Ubicacion { get; set; }
+
+        [Required(ErrorMessage = "Debe introducir la {0}")]
+        [Display(Name = "¿Depreciación?")]
+        public bool Depreciacion { get; set; }
 
         //Propiedades Virtuales Referencias a otras clases
 
@@ -76,6 +81,8 @@ namespace bd.swrm.entidades.Negocio
         public virtual ICollection<AltaActivoFijoDetalle> AltaActivosFijosDetalles { get; set; }
 
         public virtual ICollection<BajaActivoFijoDetalle> BajaActivosFijosDetalles { get; set; }
+
+        public virtual ICollection<ActivoFijoDocumento> ActivoFijoDocumento { get; set; }
 
         public virtual ICollection<EmpleadoActivoFijo> EmpleadoActivoFijo { get; set; }
 

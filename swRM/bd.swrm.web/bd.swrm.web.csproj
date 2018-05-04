@@ -36,12 +36,14 @@
     <Folder Include="Controllers\MVC\" />
     <Folder Include="Properties\PublishProfiles\" />
     <Folder Include="Properties\PublishProfiles\" />
+    <Folder Include="wwwroot\ActivoFijoDocumentos\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\SalvarLogEntry\bd.guardarlog.servicios\bd.log.guardar.csproj" />
     <ProjectReference Include="..\bd.swcompartidos.servicios.externos\bd.sw.externos.csproj" />
     <ProjectReference Include="..\bd.swrm.datos\bd.swrm.datos.csproj" />
     <ProjectReference Include="..\bd.swrm.entidades\bd.swrm.entidades.csproj" />
+    <ProjectReference Include="..\bd.swrm.servicios\bd.swrm.servicios.csproj" />
   </ItemGroup>
 
 </Project>

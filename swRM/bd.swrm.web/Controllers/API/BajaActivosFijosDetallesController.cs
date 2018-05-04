@@ -75,7 +75,7 @@ namespace bd.swrm.web.Controllers.API
                     {
                         bajaActivosFijosDetallesActualizar.FechaBaja = bajaActivosFijosDetalles.FechaBaja;
                         bajaActivosFijosDetallesActualizar.IdMotivoBaja = bajaActivosFijosDetalles.IdMotivoBaja;
-                        bajaActivosFijosDetallesActualizar.IdActivo = bajaActivosFijosDetalles.IdActivo;
+                        bajaActivosFijosDetallesActualizar.IdActivoFijo = bajaActivosFijosDetalles.IdActivoFijo;
                         bajaActivosFijosDetallesActualizar.MemoOficioResolucion = bajaActivosFijosDetalles.MemoOficioResolucion;
                         db.BajaActivoFijoDetalle.Update(bajaActivosFijosDetallesActualizar);
                         await db.SaveChangesAsync();
