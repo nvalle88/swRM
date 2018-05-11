@@ -6,6 +6,11 @@ namespace bd.swrm.entidades.Negocio
 
     public partial class RecepcionActivoFijo
     {
+        public RecepcionActivoFijo()
+        {
+            RecepcionActivoFijoDetalle = new HashSet<RecepcionActivoFijoDetalle>();
+        }
+
         [Key]
         public int IdRecepcionActivoFijo { get; set; }
 
@@ -17,7 +22,7 @@ namespace bd.swrm.entidades.Negocio
 
         [Required(ErrorMessage = "Debe introducir la {0}")]
         [Display(Name = "Cantidad:")]
-        public decimal Cantidad { get; set; }
+        public int Cantidad { get; set; }
 
         [Required(ErrorMessage = "Debe introducir la {0}")]
         [Display(Name = "¿Validacion técnica?")]
@@ -35,26 +40,10 @@ namespace bd.swrm.entidades.Negocio
 
         //Propiedades Virtuales Referencias a otras clases
 
-        [Display(Name = "Libro de activo fijo:")]
-        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
-        public int? IdLibroActivoFijo { get; set; }
-        public virtual LibroActivoFijo LibroActivoFijo { get; set; }
-
-        [Display(Name = "Servidor público:")]
+        [Display(Name = "Motivo de Recepción:")]
         [Required(ErrorMessage = "Debe seleccionar el {0}")]
-        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
-        public int IdEmpleado { get; set; }
-        public virtual Empleado Empleado { get; set; }
-
-        [Display(Name = "Sub clase de activo fijo:")]
-        [Required(ErrorMessage = "Debe seleccionar la {0}")]
-        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
-        public int IdSubClaseActivoFijo { get; set; }
-        public virtual SubClaseActivoFijo SubClaseActivoFijo { get; set; }
-
-        [Display(Name = "MotivoRecepción:")]
-        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
-        public int? IdMotivoRecepcion { get; set; }
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0}")]
+        public int IdMotivoRecepcion { get; set; }
         public virtual MotivoRecepcion MotivoRecepcion { get; set; }
 
         [Display(Name = "Proveedor:")]

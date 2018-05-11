@@ -17,41 +17,56 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/BajaActivosFijosDetalles")]
-    public class BajaActivosFijosDetallesController : Controller
+    [Route("api/Bodega")]
+    public class BodegaController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public BajaActivosFijosDetallesController(SwRMDbContext db)
+        public BodegaController(SwRMDbContext db)
         {
             this.db = db;
         }
-        
+
         [HttpGet]
-        [Route("ListarBajaActivosFijosDetalles")]
-        public async Task<List<BajaActivoFijoDetalle>> GetBajaActivosFijosDetalles()
+        [Route("ListarBodega")]
+        public async Task<List<Bodega>> GetBodega()
         {
             try
             {
-                return await db.BajaActivoFijoDetalle.Include(c=> c.ActivoFijo).OrderBy(x => x.FechaBaja).ToListAsync();
+                return await db.Bodega.OrderBy(x => x.Nombre).Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais).ToListAsync();
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new List<BajaActivoFijoDetalle>();
+                return new List<Bodega>();
             }
         }
-        
+
+        [HttpGet]
+        [Route("ListarBodegaPorSucursal/{idSucursal}")]
+        public async Task<List<Bodega>> GetBodegaPorSucursal(int idSucursal)
+        {
+            try
+            {
+                return await db.Bodega.Where(c => c.IdSucursal == idSucursal).OrderBy(x => x.Nombre).Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<Bodega>();
+            }
+        }
+
         [HttpGet("{id}")]
-        public async Task<Response> GetBajaActivosFijosDetalles([FromRoute] int id)
+        public async Task<Response> GetBodega([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var bajaActivosFijosDetalles = await db.BajaActivoFijoDetalle.Include(c => c.ActivoFijo).SingleOrDefaultAsync(m => m.IdActivoFijoBaja == id);
-                return new Response { IsSuccess = bajaActivosFijosDetalles != null, Message = bajaActivosFijosDetalles != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = bajaActivosFijosDetalles };
+                var bodega = await db.Bodega.Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais).SingleOrDefaultAsync(m => m.IdBodega == id);
+                return new Response { IsSuccess = bodega != null, Message = bodega != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = bodega };
             }
             catch (Exception ex)
             {
@@ -59,35 +74,37 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
+
         [HttpPut("{id}")]
-        public async Task<Response> PutBajaActivosFijosDetalles([FromRoute] int id, [FromBody] BajaActivoFijoDetalle bajaActivosFijosDetalles)
+        public async Task<Response> PutBodega([FromRoute] int id, [FromBody] Bodega bodega)
         {
             try
             {
+                ModelState.Remove("Sucursal.Nombre");
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var bajaActivosFijosDetallesActualizar = await db.BajaActivoFijoDetalle.Where(x => x.IdActivoFijoBaja == id).FirstOrDefaultAsync();
-                if (bajaActivosFijosDetallesActualizar != null)
+                if (!await db.Bodega.Where(c => c.Nombre.ToUpper().Trim() == bodega.Nombre.ToUpper().Trim()).AnyAsync(c => c.IdBodega != bodega.IdBodega))
                 {
-                    try
+                    var bodegaActualizar = await db.Bodega.Where(x => x.IdBodega == id).FirstOrDefaultAsync();
+                    if (bodegaActualizar != null)
                     {
-                        bajaActivosFijosDetallesActualizar.FechaBaja = bajaActivosFijosDetalles.FechaBaja;
-                        bajaActivosFijosDetallesActualizar.IdMotivoBaja = bajaActivosFijosDetalles.IdMotivoBaja;
-                        bajaActivosFijosDetallesActualizar.IdActivoFijo = bajaActivosFijosDetalles.IdActivoFijo;
-                        bajaActivosFijosDetallesActualizar.MemoOficioResolucion = bajaActivosFijosDetalles.MemoOficioResolucion;
-                        db.BajaActivoFijoDetalle.Update(bajaActivosFijosDetallesActualizar);
-                        await db.SaveChangesAsync();
-                        return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
-                    }
-                    catch (Exception ex)
-                    {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                        return new Response { IsSuccess = false, Message = Mensaje.Error };
+                        try
+                        {
+                            bodegaActualizar.Nombre = bodega.Nombre;
+                            bodegaActualizar.IdSucursal = bodega.IdSucursal;
+                            db.Bodega.Update(bodegaActualizar);
+                            await db.SaveChangesAsync();
+                            return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                        }
+                        catch (Exception ex)
+                        {
+                            await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                            return new Response { IsSuccess = false, Message = Mensaje.Error };
+                        }
                     }
                 }
-                return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
             }
             catch (Exception)
             {
@@ -96,18 +113,19 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpPost]
-        [Route("InsertarBajaActivoFijoDetalle")]
-        public async Task<Response> PostBajaActivosFijosDetalles([FromBody] BajaActivoFijoDetalle bajaActivosFijosDetalles)
+        [Route("InsertarBodega")]
+        public async Task<Response> PostBodega([FromBody] Bodega bodega)
         {
             try
             {
-                ModelState.Remove("IdActivo");
+                ModelState.Remove("Sucursal.Nombre");
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.BajaActivoFijoDetalle.AnyAsync(c => c.IdActivoFijoBaja == bajaActivosFijosDetalles.IdActivoFijoBaja))
+                if (!await db.Bodega.AnyAsync(c => c.Nombre.ToUpper().Trim() == bodega.Nombre.ToUpper().Trim()))
                 {
-                    db.BajaActivoFijoDetalle.Add(bajaActivosFijosDetalles);
+                    db.Entry(bodega.Sucursal).State = EntityState.Unchanged;
+                    db.Bodega.Add(bodega);
                     await db.SaveChangesAsync();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
@@ -119,20 +137,20 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
+
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteBajaActivosFijosDetalles([FromRoute] int id)
+        public async Task<Response> DeleteBodega([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = await db.BajaActivoFijoDetalle.SingleOrDefaultAsync(m => m.IdActivoFijoBaja == id);
+                var respuesta = await db.Bodega.SingleOrDefaultAsync(m => m.IdBodega == id);
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                db.BajaActivoFijoDetalle.Remove(respuesta);
+                db.Bodega.Remove(respuesta);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
@@ -143,10 +161,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(BajaActivoFijoDetalle bajaActivosFijosDetalles)
+        public Response Existe(Bodega bodega)
         {
-            var bdd = bajaActivosFijosDetalles.IdActivoFijoBaja;
-            var loglevelrespuesta = db.BajaActivoFijoDetalle.Where(p => p.IdActivoFijoBaja == bdd).FirstOrDefault();
+            var bdd = bodega.Nombre.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.Bodega.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
             return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }

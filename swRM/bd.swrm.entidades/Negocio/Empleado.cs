@@ -12,6 +12,8 @@ namespace bd.swrm.entidades.Negocio
             TransferenciaActivoFijoIdEmpleadoRegistraNavigation = new HashSet<TransferenciaActivoFijo>();
             TransferenciaActivoFijoIdEmpleadoResponsableEnvioNavigation = new HashSet<TransferenciaActivoFijo>();
             TransferenciaActivoFijoIdEmpleadoResponsableReciboNavigation = new HashSet<TransferenciaActivoFijo>();
+            UbicacionActivoFijo = new HashSet<UbicacionActivoFijo>();
+            MantenimientoActivoFijo = new HashSet<MantenimientoActivoFijo>();
         }
 
         [Key]
@@ -79,5 +81,7 @@ namespace bd.swrm.entidades.Negocio
         public virtual ICollection<TransferenciaActivoFijo> TransferenciaActivoFijoIdEmpleadoRegistraNavigation { get; set; }
         public virtual ICollection<TransferenciaActivoFijo> TransferenciaActivoFijoIdEmpleadoResponsableEnvioNavigation { get; set; }
         public virtual ICollection<TransferenciaActivoFijo> TransferenciaActivoFijoIdEmpleadoResponsableReciboNavigation { get; set; }
+        public virtual ICollection<UbicacionActivoFijo> UbicacionActivoFijo { get; set; }
+        public virtual ICollection<MantenimientoActivoFijo> MantenimientoActivoFijo { get; set; }
     }
 }

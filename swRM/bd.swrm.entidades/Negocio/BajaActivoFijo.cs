@@ -4,10 +4,11 @@ namespace bd.swrm.entidades.Negocio
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
 
-    public partial class BajaActivoFijoDetalle
+    public partial class BajaActivoFijo
     {
         [Key]
-        public int IdActivoFijoBaja { get; set; }
+        public int IdRecepcionActivoFijoDetalle { get; set; }
+        public virtual RecepcionActivoFijoDetalle RecepcionActivoFijoDetalle { get; set; }
 
         [Required(ErrorMessage = "Debe introducir la {0}")]
         [Display(Name = "Fecha de Baja:")]
@@ -26,11 +27,5 @@ namespace bd.swrm.entidades.Negocio
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int IdMotivoBaja { get; set; }
         public virtual MotivoBaja MotivoBaja { get; set; }
-
-        [Display(Name = "Activo Fijo:")]
-        [Required(ErrorMessage = "Debe seleccionar el {0}")]
-        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
-        public int IdActivoFijo { get; set; }
-        public virtual ActivoFijo ActivoFijo { get; set; }
     }
 }

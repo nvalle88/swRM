@@ -17,41 +17,41 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/ActivoFijoComponentes")]
-    public class ActivosFijoComponentesController : Controller
+    [Route("api/ComponenteActivoFijo")]
+    public class ComponenteActivosFijoController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public ActivosFijoComponentesController(SwRMDbContext db)
+        public ComponenteActivosFijoController(SwRMDbContext db)
         {
             this.db = db;
         }
 
         [HttpGet]
-        [Route("ListarActivosFijosComponentes")]
-        public async Task<List<ActivoFijoComponentes>> GetActivosFijosComponentes()
+        [Route("ListarComponenteActivoFijo")]
+        public async Task<List<ComponenteActivoFijo>> GetComponenteActivoFijo()
         {
             try
             {
-                return await db.ActivoFijoComponentes.Include(x => x.ActivoFijoOrigen).Include(x=> x.ActivoFijoComponente).OrderBy(x => x.IdAdicion).ToListAsync();
+                return await db.ComponenteActivoFijo.OrderBy(x => x.IdComponenteActivoFijo).ToListAsync();
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new List<ActivoFijoComponentes>();
+                return new List<ComponenteActivoFijo>();
             }
         }
 
         [HttpGet("{id}")]
-        public async Task<Response> GetActivosFijosComponentes([FromRoute]int id)
+        public async Task<Response> GetComponenteActivoFijo([FromRoute]int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var activosFijosComponentes = await db.ActivoFijoComponentes.Include(x => x.ActivoFijoOrigen).Include(x => x.ActivoFijoComponente).SingleOrDefaultAsync(m => m.IdAdicion == id);
-                return new Response { IsSuccess = activosFijosComponentes != null, Message = activosFijosComponentes != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = activosFijosComponentes };
+                var componenteActivoFijo = await db.ComponenteActivoFijo.SingleOrDefaultAsync(m => m.IdComponenteActivoFijo == id);
+                return new Response { IsSuccess = componenteActivoFijo != null, Message = componenteActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = componenteActivoFijo };
             }
             catch (Exception ex)
             {
@@ -61,17 +61,17 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpPost]
-        [Route("InsertarActivosFijosComponentes")]
-        public async Task<Response> PostMarca([FromBody]ActivoFijoComponentes activosFijosComponentes)
+        [Route("InsertarComponenteActivoFijo")]
+        public async Task<Response> PostMarca([FromBody]ComponenteActivoFijo componenteActivoFijo)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.ActivoFijoComponentes.AnyAsync(c => c.IdActivoFijoOrigen == activosFijosComponentes.IdActivoFijoOrigen && c.IdActivoFijoComponente == activosFijosComponentes.IdActivoFijoComponente))
+                if (!await db.ComponenteActivoFijo.AnyAsync(c => c.IdRecepcionActivoFijoDetalleOrigen == componenteActivoFijo.IdRecepcionActivoFijoDetalleOrigen && c.IdRecepcionActivoFijoDetalleComponente == componenteActivoFijo.IdRecepcionActivoFijoDetalleComponente))
                 {
-                    db.ActivoFijoComponentes.Add(activosFijosComponentes);
+                    db.ComponenteActivoFijo.Add(componenteActivoFijo);
                     await db.SaveChangesAsync();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
@@ -85,24 +85,24 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpPut("{id}")]
-        public async Task<Response> PutActivosFijosComponentes([FromRoute] int id, [FromBody]ActivoFijoComponentes activosFijosComponentes)
+        public async Task<Response> PutComponenteActivoFijo([FromRoute] int id, [FromBody]ComponenteActivoFijo componenteActivoFijo)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.ActivoFijoComponentes.Where(c => c.IdActivoFijoOrigen == activosFijosComponentes.IdActivoFijoOrigen && c.IdActivoFijoComponente == activosFijosComponentes.IdActivoFijoComponente).AnyAsync(c => c.IdAdicion != activosFijosComponentes.IdAdicion))
+                if (!await db.ComponenteActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalleOrigen == componenteActivoFijo.IdRecepcionActivoFijoDetalleOrigen && c.IdRecepcionActivoFijoDetalleComponente == componenteActivoFijo.IdRecepcionActivoFijoDetalleComponente).AnyAsync(c => c.IdComponenteActivoFijo != componenteActivoFijo.IdComponenteActivoFijo))
                 {
-                    var activosFijosComponentesActualizar = await db.ActivoFijoComponentes.Where(x => x.IdAdicion == id).FirstOrDefaultAsync();
-                    if (activosFijosComponentesActualizar != null)
+                    var componenteActivoFijoActualizar = await db.ComponenteActivoFijo.Where(x => x.IdComponenteActivoFijo == id).FirstOrDefaultAsync();
+                    if (componenteActivoFijoActualizar != null)
                     {
                         try
                         {
-                            activosFijosComponentesActualizar.IdActivoFijoOrigen = activosFijosComponentes.IdActivoFijoOrigen;
-                            activosFijosComponentesActualizar.IdActivoFijoComponente = activosFijosComponentes.IdActivoFijoComponente;
-                            activosFijosComponentesActualizar.FechaAdicion = activosFijosComponentes.FechaAdicion;
-                            db.ActivoFijoComponentes.Update(activosFijosComponentesActualizar);
+                            componenteActivoFijoActualizar.IdRecepcionActivoFijoDetalleOrigen = componenteActivoFijo.IdRecepcionActivoFijoDetalleOrigen;
+                            componenteActivoFijoActualizar.IdRecepcionActivoFijoDetalleComponente = componenteActivoFijo.IdRecepcionActivoFijoDetalleComponente;
+                            componenteActivoFijoActualizar.FechaAdicion = componenteActivoFijo.FechaAdicion;
+                            db.ComponenteActivoFijo.Update(componenteActivoFijoActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                         }
@@ -122,18 +122,18 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteActivosFijosComponentes([FromRoute] int id)
+        public async Task<Response> DeleteComponenteActivoFijo([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = await db.ActivoFijoComponentes.SingleOrDefaultAsync(m => m.IdAdicion == id);
+                var respuesta = await db.ComponenteActivoFijo.SingleOrDefaultAsync(m => m.IdComponenteActivoFijo == id);
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                db.ActivoFijoComponentes.Remove(respuesta);
+                db.ComponenteActivoFijo.Remove(respuesta);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
@@ -144,11 +144,11 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(ActivoFijoComponentes activosFijosComponentes)
+        public Response Existe(ComponenteActivoFijo componenteActivoFijo)
         {
-            var bdd = activosFijosComponentes.IdActivoFijoOrigen;
-            var _bdd = activosFijosComponentes.IdActivoFijoComponente;
-            var loglevelrespuesta = db.ActivoFijoComponentes.Where(p => p.IdActivoFijoOrigen == bdd && p.IdActivoFijoComponente == _bdd).FirstOrDefault();
+            var bdd = componenteActivoFijo.IdRecepcionActivoFijoDetalleOrigen;
+            var _bdd = componenteActivoFijo.IdRecepcionActivoFijoDetalleComponente;
+            var loglevelrespuesta = db.ComponenteActivoFijo.Where(p => p.IdRecepcionActivoFijoDetalleOrigen == bdd && p.IdRecepcionActivoFijoDetalleComponente == _bdd).FirstOrDefault();
             return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }

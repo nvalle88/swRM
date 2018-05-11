@@ -13,46 +13,49 @@ using bd.swrm.entidades.Enumeradores;
 using bd.log.guardar.Enumeradores;
 using bd.log.guardar.Utiles;
 using bd.swrm.entidades.Utils;
+using bd.swrm.servicios.Interfaces;
+using bd.swrm.entidades.ObjectTransfer;
 
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/AltaActivosFijosDetalles")]
-    public class AltaActivosFijosDetallesController : Controller
+    [Route("api/DocumentoActivoFijo")]
+    public class DocumentoActivoFijoController : Controller
     {
+        private readonly IUploadFileService uploadFileService;
         private readonly SwRMDbContext db;
 
-        public AltaActivosFijosDetallesController(SwRMDbContext db)
+        public DocumentoActivoFijoController(SwRMDbContext db, IUploadFileService uploadFileService)
         {
+            this.uploadFileService = uploadFileService;
             this.db = db;
         }
-        
+
         [HttpGet]
-        [Route("ListarAltasActivosFijosDetalles")]
-        public async Task<List<AltaActivoFijoDetalle>> GetAltaActivosFijosDetalles()
+        [Route("ListarDocumentos")]
+        public async Task<List<DocumentoActivoFijo>> GetDocumentoActivoFijo()
         {
             try
             {
-                return await db.AltaActivoFijoDetalle.Include(x => x.ActivoFijo).Include(x=> x.Factura).ToListAsync();
-                
+                return await db.DocumentoActivoFijo.Include(c=> c.ActivoFijo).OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new List<AltaActivoFijoDetalle>();
+                return new List<DocumentoActivoFijo>();
             }
         }
-        
+
         [HttpGet("{id}")]
-        public async Task<Response> GetAltaActivosFijosDetalles([FromRoute]int id)
+        public async Task<Response> GetDocumentoActivoFijo([FromRoute]int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var altaActivosFijosDetalles = await db.AltaActivoFijoDetalle.Include(x => x.ActivoFijo).Include(x => x.Factura).SingleOrDefaultAsync(m => m.IdActivoFijoAlta == id);
-                return new Response { IsSuccess = altaActivosFijosDetalles != null, Message = altaActivosFijosDetalles != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = altaActivosFijosDetalles };
+                var documentoActivoFijo = await db.DocumentoActivoFijo.Include(c=> c.ActivoFijo).SingleOrDefaultAsync(m => m.IdDocumentoActivoFijo == id);
+                return new Response { IsSuccess = documentoActivoFijo != null, Message = documentoActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = documentoActivoFijo };
             }
             catch (Exception ex)
             {
@@ -60,22 +63,26 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
+
         [HttpPost]
-        [Route("InsertarAltaActivoFijoDetalle")]
-        public async Task<Response> PostAltaActivosFijosDetalles([FromBody]AltaActivoFijoDetalle altaActivosFijosDetalles)
+        [Route("UploadFiles")]
+        public async Task<Response> PostDocumentoActivoFijo([FromBody] DocumentoActivoFijoTransfer documentoActivoFijoTransfer)
         {
             try
             {
-                ModelState.Remove("IdFactura");
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.AltaActivoFijoDetalle.AnyAsync(c => c.IdActivoFijoAlta == altaActivosFijosDetalles.IdActivoFijoAlta && c.IdFactura == altaActivosFijosDetalles.IdFactura))
+                if (!await db.DocumentoActivoFijo.AnyAsync(c => c.Nombre.ToUpper().Trim() == documentoActivoFijoTransfer.Nombre.ToUpper().Trim()))
                 {
-                    db.AltaActivoFijoDetalle.Add(altaActivosFijosDetalles);
+                    var documentoActivoFijo = await InsertarDocumentoActivoFijo(new DocumentoActivoFijo { Nombre = documentoActivoFijoTransfer.Nombre, Fecha = DateTime.Now, IdActivoFijo = documentoActivoFijoTransfer.IdActivoFijo, IdRecepcionActivoFijoDetalle = documentoActivoFijoTransfer.IdRecepcionActivoFijoDetalle });
+                    string extensionFile = uploadFileService.FileExtension(documentoActivoFijoTransfer.Nombre);
+                    await uploadFileService.UploadFile(documentoActivoFijoTransfer.Fichero, Mensaje.CarpetaActivoFijoDocumento, $"{documentoActivoFijo.IdDocumentoActivoFijo}{extensionFile}");
+
+                    var seleccionado = await db.DocumentoActivoFijo.FindAsync(documentoActivoFijo.IdDocumentoActivoFijo);
+                    seleccionado.Url = $"{Mensaje.CarpetaActivoFijoDocumento}/{documentoActivoFijo.IdDocumentoActivoFijo}{extensionFile}";
+                    db.DocumentoActivoFijo.Update(seleccionado);
                     await db.SaveChangesAsync();
-                    Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
                 return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
@@ -86,26 +93,40 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
+
+        [HttpPost]
+        [Route("GetFile")]
+        public async Task<Response> GetDocumentoActivoFijo([FromBody] DocumentoActivoFijo documentoActivoFijo)
+        {
+            try
+            {
+                var respuestaFile = uploadFileService.GetFileDocumentoActivoFijo(Mensaje.CarpetaActivoFijoDocumento, documentoActivoFijo.Nombre);
+                return new Response { IsSuccess = respuestaFile != null, Message = respuestaFile != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = respuestaFile };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+
         [HttpPut("{id}")]
-        public async Task<Response> PutAltaActivosFijosDetalles([FromRoute] int id, [FromBody]AltaActivoFijoDetalle altaActivosFijosDetalles)
+        public async Task<Response> PutDocumentoActivoFijo([FromRoute] int id, [FromBody]DocumentoActivoFijo documentoActivoFijo)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.AltaActivoFijoDetalle.Where(c => c.IdActivoFijoAlta == altaActivosFijosDetalles.IdActivoFijoAlta && c.IdFactura == altaActivosFijosDetalles.IdFactura).AnyAsync(c => c.IdActivoFijoAlta != altaActivosFijosDetalles.IdActivoFijoAlta))
+                if (!await db.DocumentoActivoFijo.Where(c => c.Nombre.ToUpper().Trim() == documentoActivoFijo.Nombre.ToUpper().Trim()).AnyAsync(c => c.IdDocumentoActivoFijo != documentoActivoFijo.IdDocumentoActivoFijo))
                 {
-                    var altaActivosFijosDetallesActualizar = await db.AltaActivoFijoDetalle.Where(x => x.IdActivoFijoAlta == id).FirstOrDefaultAsync();
-                    if (altaActivosFijosDetallesActualizar != null)
+                    var documentoActivoFijoActualizar = await db.DocumentoActivoFijo.FirstOrDefaultAsync(x => x.IdDocumentoActivoFijo == id);
+                    if (documentoActivoFijoActualizar != null)
                     {
                         try
                         {
-                            altaActivosFijosDetallesActualizar.FechaAlta = altaActivosFijosDetalles.FechaAlta;
-                            altaActivosFijosDetallesActualizar.IdFactura = altaActivosFijosDetalles.IdFactura;
-                            altaActivosFijosDetallesActualizar.IdActivoFijo = altaActivosFijosDetalles.IdActivoFijo;
-                            db.AltaActivoFijoDetalle.Update(altaActivosFijosDetallesActualizar);
+                            documentoActivoFijoActualizar.Nombre = documentoActivoFijo.Nombre;
+                            db.DocumentoActivoFijo.Update(documentoActivoFijoActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                         }
@@ -125,18 +146,19 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteAltaActivosFijosDetalles([FromRoute] int id)
+        public async Task<Response> DeleteDocumentoInformacionInstitucional([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = await db.AltaActivoFijoDetalle.SingleOrDefaultAsync(m => m.IdActivoFijoAlta == id);
+                var respuesta = await db.DocumentoActivoFijo.SingleOrDefaultAsync(m => m.IdDocumentoActivoFijo == id);
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                db.AltaActivoFijoDetalle.Remove(respuesta);
+                var respuestaFile = uploadFileService.DeleteFile(Mensaje.CarpetaActivoFijoDocumento, $"{id}{uploadFileService.FileExtension(respuesta.Nombre)}");
+                db.DocumentoActivoFijo.Remove(respuesta);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
@@ -147,12 +169,11 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(AltaActivoFijoDetalle altaActivosFijosDetalles)
+        private async Task<DocumentoActivoFijo> InsertarDocumentoActivoFijo(DocumentoActivoFijo documentoActivoFijo)
         {
-            var bdd = altaActivosFijosDetalles.IdActivoFijoAlta;
-            var _bdd = altaActivosFijosDetalles.IdFactura;
-            var loglevelrespuesta = db.AltaActivoFijoDetalle.Where(p => p.IdActivoFijoAlta == bdd && p.IdFactura == _bdd).FirstOrDefault();
-            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
+            db.DocumentoActivoFijo.Add(documentoActivoFijo);
+            await db.SaveChangesAsync();
+            return documentoActivoFijo;
         }
     }
 }

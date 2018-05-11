@@ -17,41 +17,56 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/MantenimientoActivoFijo")]
-    public class MantenimientoActivoFijoController : Controller
+    [Route("api/Subramo")]
+    public class SubramoController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public MantenimientoActivoFijoController(SwRMDbContext db)
+        public SubramoController(SwRMDbContext db)
         {
             this.db = db;
         }
-        
+
         [HttpGet]
-        [Route("ListarMantenimientosActivoFijo")]
-        public async Task<List<MantenimientoActivoFijo>> GetMantenimientoActivoFijo()
+        [Route("ListarSubramo")]
+        public async Task<List<Subramo>> GetSubramo()
         {
             try
             {
-                return await db.MantenimientoActivoFijo.OrderBy(x => x.FechaMantenimiento).Include(x => x.Empleado).ThenInclude(x => x.Persona).Include(x => x.RecepcionActivoFijoDetalle).ToListAsync();
+                return await db.Subramo.OrderBy(x => x.Nombre).Include(c => c.Ramo).ToListAsync();
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new List<MantenimientoActivoFijo>();
+                return new List<Subramo>();
             }
         }
-        
+
+        [HttpGet]
+        [Route("ListarSubramoPorRamo/{idRamo}")]
+        public async Task<List<Subramo>> GetSubramoPorRamo(int idRamo)
+        {
+            try
+            {
+                return await db.Subramo.Where(c => c.IdRamo == idRamo).OrderBy(x => x.Nombre).Include(c => c.Ramo).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<Subramo>();
+            }
+        }
+
         [HttpGet("{id}")]
-        public async Task<Response> GetMantenimientoActivoFijo([FromRoute] int id)
+        public async Task<Response> GetSubramo([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var mantenimientoActivoFijo = await db.MantenimientoActivoFijo.SingleOrDefaultAsync(m => m.IdMantenimientoActivoFijo == id);
-                return new Response { IsSuccess = mantenimientoActivoFijo != null, Message = mantenimientoActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = mantenimientoActivoFijo };
+                var subramo = await db.Subramo.Include(c => c.Ramo).SingleOrDefaultAsync(m => m.IdSubramo == id);
+                return new Response { IsSuccess = subramo != null, Message = subramo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = subramo };
             }
             catch (Exception ex)
             {
@@ -59,35 +74,33 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
+
         [HttpPut("{id}")]
-        public async Task<Response> PutMantenimientoActivoFijo([FromRoute] int id, [FromBody] MantenimientoActivoFijo mantenimientoActivoFijo)
+        public async Task<Response> PutSubramo([FromRoute] int id, [FromBody] Subramo subramo)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var mantenimientoActivoFijoActualizar = await db.MantenimientoActivoFijo.Where(x => x.IdMantenimientoActivoFijo == id).FirstOrDefaultAsync();
-                if (mantenimientoActivoFijoActualizar != null)
+                if (!await db.Subramo.Where(c => c.Nombre.ToUpper().Trim() == subramo.Nombre.ToUpper().Trim()).AnyAsync(c => c.IdSubramo != subramo.IdSubramo))
                 {
-                    try
+                    var subramoActualizar = await db.Subramo.Where(x => x.IdSubramo == id).FirstOrDefaultAsync();
+                    if (subramoActualizar != null)
                     {
-                        mantenimientoActivoFijoActualizar.FechaMantenimiento = mantenimientoActivoFijo.FechaMantenimiento;
-                        mantenimientoActivoFijoActualizar.FechaDesde = mantenimientoActivoFijo.FechaDesde;
-                        mantenimientoActivoFijoActualizar.FechaHasta = mantenimientoActivoFijo.FechaHasta;
-                        mantenimientoActivoFijoActualizar.Valor = mantenimientoActivoFijo.Valor;
-                        mantenimientoActivoFijoActualizar.Observaciones = mantenimientoActivoFijo.Observaciones;
-                        mantenimientoActivoFijoActualizar.IdEmpleado = mantenimientoActivoFijo.IdEmpleado;
-                        mantenimientoActivoFijoActualizar.IdRecepcionActivoFijoDetalle = mantenimientoActivoFijo.IdRecepcionActivoFijoDetalle;
-                        db.MantenimientoActivoFijo.Update(mantenimientoActivoFijoActualizar);
-                        await db.SaveChangesAsync();
-                        return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
-                    }
-                    catch (Exception ex)
-                    {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                        return new Response { IsSuccess = false, Message = Mensaje.Error };
+                        try
+                        {
+                            subramoActualizar.Nombre = subramo.Nombre;
+                            subramoActualizar.IdRamo = subramo.IdRamo;
+                            db.Subramo.Update(subramoActualizar);
+                            await db.SaveChangesAsync();
+                            return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                        }
+                        catch (Exception ex)
+                        {
+                            await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                            return new Response { IsSuccess = false, Message = Mensaje.Error };
+                        }
                     }
                 }
                 return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
@@ -97,19 +110,23 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
-        
+
         [HttpPost]
-        [Route("InsertarMantenimientoActivoFijo")]
-        public async Task<Response> PostMantenimientoActivoFijo([FromBody] MantenimientoActivoFijo mantenimientoActivoFijo)
+        [Route("InsertarSubramo")]
+        public async Task<Response> PostArticulo([FromBody] Subramo subramo)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                db.MantenimientoActivoFijo.Add(mantenimientoActivoFijo);
-                await db.SaveChangesAsync();
-                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                if (!await db.Subramo.AnyAsync(c => c.Nombre.ToUpper().Trim() == subramo.Nombre.ToUpper().Trim()))
+                {
+                    db.Subramo.Add(subramo);
+                    await db.SaveChangesAsync();
+                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                }
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
             }
             catch (Exception ex)
             {
@@ -117,20 +134,20 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
+
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteMantenimientoActivoFijo([FromRoute] int id)
+        public async Task<Response> DeleteSubramo([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = await db.MantenimientoActivoFijo.SingleOrDefaultAsync(m => m.IdMantenimientoActivoFijo == id);
+                var respuesta = await db.Subramo.SingleOrDefaultAsync(m => m.IdSubramo == id);
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                db.MantenimientoActivoFijo.Remove(respuesta);
+                db.Subramo.Remove(respuesta);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
@@ -141,10 +158,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(MantenimientoActivoFijo mantenimientoActivoFijo)
+        public Response Existe(Subramo subramo)
         {
-            var bdd = mantenimientoActivoFijo.FechaMantenimiento;
-            var loglevelrespuesta = db.MantenimientoActivoFijo.Where(p => p.FechaMantenimiento == bdd && p.IdEmpleado == mantenimientoActivoFijo.IdEmpleado && p.IdRecepcionActivoFijoDetalle == mantenimientoActivoFijo.IdRecepcionActivoFijoDetalle).FirstOrDefault();
+            var bdd = subramo.Nombre.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.Subramo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
             return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }

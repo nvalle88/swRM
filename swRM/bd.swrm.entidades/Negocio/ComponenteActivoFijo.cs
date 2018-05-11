@@ -4,22 +4,22 @@ using System.ComponentModel.DataAnnotations;
 
 namespace bd.swrm.entidades.Negocio
 {
-    public partial class ActivoFijoComponentes
+    public partial class ComponenteActivoFijo
     {
         [Key]
-        public int IdAdicion { get; set; }
+        public int IdComponenteActivoFijo { get; set; }
 
-        [Display(Name = "ActivoFijo de origen:")]
+        [Display(Name = "Activo Fijo de origen:")]
         [Required(ErrorMessage = "Debe seleccionar el {0} ")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
-        public int IdActivoFijoOrigen { get; set; }
-        public virtual ActivoFijo ActivoFijoOrigen { get; set; }
+        public int IdRecepcionActivoFijoDetalleOrigen { get; set; }
+        public virtual RecepcionActivoFijoDetalle RecepcionActivoFijoDetalleOrigen { get; set; }
 
-        [Display(Name = "Componente de ActivoFijo:")]
+        [Display(Name = "Componente de Activo Fijo:")]
         [Required(ErrorMessage = "Debe seleccionar el {0} ")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
-        public int IdActivoFijoComponente { get; set; }
-        public virtual ActivoFijo ActivoFijoComponente { get; set; }
+        public int IdRecepcionActivoFijoDetalleComponente { get; set; }
+        public virtual RecepcionActivoFijoDetalle RecepcionActivoFijoDetalleComponente { get; set; }
 
         [Required(ErrorMessage = "Debe introducir la {0}")]
         [Display(Name = "Fecha de adición:")]

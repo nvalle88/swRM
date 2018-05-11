@@ -20,10 +20,13 @@ namespace bd.swrm.entidades.Negocio
         public string CodigoBarras { get; set; }
 
         [NotMapped]
-        public string TAF { get; set; }
+        public string CAF { get; set; }
 
         [NotMapped]
-        public string CAF { get; set; }
+        public string SUBCAF { get; set; }
+
+        [NotMapped]
+        public string SUC { get; set; }
 
         //Propiedades Virtuales Referencias a otras clases
         public virtual ICollection<ActivoFijo> ActivoFijo { get; set; }
