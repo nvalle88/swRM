@@ -16,5 +16,7 @@
 
         //Propiedades Virtuales Referencias a otras clases
         public virtual ICollection<RecepcionActivoFijoDetalle> RecepcionActivoFijoDetalle { get; set; }
+
+        public virtual ICollection<SolicitudProveeduriaDetalle> SolicitudProveeduriaDetalle { get; set; }
     }
 }

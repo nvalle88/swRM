@@ -14,7 +14,6 @@ using bd.swrm.entidades.Enumeradores;
 using bd.log.guardar.Utiles;
 using bd.swrm.entidades.Utils;
 
-
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]

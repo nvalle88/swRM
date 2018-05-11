@@ -36,9 +36,14 @@ namespace bd.swrm.servicios.Servicios
 
         public bool DeleteFile(string folder, string fileName)
         {
+            return DeleteFile(Path.Combine(_hostingEnvironment.WebRootPath, $"{folder}/{fileName}"));
+        }
+
+        public bool DeleteFile(string url)
+        {
             try
             {
-                var targetDirectory = Path.Combine(_hostingEnvironment.WebRootPath, $"{folder}/{fileName}");
+                var targetDirectory = Path.Combine(_hostingEnvironment.WebRootPath, url);
                 if (File.Exists(targetDirectory))
                 {
                     File.Delete(targetDirectory);
@@ -82,14 +87,14 @@ namespace bd.swrm.servicios.Servicios
             }
         }
 
-        public ActivoFijoDocumentoTransfer GetFileActivoFijoDocumento(string folder, string fileName)
+        public DocumentoActivoFijoTransfer GetFileDocumentoActivoFijo(string folder, string fileName)
         {
             try
             {
                 byte[] data = GetBytesFromFile(folder, fileName);
                 if (data.Length > 0)
                 {
-                    return new ActivoFijoDocumentoTransfer
+                    return new DocumentoActivoFijoTransfer
                     {
                         Nombre = fileName,
                         Fichero = data

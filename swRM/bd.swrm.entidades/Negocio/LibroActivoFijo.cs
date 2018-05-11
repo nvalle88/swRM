@@ -5,6 +5,11 @@ namespace bd.swrm.entidades.Negocio
 
     public partial class LibroActivoFijo
     {
+        public LibroActivoFijo()
+        {
+            UbicacionActivoFijo = new HashSet<UbicacionActivoFijo>();
+        }
+
         [Key]
         public int IdLibroActivoFijo { get; set; }
 
@@ -15,8 +20,6 @@ namespace bd.swrm.entidades.Negocio
         public int? IdSucursal { get; set; }
         public virtual Sucursal Sucursal { get; set; }
 
-        public virtual ICollection<ActivoFijo> ActivoFijo { get; set; }
-
-        public virtual ICollection<RecepcionActivoFijo> RecepcionActivoFijo { get; set; }
+        public virtual ICollection<UbicacionActivoFijo> UbicacionActivoFijo { get; set; }
     }
 }

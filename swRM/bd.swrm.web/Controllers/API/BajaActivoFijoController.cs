@@ -17,41 +17,41 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/EmpleadoActivoFijo")]
-    public class EmpleadoActivoFijoController : Controller
+    [Route("api/BajaActivoFijoDetalle")]
+    public class BajaActivoFijoController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public EmpleadoActivoFijoController(SwRMDbContext db)
+        public BajaActivoFijoController(SwRMDbContext db)
         {
             this.db = db;
         }
         
         [HttpGet]
-        [Route("ListarEmpleadosActivoFijo")]
-        public async Task<List<EmpleadoActivoFijo>> GetEmpleadoActivoFijo()
+        [Route("ListarBajaActivoFijoDetalle")]
+        public async Task<List<BajaActivoFijo>> GetBajaActivoFijoDetalle()
         {
             try
             {
-                return await db.EmpleadoActivoFijo.OrderBy(x => x.Empleado.Persona.Nombres).ThenBy(x=> x.Empleado.Persona.Apellidos).ToListAsync();
+                return await db.BajaActivoFijo.Include(c=> c.MotivoBaja).OrderBy(x => x.FechaBaja).ToListAsync();
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new List<EmpleadoActivoFijo>();
+                return new List<BajaActivoFijo>();
             }
         }
         
         [HttpGet("{id}")]
-        public async Task<Response> GetEmpleadoActivoFijo([FromRoute] int id)
+        public async Task<Response> GetBajaActivoFijoDetalle([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var empleadoActivoFijo = await db.EmpleadoActivoFijo.SingleOrDefaultAsync(m => m.IdEmpleadoActivoFijo == id);
-                return new Response { IsSuccess = empleadoActivoFijo != null, Message = empleadoActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = empleadoActivoFijo };
+                var bajaActivoFijoDetalle = await db.BajaActivoFijo.Include(c => c.MotivoBaja).SingleOrDefaultAsync(m => m.IdRecepcionActivoFijoDetalle == id);
+                return new Response { IsSuccess = bajaActivoFijoDetalle != null, Message = bajaActivoFijoDetalle != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = bajaActivoFijoDetalle };
             }
             catch (Exception ex)
             {
@@ -61,22 +61,22 @@ namespace bd.swrm.web.Controllers.API
         }
         
         [HttpPut("{id}")]
-        public async Task<Response> PutEmpleadoActivoFijo([FromRoute] int id, [FromBody] EmpleadoActivoFijo empleadoActivoFijo)
+        public async Task<Response> PutBajaActivoFijoDetalle([FromRoute] int id, [FromBody] BajaActivoFijo bajaActivoFijoDetalle)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var empleadoActivoFijoActualizar = await db.EmpleadoActivoFijo.Where(x => x.IdEmpleadoActivoFijo == id).FirstOrDefaultAsync();
-                if (empleadoActivoFijoActualizar != null)
+                var bajaActivoFijoDetalleActualizar = await db.BajaActivoFijo.Where(x => x.IdRecepcionActivoFijoDetalle == id).FirstOrDefaultAsync();
+                if (bajaActivoFijoDetalleActualizar != null)
                 {
                     try
                     {
-                        empleadoActivoFijoActualizar.FechaAsignacion = empleadoActivoFijo.FechaAsignacion;
-                        empleadoActivoFijoActualizar.IdActivoFijo = empleadoActivoFijo.IdActivoFijo;
-                        empleadoActivoFijoActualizar.IdEmpleado = empleadoActivoFijo.IdEmpleado;
-                        db.EmpleadoActivoFijo.Update(empleadoActivoFijoActualizar);
+                        bajaActivoFijoDetalleActualizar.FechaBaja = bajaActivoFijoDetalle.FechaBaja;
+                        bajaActivoFijoDetalleActualizar.IdMotivoBaja = bajaActivoFijoDetalle.IdMotivoBaja;
+                        bajaActivoFijoDetalleActualizar.MemoOficioResolucion = bajaActivoFijoDetalle.MemoOficioResolucion;
+                        db.BajaActivoFijo.Update(bajaActivoFijoDetalleActualizar);
                         await db.SaveChangesAsync();
                         return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                     }
@@ -86,26 +86,27 @@ namespace bd.swrm.web.Controllers.API
                         return new Response { IsSuccess = false, Message = Mensaje.Error };
                     }
                 }
-                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
+                return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
             }
             catch (Exception)
             {
                 return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
-        
+
         [HttpPost]
-        [Route("InsertarEmpleadoActivoFijo")]
-        public async Task<Response> PostEmpleadoActivoFijo([FromBody] EmpleadoActivoFijo empleadoActivoFijo)
+        [Route("InsertarBajaActivoFijo")]
+        public async Task<Response> PostBajaActivoFijoDetalle([FromBody] BajaActivoFijo bajaActivoFijoDetalle)
         {
             try
             {
+                ModelState.Remove("IdActivo");
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.EmpleadoActivoFijo.AnyAsync(p => p.IdEmpleado == empleadoActivoFijo.IdEmpleado && p.IdActivoFijo == empleadoActivoFijo.IdActivoFijo))
+                if (!await db.BajaActivoFijo.AnyAsync(c => c.IdRecepcionActivoFijoDetalle == bajaActivoFijoDetalle.IdRecepcionActivoFijoDetalle))
                 {
-                    db.EmpleadoActivoFijo.Add(empleadoActivoFijo);
+                    db.BajaActivoFijo.Add(bajaActivoFijoDetalle);
                     await db.SaveChangesAsync();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
@@ -119,18 +120,18 @@ namespace bd.swrm.web.Controllers.API
         }
         
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteEmpleadoActivoFijo([FromRoute] int id)
+        public async Task<Response> DeleteBajaActivoFijoDetalle([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = await db.EmpleadoActivoFijo.SingleOrDefaultAsync(m => m.IdEmpleadoActivoFijo == id);
+                var respuesta = await db.BajaActivoFijo.SingleOrDefaultAsync(m => m.IdRecepcionActivoFijoDetalle == id);
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                db.EmpleadoActivoFijo.Remove(respuesta);
+                db.BajaActivoFijo.Remove(respuesta);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
@@ -141,9 +142,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(EmpleadoActivoFijo empleadoActivoFijo)
+        public Response Existe(BajaActivoFijo bajaActivoFijoDetalle)
         {
-            var loglevelrespuesta = db.EmpleadoActivoFijo.Where(p => p.IdEmpleado == empleadoActivoFijo.IdEmpleado && p.IdActivoFijo == empleadoActivoFijo.IdActivoFijo).FirstOrDefault();
+            var bdd = bajaActivoFijoDetalle.IdRecepcionActivoFijoDetalle;
+            var loglevelrespuesta = db.BajaActivoFijo.Where(p => p.IdRecepcionActivoFijoDetalle == bdd).FirstOrDefault();
             return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }

@@ -30,36 +30,47 @@ namespace bd.swrm.web.Temporizador
             timer = new Timer((c) => { accion(); }, accion, tiempoEsperaFuncionCallBack, periodoEsperaFuncionCallBack);
         }
 
-        public static async Task ComprobarActivosFijosAlta()
+        public static async Task DepreciacionActivosFijosAlta()
         {
+            Action<decimal, decimal, int> insertarDepreciacionActivoFijo = async (depreciacionAcumulada, valorResidual, idRecepcionActivoFijoDetalle) =>
+            {
+                var nuevaDepreciacionActivoFijo = new DepreciacionActivoFijo
+                {
+                    FechaDepreciacion = DateTime.Now,
+                    DepreciacionAcumulada = depreciacionAcumulada,
+                    ValorResidual = valorResidual,
+                    IdRecepcionActivoFijoDetalle = idRecepcionActivoFijoDetalle
+                };
+
+                if (nuevaDepreciacionActivoFijo.ValorResidual <= 0)
+                    nuevaDepreciacionActivoFijo.ValorResidual = 1;
+
+                db.DepreciacionActivoFijo.Add(nuevaDepreciacionActivoFijo);
+                await db.SaveChangesAsync();
+            };
+
             try
             {
-                var listaRecepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle.Where(c => c.Estado.Nombre == "Alta" && c.ActivoFijo.Depreciacion).Include(c => c.ActivoFijo.DepreciacionActivoFijo).ToListAsync();
+                var listaRecepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle.Where(c => c.Estado.Nombre == "Alta" && c.ActivoFijo.Depreciacion).Include(c=> c.AltaActivoFijo).Include(c => c.DepreciacionActivoFijo.OrderByDescending(p=> p.FechaDepreciacion)).ToListAsync();
                 if (listaRecepcionActivoFijoDetalle.Count == 0)
                     timerDepreciacion.Dispose();
                 else
                 {
                     foreach (var recepcionActivoFijoDetalle in listaRecepcionActivoFijoDetalle)
                     {
-                        var depreciacionActivoFijo = recepcionActivoFijoDetalle?.ActivoFijo?.DepreciacionActivoFijo?.FirstOrDefault();
-                        if (depreciacionActivoFijo != null)
+                        var ultimaDepreciacion = recepcionActivoFijoDetalle?.DepreciacionActivoFijo.FirstOrDefault();
+                        if (ultimaDepreciacion != null)
                         {
-                            if ((depreciacionActivoFijo.FechaDepreciacion.Subtract(DateTime.Now).TotalDays) * (-1) >= 30)
+                            if ((ultimaDepreciacion.FechaDepreciacion.Subtract(DateTime.Now).TotalDays) * (-1) >= 30)
                             {
-                                if (depreciacionActivoFijo.ValorResidual > 1)
-                                {
-                                    depreciacionActivoFijo.DepreciacionAcumulada += recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion;
-                                    depreciacionActivoFijo.FechaDepreciacion = DateTime.Now;
-                                    depreciacionActivoFijo.ValorResidual -= depreciacionActivoFijo.DepreciacionAcumulada;
-
-                                    if (depreciacionActivoFijo.ValorResidual <= 0)
-                                        depreciacionActivoFijo.ValorResidual = 1;
-
-                                    db.Entry(depreciacionActivoFijo.ActivoFijo).State = EntityState.Detached;
-                                    db.Entry(depreciacionActivoFijo).State = EntityState.Modified;
-                                    await db.SaveChangesAsync();
-                                }
+                                if (ultimaDepreciacion.ValorResidual > 1)
+                                    insertarDepreciacionActivoFijo((ultimaDepreciacion.DepreciacionAcumulada + recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), (ultimaDepreciacion.ValorResidual - recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
                             }
+                        }
+                        else
+                        {
+                            if ((recepcionActivoFijoDetalle.AltaActivoFijo.FechaAlta.Subtract(DateTime.Now).TotalDays) *(-1) >= 30)
+                                insertarDepreciacionActivoFijo((recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), (recepcionActivoFijoDetalle.ActivoFijo.ValorCompra - recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
                         }
                     }
                 }
@@ -72,20 +83,14 @@ namespace bd.swrm.web.Temporizador
 
         private static SwRMDbContext CreateDbContext()
         {
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .Build();
-
             var builder = new DbContextOptionsBuilder<SwRMDbContext>();
-            var connectionString = configuration.GetConnectionString("SwRMConnection");
             builder.ConfigureWarnings(w => w.Throw(RelationalEventId.QueryClientEvaluationWarning));
             return new SwRMDbContext(builder.Options);
         }
 
         public static void InicializarTemporizadorDepreciacion()
         {
-            InicializarTemporizador(timerDepreciacion, async () => { await ComprobarActivosFijosAlta(); }, new TimeSpan(0, 0, 5), new TimeSpan(24, 0, 0));
+            InicializarTemporizador(timerDepreciacion, async () => { await DepreciacionActivosFijosAlta(); }, new TimeSpan(0, 0, 5), new TimeSpan(24, 0, 0));
         }
     }
 }

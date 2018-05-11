@@ -4,10 +4,10 @@ using System.Text;
 
 namespace bd.swrm.entidades.ObjectTransfer
 {
-    public class ActivoFijoDocumentoTransfer
+    public class AprobacionActivoFijoTransfer
     {
-        public string Nombre { get; set; }
-        public byte[] Fichero { get; set; }
         public int IdActivoFijo { get; set; }
+        public string NuevoEstadoActivoFijo { get; set; }
+        public bool ValidacionTecnica { get; set; }
     }
 }

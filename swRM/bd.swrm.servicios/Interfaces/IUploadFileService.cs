@@ -11,7 +11,8 @@ namespace bd.swrm.servicios.Interfaces
     {
         Task<bool> UploadFile(byte[] file, string folder, string fileName);
         bool DeleteFile(string folder, string fileName);
+        bool DeleteFile(string url);
         string FileExtension(string fileName);
-        ActivoFijoDocumentoTransfer GetFileActivoFijoDocumento(string folder, string fileName);
+        DocumentoActivoFijoTransfer GetFileDocumentoActivoFijo(string folder, string fileName);
     }
 }

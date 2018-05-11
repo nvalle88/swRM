@@ -4,10 +4,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace bd.swrm.entidades.Negocio
 {
-    public partial class ActivoFijoDocumento
+    public partial class DocumentoActivoFijo
     {
         [Key]
-        public int IdActivoFijoDocumento { get; set; }
+        public int IdDocumentoActivoFijo { get; set; }
 
         [Required(ErrorMessage = "Debe introducir el {0}")]
         [Display(Name = "Documento:")]
@@ -25,11 +25,14 @@ namespace bd.swrm.entidades.Negocio
         [StringLength(1024, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string Url { get; set; }
 
-        [Display(Name = "ActivoFijo:")]
-        [Required(ErrorMessage = "Debe seleccionar el {0} ")]
+        [Display(Name = "Activo Fijo:")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
-        public int IdActivo { get; set; }
-
+        public int? IdActivoFijo { get; set; }
         public virtual ActivoFijo ActivoFijo { get; set; }
+
+        [Display(Name = "Detalle de Recepción de Activo Fijo:")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        public int? IdRecepcionActivoFijoDetalle { get; set; }
+        public virtual RecepcionActivoFijoDetalle RecepcionActivoFijoDetalle { get; set; }
     }
 }
