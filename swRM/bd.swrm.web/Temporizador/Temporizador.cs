@@ -51,7 +51,7 @@ namespace bd.swrm.web.Temporizador
 
             try
             {
-                var listaRecepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle.Where(c => c.Estado.Nombre == "Alta" && c.ActivoFijo.Depreciacion).Include(c=> c.AltaActivoFijo).Include(c => c.DepreciacionActivoFijo.OrderByDescending(p=> p.FechaDepreciacion)).ToListAsync();
+                var listaRecepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle.Where(c => c.Estado.Nombre == Estados.Alta && c.ActivoFijo.Depreciacion).Include(c=> c.AltaActivoFijo).Include(c => c.DepreciacionActivoFijo.OrderByDescending(p=> p.FechaDepreciacion)).ToListAsync();
                 if (listaRecepcionActivoFijoDetalle.Count == 0)
                     timerDepreciacion.Dispose();
                 else
