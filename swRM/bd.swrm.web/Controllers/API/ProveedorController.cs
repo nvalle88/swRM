@@ -68,7 +68,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.Proveedor.Where(c => c.Nombre.ToUpper().Trim() == proveedor.Nombre.ToUpper().Trim()).AnyAsync(c => c.IdProveedor != proveedor.IdProveedor))
+                if (!await db.Proveedor.Where(c => c.Codigo.ToUpper().Trim() == proveedor.Codigo.ToUpper().Trim()).AnyAsync(c => c.IdProveedor != proveedor.IdProveedor))
                 {
                     var ProveedorActualizar = await db.Proveedor.Where(x => x.IdProveedor == id).FirstOrDefaultAsync();
                     if (ProveedorActualizar != null)
@@ -79,6 +79,15 @@ namespace bd.swrm.web.Controllers.API
                             ProveedorActualizar.Apellidos = proveedor.Apellidos;
                             ProveedorActualizar.Identificacion = proveedor.Identificacion;
                             ProveedorActualizar.Direccion = proveedor.Direccion;
+                            ProveedorActualizar.Codigo = proveedor.Codigo;
+                            ProveedorActualizar.Activo = proveedor.Activo;
+                            ProveedorActualizar.LineaServicio = proveedor.LineaServicio;
+                            ProveedorActualizar.RazonSocial = proveedor.RazonSocial;
+                            ProveedorActualizar.Telefono = proveedor.Telefono;
+                            ProveedorActualizar.Email = proveedor.Email;
+                            ProveedorActualizar.Cargo = proveedor.Cargo;
+                            ProveedorActualizar.Observaciones = proveedor.Observaciones;
+                            ProveedorActualizar.Emision = proveedor.Emision;
                             db.Proveedor.Update(ProveedorActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
@@ -107,7 +116,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.Proveedor.AnyAsync(c => c.Nombre.ToUpper().Trim() == proveedor.Nombre.ToUpper().Trim()))
+                if (!await db.Proveedor.AnyAsync(c => c.Codigo.ToUpper().Trim() == proveedor.Codigo.ToUpper().Trim()))
                 {
                     db.Proveedor.Add(proveedor);
                     await db.SaveChangesAsync();

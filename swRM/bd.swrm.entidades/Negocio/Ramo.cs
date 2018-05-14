@@ -16,7 +16,7 @@ namespace bd.swrm.entidades.Negocio
 
         [Required(ErrorMessage = "Debe introducir el {0}")]
         [Display(Name = "Ramo:")]
-        [StringLength(100, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
+        [StringLength(200, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string Nombre { get; set; }
 
         public virtual ICollection<Subramo> Subramos { get; set; }

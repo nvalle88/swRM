@@ -6,6 +6,13 @@
 
     public partial class Estado
     {
+        public Estado()
+        {
+            RecepcionActivoFijoDetalle = new HashSet<RecepcionActivoFijoDetalle>();
+            SolicitudProveeduriaDetalle = new HashSet<SolicitudProveeduriaDetalle>();
+            TransferenciaActivoFijo = new HashSet<TransferenciaActivoFijo>();
+        }
+
         [Key]
         public int IdEstado { get; set; }
 
@@ -18,5 +25,7 @@
         public virtual ICollection<RecepcionActivoFijoDetalle> RecepcionActivoFijoDetalle { get; set; }
 
         public virtual ICollection<SolicitudProveeduriaDetalle> SolicitudProveeduriaDetalle { get; set; }
+
+        public virtual ICollection<TransferenciaActivoFijo> TransferenciaActivoFijo { get; set; }
     }
 }
