@@ -41,7 +41,22 @@ namespace bd.swrm.web.Controllers.API
                 return new List<MantenimientoActivoFijo>();
             }
         }
-        
+
+        [HttpPost]
+        [Route("ListarMantenimientosActivoFijoPorIdDetalleActivoFijo")]
+        public async Task<List<MantenimientoActivoFijo>> GetMantenimientosActivoFijoPorIdDetalleActivoFijo([FromBody] int idRecepcionActivoFijoDetalle)
+        {
+            try
+            {
+                return await db.MantenimientoActivoFijo.Include(x => x.Empleado).ThenInclude(x => x.Persona).Include(x => x.RecepcionActivoFijoDetalle).Where(c=> c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle).OrderBy(x => x.FechaMantenimiento).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<MantenimientoActivoFijo>();
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<Response> GetMantenimientoActivoFijo([FromRoute] int id)
         {
