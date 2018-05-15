@@ -68,6 +68,51 @@ namespace bd.swrm.web.Controllers.API
             return await ListarActivosFijos(predicadoActivoFijo: c => c.PolizaSeguroActivoFijo.NumeroPoliza == null, predicadoRecepcionActivoFijoDetalle: c => c.Estado.Nombre == Estados.Recepcionado);
         }
 
+        [HttpGet("{id}")]
+        public async Task<Response> GetActivosFijos([FromRoute]int id)
+        {
+            return await ObtenerActivoFijo(id);
+        }
+
+        [HttpGet("{id}/{estado}")]
+        public async Task<Response> GetActivoFijoPorEstado([FromRoute]int id, [FromRoute] string estado)
+        {
+            return await ObtenerActivoFijo(id, predicadoDetalleActivoFijo: c => c.Estado.Nombre == estado);
+        }
+
+        [HttpGet("DetalleActivoFijo/{id}")]
+        public async Task<Response> GetDetalleActivoFijo([FromRoute] int id)
+        {
+            return await ObtenerDetalleActivoFijo(id);
+        }
+
+        [HttpGet("DetalleActivoFijoPorEstado/{id}/{estado}")]
+        public async Task<Response> GetDetalleActivoFijo([FromRoute] int id, [FromRoute] string estado)
+        {
+            return await ObtenerDetalleActivoFijo(id, predicadoDetalleActivoFijo: c => c.Estado.Nombre == estado);
+        }
+
+        [HttpPost]
+        [Route("DetallesActivoFijo")]
+        public async Task<List<RecepcionActivoFijoDetalleSeleccionado>> GetRecepcionActivoFijoDetalleSeleccionado([FromBody] List<IdRecepcionActivoFijoDetalleSeleccionado> listadoRecepcionActivoFijoDetalleSeleccionado)
+        {
+            var lista = new List<RecepcionActivoFijoDetalleSeleccionado>();
+            try
+            {
+                foreach (var item in listadoRecepcionActivoFijoDetalleSeleccionado)
+                {
+                    var response = await ObtenerDetalleActivoFijo(item.idRecepcionActivoFijoDetalle);
+                    if (response.IsSuccess)
+                        lista.Add(new RecepcionActivoFijoDetalleSeleccionado { RecepcionActivoFijoDetalle = response.Resultado as RecepcionActivoFijoDetalle, Seleccionado = item.seleccionado });
+                }
+            }
+            catch (Exception)
+            {
+                return new List<RecepcionActivoFijoDetalleSeleccionado>();
+            }
+            return lista;
+        }
+
         [HttpPost]
         [Route("AsignarPoliza")]
         public async Task<Response> AsignarPoliza([FromBody] PolizaSeguroActivoFijo polizaSeguroActivoFijo)
@@ -105,18 +150,6 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        [HttpGet("{id}")]
-        public async Task<Response> GetActivosFijos([FromRoute]int id)
-        {
-            return await ObtenerActivoFijo(id);
-        }
-
-        [HttpGet("{id}/{estado}")]
-        public async Task<Response> GetActivoFijoPorEstado([FromRoute]int id, [FromRoute] string estado)
-        {
-            return await ObtenerActivoFijo(id, predicadoDetalleActivoFijo: c => c.Estado.Nombre == estado);
-        }
-
         [HttpPost]
         [Route("ListarDetallesActivoFijo")]
         public async Task<Response> GetDetallesActivoFijo([FromBody] int[] idsRecepcionActivoFijoDetalle)
@@ -137,18 +170,6 @@ namespace bd.swrm.web.Controllers.API
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
-        }
-
-        [HttpGet("DetalleActivoFijo/{id}")]
-        public async Task<Response> GetDetalleActivoFijo([FromRoute] int id)
-        {
-            return await ObtenerDetalleActivoFijo(id);
-        }
-
-        [HttpGet("DetalleActivoFijoPorEstado/{id}/{estado}")]
-        public async Task<Response> GetDetalleActivoFijo([FromRoute] int id, [FromRoute] string estado)
-        {
-            return await ObtenerDetalleActivoFijo(id, predicadoDetalleActivoFijo: c => c.Estado.Nombre == estado);
         }
 
         [HttpPost]
@@ -203,6 +224,92 @@ namespace bd.swrm.web.Controllers.API
                     await db.SaveChangesAsync();
                 }
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+
+        [HttpPost]
+        [Route("ValidacionRecepcionActivoFijoDetalleDatosEspecificos")]
+        public async Task<Response> PostValidacionRecepcionActivoFijoDetalleDatosEspecificos([FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
+        {
+            try
+            {
+                var listaPropiedadValorErrores = new List<PropiedadValor>();
+                if (!String.IsNullOrEmpty(recepcionActivoFijoDetalle.Serie))
+                {
+                    if (recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle == 0)
+                    {
+                        if (await db.RecepcionActivoFijoDetalle.AnyAsync(c => c.Serie.ToUpper().Trim() == recepcionActivoFijoDetalle.Serie.ToUpper().Trim()))
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "Serie", Valor = "La Serie: ya existe." });
+                    }
+                    else
+                    {
+                        if (await db.RecepcionActivoFijoDetalle.Where(c => c.Serie.ToUpper().Trim() == recepcionActivoFijoDetalle.Serie.ToUpper().Trim()).AnyAsync(c => c.IdRecepcionActivoFijoDetalle != recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle))
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "Serie", Valor = "La Serie: ya existe." });
+                    }
+                }
+
+                if (!String.IsNullOrEmpty(recepcionActivoFijoDetalle.NumeroChasis))
+                {
+                    if (recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle == 0)
+                    {
+                        if (await db.RecepcionActivoFijoDetalle.AnyAsync(c => c.NumeroChasis.ToUpper().Trim() == recepcionActivoFijoDetalle.NumeroChasis.ToUpper().Trim()))
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroChasis", Valor = "El Número de chasis: ya existe." });
+                    }
+                    else
+                    {
+                        if (await db.RecepcionActivoFijoDetalle.Where(c => c.NumeroChasis.ToUpper().Trim() == recepcionActivoFijoDetalle.NumeroChasis.ToUpper().Trim()).AnyAsync(c => c.IdRecepcionActivoFijoDetalle != recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle))
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroChasis", Valor = "El Número de chasis: ya existe." });
+                    }
+                }
+
+                if (!String.IsNullOrEmpty(recepcionActivoFijoDetalle.NumeroMotor))
+                {
+                    if (recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle == 0)
+                    {
+                        if (await db.RecepcionActivoFijoDetalle.AnyAsync(c => c.NumeroMotor.ToUpper().Trim() == recepcionActivoFijoDetalle.NumeroMotor.ToUpper().Trim()))
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroMotor", Valor = "El Número de motor: ya existe." });
+                    }
+                    else
+                    {
+                        if (await db.RecepcionActivoFijoDetalle.Where(c => c.NumeroMotor.ToUpper().Trim() == recepcionActivoFijoDetalle.NumeroMotor.ToUpper().Trim()).AnyAsync(c => c.IdRecepcionActivoFijoDetalle != recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle))
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroMotor", Valor = "El Número de motor: ya existe." });
+                    }
+                }
+
+                if (!String.IsNullOrEmpty(recepcionActivoFijoDetalle.Placa))
+                {
+                    if (recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle == 0)
+                    {
+                        if (await db.RecepcionActivoFijoDetalle.AnyAsync(c => c.Placa.ToUpper().Trim() == recepcionActivoFijoDetalle.Placa.ToUpper().Trim()))
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "Placa", Valor = "La Placa: ya existe." });
+                    }
+                    else
+                    {
+                        if (await db.RecepcionActivoFijoDetalle.Where(c => c.Placa.ToUpper().Trim() == recepcionActivoFijoDetalle.Placa.ToUpper().Trim()).AnyAsync(c => c.IdRecepcionActivoFijoDetalle != recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle))
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "Placa", Valor = "La Placa: ya existe." });
+                    }
+                }
+
+                if (!String.IsNullOrEmpty(recepcionActivoFijoDetalle.NumeroClaveCatastral))
+                {
+                    if (recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle == 0)
+                    {
+                        if (await db.RecepcionActivoFijoDetalle.AnyAsync(c => c.NumeroClaveCatastral.ToUpper().Trim() == recepcionActivoFijoDetalle.NumeroClaveCatastral.ToUpper().Trim()))
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroClaveCatastral", Valor = "El Número de clave catastral: ya existe." });
+                    }
+                    else
+                    {
+                        if (await db.RecepcionActivoFijoDetalle.Where(c => c.NumeroClaveCatastral.ToUpper().Trim() == recepcionActivoFijoDetalle.NumeroClaveCatastral.ToUpper().Trim()).AnyAsync(c => c.IdRecepcionActivoFijoDetalle != recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle))
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroClaveCatastral", Valor = "El Número de clave catastral: ya existe." });
+                    }
+                }
+
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = listaPropiedadValorErrores };
             }
             catch (Exception ex)
             {
@@ -403,190 +510,104 @@ namespace bd.swrm.web.Controllers.API
             return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
 
-        [HttpPost]
-        [Route("ValidacionRecepcionActivoFijoDetalleDatosEspecificos")]
-        public async Task<Response> PostValidacionRecepcionActivoFijoDetalleDatosEspecificos([FromBody] RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
+        #region Datos Comunes
+        private IQueryable<ActivoFijo> ObtenerDatosActivoFijo()
         {
-            try
-            {
-                var listaPropiedadValorErrores = new List<PropiedadValor>();
-                if (!String.IsNullOrEmpty(recepcionActivoFijoDetalle.Serie))
-                {
-                    if (recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle == 0)
-                    {
-                        if (await db.RecepcionActivoFijoDetalle.AnyAsync(c => c.Serie.ToUpper().Trim() == recepcionActivoFijoDetalle.Serie.ToUpper().Trim()))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "Serie", Valor = "La Serie: ya existe." });
-                    }
-                    else
-                    {
-                        if (await db.RecepcionActivoFijoDetalle.Where(c => c.Serie.ToUpper().Trim() == recepcionActivoFijoDetalle.Serie.ToUpper().Trim()).AnyAsync(c => c.IdRecepcionActivoFijoDetalle != recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "Serie", Valor = "La Serie: ya existe." });
-                    }
-                }
-
-                if (!String.IsNullOrEmpty(recepcionActivoFijoDetalle.NumeroChasis))
-                {
-                    if (recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle == 0)
-                    {
-                        if (await db.RecepcionActivoFijoDetalle.AnyAsync(c => c.NumeroChasis.ToUpper().Trim() == recepcionActivoFijoDetalle.NumeroChasis.ToUpper().Trim()))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroChasis", Valor = "El Número de chasis: ya existe." });
-                    }
-                    else
-                    {
-                        if (await db.RecepcionActivoFijoDetalle.Where(c => c.NumeroChasis.ToUpper().Trim() == recepcionActivoFijoDetalle.NumeroChasis.ToUpper().Trim()).AnyAsync(c => c.IdRecepcionActivoFijoDetalle != recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroChasis", Valor = "El Número de chasis: ya existe." });
-                    }
-                }
-
-                if (!String.IsNullOrEmpty(recepcionActivoFijoDetalle.NumeroMotor))
-                {
-                    if (recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle == 0)
-                    {
-                        if (await db.RecepcionActivoFijoDetalle.AnyAsync(c => c.NumeroMotor.ToUpper().Trim() == recepcionActivoFijoDetalle.NumeroMotor.ToUpper().Trim()))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroMotor", Valor = "El Número de motor: ya existe." });
-                    }
-                    else
-                    {
-                        if (await db.RecepcionActivoFijoDetalle.Where(c => c.NumeroMotor.ToUpper().Trim() == recepcionActivoFijoDetalle.NumeroMotor.ToUpper().Trim()).AnyAsync(c => c.IdRecepcionActivoFijoDetalle != recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroMotor", Valor = "El Número de motor: ya existe." });
-                    }
-                }
-
-                if (!String.IsNullOrEmpty(recepcionActivoFijoDetalle.Placa))
-                {
-                    if (recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle == 0)
-                    {
-                        if (await db.RecepcionActivoFijoDetalle.AnyAsync(c => c.Placa.ToUpper().Trim() == recepcionActivoFijoDetalle.Placa.ToUpper().Trim()))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "Placa", Valor = "La Placa: ya existe." });
-                    }
-                    else
-                    {
-                        if (await db.RecepcionActivoFijoDetalle.Where(c => c.Placa.ToUpper().Trim() == recepcionActivoFijoDetalle.Placa.ToUpper().Trim()).AnyAsync(c => c.IdRecepcionActivoFijoDetalle != recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "Placa", Valor = "La Placa: ya existe." });
-                    }
-                }
-
-                if (!String.IsNullOrEmpty(recepcionActivoFijoDetalle.NumeroClaveCatastral))
-                {
-                    if (recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle == 0)
-                    {
-                        if (await db.RecepcionActivoFijoDetalle.AnyAsync(c => c.NumeroClaveCatastral.ToUpper().Trim() == recepcionActivoFijoDetalle.NumeroClaveCatastral.ToUpper().Trim()))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroClaveCatastral", Valor = "El Número de clave catastral: ya existe." });
-                    }
-                    else
-                    {
-                        if (await db.RecepcionActivoFijoDetalle.Where(c => c.NumeroClaveCatastral.ToUpper().Trim() == recepcionActivoFijoDetalle.NumeroClaveCatastral.ToUpper().Trim()).AnyAsync(c => c.IdRecepcionActivoFijoDetalle != recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroClaveCatastral", Valor = "El Número de clave catastral: ya existe." });
-                    }
-                }
-
-                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = listaPropiedadValorErrores };
-            }
-            catch (Exception ex)
-            {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new Response { IsSuccess = false, Message = Mensaje.Error };
-            }
-        }
-        
-        private async Task<List<ActivoFijo>> ListarActivosFijos(Expression<Func<ActivoFijo, bool>> predicadoActivoFijo = null, Expression<Func<RecepcionActivoFijoDetalle, bool>> predicadoRecepcionActivoFijoDetalle = null)
-        {
-            try
-            {
-                var listaActivosFijos = new List<ActivoFijo>();
-                var listaActivoFijoBD = db.ActivoFijo
+            return db.ActivoFijo
                     .Include(c => c.SubClaseActivoFijo).ThenInclude(c => c.ClaseActivoFijo).ThenInclude(c => c.TipoActivoFijo)
                     .Include(c => c.CodigoActivoFijo)
                     .Include(c => c.Modelo).ThenInclude(c => c.Marca)
                     .Include(c => c.PolizaSeguroActivoFijo).ThenInclude(c => c.Subramo).ThenInclude(c => c.Ramo)
                     .Include(c => c.PolizaSeguroActivoFijo).ThenInclude(c => c.CompaniaSeguro);
+        }
+        private IQueryable<RecepcionActivoFijoDetalle> ObtenerListadoDetallesActivosFijos(int idActivoFijo)
+        {
+            return db.RecepcionActivoFijoDetalle
+                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Proveedor)
+                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.MotivoRecepcion)
+                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.FondoFinanciamiento)
+                    .Include(c => c.Estado).Include(c => c.AltaActivoFijo)
+                    .Include(c => c.BajaActivoFijo)
+                    .Where(c => c.IdActivoFijo == idActivoFijo)
+                    .OrderBy(c => c.Estado.Nombre)
+                    .OrderBy(c => c.RecepcionActivoFijo.FechaRecepcion)
+                    .OrderBy(c => c.AltaActivoFijo.FechaAlta)
+                    .OrderBy(c => c.BajaActivoFijo.FechaBaja);
+        }
+        private async Task<UbicacionActivoFijo> ObtenerUbicacionActualDetalleActivoFijo(int idRecepcionActivoFijoDetalle)
+        {
+            return await db.UbicacionActivoFijo
+                    .Include(c => c.LibroActivoFijo).ThenInclude(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais)
+                    .Include(c => c.Empleado).ThenInclude(c => c.Persona)
+                    .Include(c => c.Bodega)
+                    .LastOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle);
+        }
+        private RecepcionActivoFijoDetalle ObtenerDetalleActivoFijo(RecepcionActivoFijoDetalle rafdOld, UbicacionActivoFijo ubicacionActivoFijoDetalle)
+        {
+            return new RecepcionActivoFijoDetalle
+            {
+                IdRecepcionActivoFijoDetalle = rafdOld.IdRecepcionActivoFijoDetalle,
+                IdActivoFijo = rafdOld.IdActivoFijo,
+                IdRecepcionActivoFijo = rafdOld.IdRecepcionActivoFijo,
+                NumeroChasis = rafdOld.NumeroChasis,
+                NumeroMotor = rafdOld.NumeroMotor,
+                Placa = rafdOld.Placa,
+                NumeroClaveCatastral = rafdOld.NumeroClaveCatastral,
+                Serie = rafdOld.Serie,
+                Estado = new Estado { Nombre = rafdOld.Estado.Nombre },
+                UbicacionActivoFijoActual = ubicacionActivoFijoDetalle,
+                RecepcionActivoFijo = new RecepcionActivoFijo
+                {
+                    FechaRecepcion = rafdOld.RecepcionActivoFijo.FechaRecepcion,
+                    Cantidad = rafdOld.RecepcionActivoFijo.Cantidad,
+                    ValidacionTecnica = rafdOld.RecepcionActivoFijo.ValidacionTecnica,
+                    IdFondoFinanciamiento = rafdOld.RecepcionActivoFijo.IdFondoFinanciamiento,
+                    FondoFinanciamiento = new FondoFinanciamiento { Nombre = rafdOld.RecepcionActivoFijo.FondoFinanciamiento.Nombre },
+                    OrdenCompra = rafdOld.RecepcionActivoFijo.OrdenCompra,
+                    IdMotivoRecepcion = rafdOld.RecepcionActivoFijo.IdMotivoRecepcion,
+                    MotivoRecepcion = new MotivoRecepcion { Descripcion = rafdOld.RecepcionActivoFijo.MotivoRecepcion.Descripcion },
+                    IdProveedor = rafdOld.RecepcionActivoFijo.IdProveedor,
+                    Proveedor = new Proveedor { Nombre = rafdOld.RecepcionActivoFijo.Proveedor.Nombre, Apellidos = rafdOld.RecepcionActivoFijo.Proveedor.Apellidos }
+                }
+            };
+        }
+        private ActivoFijo ObtenerActivoFijoFinal(ActivoFijo activoFijo, List<RecepcionActivoFijoDetalle> listaRecepcionActivoFijoDetalle)
+        {
+            return new ActivoFijo
+            {
+                IdActivoFijo = activoFijo.IdActivoFijo,
+                Nombre = activoFijo.Nombre,
+                ValorCompra = activoFijo.ValorCompra,
+                Depreciacion = activoFijo.Depreciacion,
+                IdSubClaseActivoFijo = activoFijo.IdSubClaseActivoFijo,
+                IdModelo = activoFijo.IdModelo,
+                SubClaseActivoFijo = new SubClaseActivoFijo { Nombre = activoFijo.SubClaseActivoFijo.Nombre, IdClaseActivoFijo = activoFijo.SubClaseActivoFijo.IdClaseActivoFijo, ClaseActivoFijo = new ClaseActivoFijo { Nombre = activoFijo.SubClaseActivoFijo.ClaseActivoFijo.Nombre, IdTipoActivoFijo = activoFijo.SubClaseActivoFijo.ClaseActivoFijo.IdTipoActivoFijo, TipoActivoFijo = new TipoActivoFijo { Nombre = activoFijo.SubClaseActivoFijo.ClaseActivoFijo.TipoActivoFijo.Nombre } } },
+                CodigoActivoFijo = new CodigoActivoFijo { IdCodigoActivoFijo = activoFijo.IdCodigoActivoFijo, Codigosecuencial = activoFijo.CodigoActivoFijo.Codigosecuencial, CodigoBarras = activoFijo.CodigoActivoFijo.CodigoBarras },
+                Modelo = new Modelo { Nombre = activoFijo.Modelo.Nombre, IdMarca = activoFijo.Modelo.IdMarca, Marca = new Marca { Nombre = activoFijo.Modelo.Marca.Nombre } },
+                PolizaSeguroActivoFijo = new PolizaSeguroActivoFijo { NumeroPoliza = activoFijo.PolizaSeguroActivoFijo.NumeroPoliza, IdSubramo = activoFijo.PolizaSeguroActivoFijo.IdSubramo, IdCompaniaSeguro = activoFijo.PolizaSeguroActivoFijo.IdCompaniaSeguro, Subramo = new Subramo { Nombre = activoFijo.PolizaSeguroActivoFijo.Subramo.Nombre, IdRamo = activoFijo.PolizaSeguroActivoFijo.Subramo.IdRamo, Ramo = new Ramo { Nombre = activoFijo.PolizaSeguroActivoFijo.Subramo.Ramo.Nombre } }, CompaniaSeguro = new CompaniaSeguro { Nombre = activoFijo.PolizaSeguroActivoFijo.CompaniaSeguro.Nombre } },
+                RecepcionActivoFijoDetalle = listaRecepcionActivoFijoDetalle
+            };
+        }
+        #endregion
+
+        private async Task<List<ActivoFijo>> ListarActivosFijos(Expression<Func<ActivoFijo, bool>> predicadoActivoFijo = null, Expression<Func<RecepcionActivoFijoDetalle, bool>> predicadoRecepcionActivoFijoDetalle = null)
+        {
+            try
+            {
+                var listaActivosFijos = new List<ActivoFijo>();
+                var listaActivoFijoBD = ObtenerDatosActivoFijo();
                 var listaActivoFijo = await (predicadoActivoFijo != null ? listaActivoFijoBD.Where(predicadoActivoFijo).ToListAsync() : listaActivoFijoBD.ToListAsync());
 
                 foreach (var item in listaActivoFijo)
                 {
                     var listaRecepcionActivoFijoDetalle = new List<RecepcionActivoFijoDetalle>();
-                    var listaRecepcionActivoFijoDetalleAFBD = db.RecepcionActivoFijoDetalle
-                        .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Proveedor)
-                        .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.MotivoRecepcion)
-                        .Include(c => c.Estado).Include(c => c.AltaActivoFijo)
-                        .Include(c => c.BajaActivoFijo)
-                        .Where(c => c.IdActivoFijo == item.IdActivoFijo)
-                        .OrderBy(c => c.Estado.Nombre)
-                        .OrderBy(c => c.RecepcionActivoFijo.FechaRecepcion)
-                        .OrderBy(c => c.AltaActivoFijo.FechaAlta)
-                        .OrderBy(c => c.BajaActivoFijo.FechaBaja);
+                    var listaRecepcionActivoFijoDetalleAFBD = ObtenerListadoDetallesActivosFijos(item.IdActivoFijo);
                     var listaRecepcionActivoFijoDetalleAF = await (predicadoRecepcionActivoFijoDetalle != null ? listaRecepcionActivoFijoDetalleAFBD.Where(predicadoRecepcionActivoFijoDetalle).ToListAsync() : listaRecepcionActivoFijoDetalleAFBD.ToListAsync());
 
                     if (listaRecepcionActivoFijoDetalleAF.Count > 0)
                     {
-                        foreach (var rafd in listaRecepcionActivoFijoDetalleAF)
-                        {
-                            var ubicacionActivoFijoDetalle = await db.UbicacionActivoFijo
-                                .Include(c => c.LibroActivoFijo).ThenInclude(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais)
-                                .Include(c => c.Empleado).ThenInclude(c => c.Persona)
-                                .Include(c => c.Bodega)
-                                .FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == rafd.IdRecepcionActivoFijoDetalle);
-                            listaRecepcionActivoFijoDetalle.Add(new RecepcionActivoFijoDetalle
-                            {
-                                IdRecepcionActivoFijoDetalle = rafd.IdRecepcionActivoFijoDetalle,
-                                Serie = rafd.Serie,
-                                NumeroChasis = rafd.NumeroChasis,
-                                NumeroMotor = rafd.NumeroMotor,
-                                Placa = rafd.Placa,
-                                NumeroClaveCatastral = rafd.NumeroClaveCatastral,
-                                Estado = new Estado { Nombre = rafd.Estado.Nombre },
-                                RecepcionActivoFijo = new RecepcionActivoFijo
-                                {
-                                    FechaRecepcion = rafd.RecepcionActivoFijo.FechaRecepcion,
-                                    Cantidad = rafd.RecepcionActivoFijo.Cantidad,
-                                    ValidacionTecnica = rafd.RecepcionActivoFijo.ValidacionTecnica,
-                                    OrdenCompra = rafd.RecepcionActivoFijo.OrdenCompra,
-                                    MotivoRecepcion = new MotivoRecepcion { Descripcion = rafd.RecepcionActivoFijo.MotivoRecepcion.Descripcion },
-                                    FondoFinanciamiento = new FondoFinanciamiento { Nombre = rafd.RecepcionActivoFijo.FondoFinanciamiento.Nombre },
-                                    Proveedor = new Proveedor { Nombre = rafd.RecepcionActivoFijo.Proveedor.Nombre, Apellidos = rafd.RecepcionActivoFijo.Proveedor.Apellidos }
-                                },
-                                UbicacionActivoFijo = new List<UbicacionActivoFijo>
-                                {
-                                    new UbicacionActivoFijo
-                                    {
-                                        Bodega = ubicacionActivoFijoDetalle.Bodega != null ? new Bodega { Nombre = ubicacionActivoFijoDetalle.Bodega.Nombre } : null,
-                                        Empleado = ubicacionActivoFijoDetalle.Empleado != null ? new Empleado { Persona = new Persona { Nombres = ubicacionActivoFijoDetalle.Empleado.Persona.Nombres, Apellidos = ubicacionActivoFijoDetalle.Empleado.Persona.Apellidos } } : null,
-                                        LibroActivoFijo = new LibroActivoFijo
-                                        {
-                                            IdSucursal = ubicacionActivoFijoDetalle.LibroActivoFijo.IdSucursal,
-                                            Sucursal = new Sucursal
-                                            {
-                                                Nombre = ubicacionActivoFijoDetalle.LibroActivoFijo.Sucursal.Nombre,
-                                                Ciudad = new Ciudad
-                                                {
-                                                    Nombre = ubicacionActivoFijoDetalle.LibroActivoFijo.Sucursal.Ciudad.Nombre,
-                                                    Provincia = new Provincia
-                                                    {
-                                                        Nombre = ubicacionActivoFijoDetalle.LibroActivoFijo.Sucursal.Ciudad.Provincia.Nombre,
-                                                        Pais = new Pais
-                                                        {
-                                                            Nombre = ubicacionActivoFijoDetalle.LibroActivoFijo.Sucursal.Ciudad.Provincia.Pais.Nombre
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                        listaActivosFijos.Add(new ActivoFijo
-                        {
-                            IdActivoFijo = item.IdActivoFijo,
-                            Nombre = item.Nombre,
-                            ValorCompra = item.ValorCompra,
-                            Depreciacion = item.Depreciacion,
-                            SubClaseActivoFijo = new SubClaseActivoFijo { Nombre = item.SubClaseActivoFijo.Nombre, ClaseActivoFijo = new ClaseActivoFijo { Nombre = item.SubClaseActivoFijo.ClaseActivoFijo.Nombre, TipoActivoFijo = new TipoActivoFijo { Nombre = item.SubClaseActivoFijo.ClaseActivoFijo.TipoActivoFijo.Nombre } } },
-                            CodigoActivoFijo = new CodigoActivoFijo { Codigosecuencial = item.CodigoActivoFijo.Codigosecuencial, CodigoBarras = item.CodigoActivoFijo.CodigoBarras },
-                            Modelo = new Modelo { Nombre = item.Modelo.Nombre, Marca = new Marca { Nombre = item.Modelo.Marca.Nombre } },
-                            PolizaSeguroActivoFijo = new PolizaSeguroActivoFijo { NumeroPoliza = item.PolizaSeguroActivoFijo.NumeroPoliza, Subramo = new Subramo { Nombre = item.PolizaSeguroActivoFijo.Subramo.Nombre, Ramo = new Ramo { Nombre = item.PolizaSeguroActivoFijo.Subramo.Ramo.Nombre } }, CompaniaSeguro = new CompaniaSeguro { Nombre = item.PolizaSeguroActivoFijo.CompaniaSeguro.Nombre } },
-                            RecepcionActivoFijoDetalle = listaRecepcionActivoFijoDetalle
-                        });
+                        listaRecepcionActivoFijoDetalleAF.ForEach(async c => listaRecepcionActivoFijoDetalle.Add(ObtenerDetalleActivoFijo(c, await ObtenerUbicacionActualDetalleActivoFijo(c.IdRecepcionActivoFijoDetalle))));
+                        listaActivosFijos.Add(ObtenerActivoFijoFinal(item, listaRecepcionActivoFijoDetalle));
                     }
                 }
                 return listaActivosFijos;
@@ -604,113 +625,18 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var activoFijoBD = db.ActivoFijo
-                    .Include(c => c.SubClaseActivoFijo).ThenInclude(c => c.ClaseActivoFijo).ThenInclude(c => c.TipoActivoFijo)
-                    .Include(c => c.CodigoActivoFijo)
-                    .Include(c => c.Modelo).ThenInclude(c => c.Marca)
-                    .Include(c => c.PolizaSeguroActivoFijo).ThenInclude(c => c.Subramo).ThenInclude(c => c.Ramo)
-                    .Include(c => c.PolizaSeguroActivoFijo).ThenInclude(c => c.CompaniaSeguro);
+                var activoFijoBD = ObtenerDatosActivoFijo();
                 var activoFijo = await (predicadoActivoFijo != null ? activoFijoBD.Where(predicadoActivoFijo).SingleOrDefaultAsync(m => m.IdActivoFijo == id) : activoFijoBD.SingleOrDefaultAsync(m => m.IdActivoFijo == id));
                 if (activoFijo != null)
                 {
                     var listaRecepcionActivoFijoDetalle = new List<RecepcionActivoFijoDetalle>();
-                    var listaRecepcionActivoFijoDetalleAFBD = db.RecepcionActivoFijoDetalle
-                        .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Proveedor)
-                        .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.MotivoRecepcion)
-                        .Include(c => c.Estado)
-                        .Include(c => c.AltaActivoFijo)
-                        .Include(c => c.BajaActivoFijo)
-                        .Where(c => c.IdActivoFijo == activoFijo.IdActivoFijo)
-                        .OrderBy(c => c.Estado.Nombre)
-                        .OrderBy(c => c.RecepcionActivoFijo.FechaRecepcion)
-                        .OrderBy(c => c.AltaActivoFijo.FechaAlta)
-                        .OrderBy(c => c.BajaActivoFijo.FechaBaja);
+                    var listaRecepcionActivoFijoDetalleAFBD = ObtenerListadoDetallesActivosFijos(activoFijo.IdActivoFijo);
                     var listaRecepcionActivoFijoDetalleAF = await (predicadoDetalleActivoFijo != null ? listaRecepcionActivoFijoDetalleAFBD.Where(predicadoDetalleActivoFijo).ToListAsync() : listaRecepcionActivoFijoDetalleAFBD.ToListAsync());
 
                     if (listaRecepcionActivoFijoDetalleAF.Count > 0)
                     {
-                        foreach (var item in listaRecepcionActivoFijoDetalleAF)
-                        {
-                            var ubicacionActivoFijoDetalle = await db.UbicacionActivoFijo
-                                .Include(c => c.LibroActivoFijo).ThenInclude(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais)
-                                .Include(c => c.Empleado).ThenInclude(c => c.Persona)
-                                .Include(c => c.Bodega)
-                                .FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == item.IdRecepcionActivoFijoDetalle);
-                            listaRecepcionActivoFijoDetalle.Add(new RecepcionActivoFijoDetalle
-                            {
-                                IdRecepcionActivoFijoDetalle = item.IdRecepcionActivoFijoDetalle,
-                                IdActivoFijo = item.IdActivoFijo,
-                                IdRecepcionActivoFijo = item.IdRecepcionActivoFijo,
-                                NumeroChasis = item.NumeroChasis,
-                                NumeroMotor = item.NumeroMotor,
-                                Placa = item.Placa,
-                                NumeroClaveCatastral = item.NumeroClaveCatastral,
-                                Serie = item.Serie,
-                                Estado = new Estado { Nombre = item.Estado.Nombre },
-                                RecepcionActivoFijo = new RecepcionActivoFijo
-                                {
-                                    FechaRecepcion = item.RecepcionActivoFijo.FechaRecepcion,
-                                    Cantidad = item.RecepcionActivoFijo.Cantidad,
-                                    ValidacionTecnica = item.RecepcionActivoFijo.ValidacionTecnica,
-                                    IdFondoFinanciamiento = item.RecepcionActivoFijo.IdFondoFinanciamiento,
-                                    FondoFinanciamiento = new FondoFinanciamiento { Nombre = item.RecepcionActivoFijo.FondoFinanciamiento.Nombre },
-                                    OrdenCompra = item.RecepcionActivoFijo.OrdenCompra,
-                                    IdMotivoRecepcion = item.RecepcionActivoFijo.IdMotivoRecepcion,
-                                    MotivoRecepcion = new MotivoRecepcion { Descripcion = item.RecepcionActivoFijo.MotivoRecepcion.Descripcion },
-                                    IdProveedor = item.RecepcionActivoFijo.IdProveedor,
-                                    Proveedor = new Proveedor { Nombre = item.RecepcionActivoFijo.Proveedor.Nombre, Apellidos = item.RecepcionActivoFijo.Proveedor.Apellidos }
-                                },
-                                UbicacionActivoFijo = new List<UbicacionActivoFijo>
-                                {
-                                    new UbicacionActivoFijo
-                                    {
-                                        IdUbicacionActivoFijo = ubicacionActivoFijoDetalle.IdUbicacionActivoFijo,
-                                        IdBodega = ubicacionActivoFijoDetalle.IdBodega,
-                                        Bodega = ubicacionActivoFijoDetalle.Bodega != null ? new Bodega { Nombre = ubicacionActivoFijoDetalle.Bodega.Nombre } : null,
-                                        IdEmpleado = ubicacionActivoFijoDetalle.IdEmpleado,
-                                        Empleado = ubicacionActivoFijoDetalle.Empleado != null ? new Empleado { Persona = new Persona { Nombres = ubicacionActivoFijoDetalle.Empleado.Persona.Nombres, Apellidos = ubicacionActivoFijoDetalle.Empleado.Persona.Apellidos } } : null,
-                                        IdLibroActivoFijo = ubicacionActivoFijoDetalle.IdLibroActivoFijo,
-                                        LibroActivoFijo = new LibroActivoFijo
-                                        {
-                                            IdSucursal = ubicacionActivoFijoDetalle.LibroActivoFijo.IdSucursal,
-                                            Sucursal = new Sucursal
-                                            {
-                                                Nombre = ubicacionActivoFijoDetalle.LibroActivoFijo.Sucursal.Nombre,
-                                                IdCiudad = ubicacionActivoFijoDetalle.LibroActivoFijo.Sucursal.IdCiudad,
-                                                Ciudad = new Ciudad
-                                                {
-                                                    Nombre = ubicacionActivoFijoDetalle.LibroActivoFijo.Sucursal.Ciudad.Nombre,
-                                                    IdProvincia = ubicacionActivoFijoDetalle.LibroActivoFijo.Sucursal.Ciudad.IdProvincia,
-                                                    Provincia = new Provincia
-                                                    {
-                                                        Nombre = ubicacionActivoFijoDetalle.LibroActivoFijo.Sucursal.Ciudad.Provincia.Nombre,
-                                                        IdPais = ubicacionActivoFijoDetalle.LibroActivoFijo.Sucursal.Ciudad.Provincia.IdPais,
-                                                        Pais = new Pais
-                                                        {
-                                                            Nombre = ubicacionActivoFijoDetalle.LibroActivoFijo.Sucursal.Ciudad.Provincia.Pais.Nombre
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                        activoFijo = new ActivoFijo
-                        {
-                            IdActivoFijo = activoFijo.IdActivoFijo,
-                            Nombre = activoFijo.Nombre,
-                            ValorCompra = activoFijo.ValorCompra,
-                            Depreciacion = activoFijo.Depreciacion,
-                            IdSubClaseActivoFijo = activoFijo.IdSubClaseActivoFijo,
-                            IdModelo = activoFijo.IdModelo,
-                            SubClaseActivoFijo = new SubClaseActivoFijo { Nombre = activoFijo.SubClaseActivoFijo.Nombre, IdClaseActivoFijo = activoFijo.SubClaseActivoFijo.IdClaseActivoFijo, ClaseActivoFijo = new ClaseActivoFijo { Nombre = activoFijo.SubClaseActivoFijo.ClaseActivoFijo.Nombre, IdTipoActivoFijo = activoFijo.SubClaseActivoFijo.ClaseActivoFijo.IdTipoActivoFijo, TipoActivoFijo = new TipoActivoFijo { Nombre = activoFijo.SubClaseActivoFijo.ClaseActivoFijo.TipoActivoFijo.Nombre } } },
-                            CodigoActivoFijo = new CodigoActivoFijo { IdCodigoActivoFijo = activoFijo.IdCodigoActivoFijo, Codigosecuencial = activoFijo.CodigoActivoFijo.Codigosecuencial, CodigoBarras = activoFijo.CodigoActivoFijo.CodigoBarras },
-                            Modelo = new Modelo { Nombre = activoFijo.Modelo.Nombre, IdMarca = activoFijo.Modelo.IdMarca, Marca = new Marca { Nombre = activoFijo.Modelo.Marca.Nombre } },
-                            PolizaSeguroActivoFijo = new PolizaSeguroActivoFijo { NumeroPoliza = activoFijo.PolizaSeguroActivoFijo.NumeroPoliza, IdSubramo = activoFijo.PolizaSeguroActivoFijo.IdSubramo, IdCompaniaSeguro = activoFijo.PolizaSeguroActivoFijo.IdCompaniaSeguro, Subramo = new Subramo { Nombre = activoFijo.PolizaSeguroActivoFijo.Subramo.Nombre, IdRamo = activoFijo.PolizaSeguroActivoFijo.Subramo.IdRamo, Ramo = new Ramo { Nombre = activoFijo.PolizaSeguroActivoFijo.Subramo.Ramo.Nombre } }, CompaniaSeguro = new CompaniaSeguro { Nombre = activoFijo.PolizaSeguroActivoFijo.CompaniaSeguro.Nombre } },
-                            RecepcionActivoFijoDetalle = listaRecepcionActivoFijoDetalle
-                        };
+                        listaRecepcionActivoFijoDetalleAF.ForEach(async c => listaRecepcionActivoFijoDetalle.Add(ObtenerDetalleActivoFijo(c, await ObtenerUbicacionActualDetalleActivoFijo(c.IdRecepcionActivoFijoDetalle))));
+                        activoFijo = ObtenerActivoFijoFinal(activoFijo, listaRecepcionActivoFijoDetalle);
                     }
                     else
                         return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
@@ -723,46 +649,6 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        private async Task<List<RecepcionActivoFijoDetalle>> ListadoDetallesActivoFijo(int idActivoFijo, Expression<Func<RecepcionActivoFijoDetalle, bool>> predicado = null)
-        {
-            try
-            {
-                var lista = (from recAFD in db.RecepcionActivoFijoDetalle
-                             join recAF in db.RecepcionActivoFijo on recAFD.IdRecepcionActivoFijo equals recAF.IdRecepcionActivoFijo
-                             join af in db.ActivoFijo on recAFD.IdActivoFijo equals af.IdActivoFijo
-                             join est in db.Estado on recAFD.IdEstado equals est.IdEstado
-                             join prov in db.Proveedor on recAF.IdProveedor equals prov.IdProveedor
-                             join codAF in db.CodigoActivoFijo on af.IdCodigoActivoFijo equals codAF.IdCodigoActivoFijo
-                             join motRec in db.MotivoRecepcion on recAF.IdMotivoRecepcion equals motRec.IdMotivoRecepcion
-                             join mod in db.Modelo on af.IdModelo equals mod.IdModelo
-                             join marca in db.Marca on mod.IdMarca equals marca.IdMarca
-                             where recAFD.IdActivoFijo == idActivoFijo
-                             select new RecepcionActivoFijoDetalle
-                             {
-                                 IdRecepcionActivoFijoDetalle = recAFD.IdRecepcionActivoFijoDetalle,
-                                 IdActivoFijo = recAFD.IdActivoFijo,
-                                 IdEstado = recAFD.IdEstado,
-                                 IdRecepcionActivoFijo = recAFD.IdRecepcionActivoFijo,
-                                 RecepcionActivoFijo = new RecepcionActivoFijo
-                                 {
-                                     FondoFinanciamiento = new FondoFinanciamiento { Nombre = recAF.FondoFinanciamiento.Nombre },
-                                     OrdenCompra = recAF.OrdenCompra,
-                                     Cantidad = recAF.Cantidad,
-                                     ValidacionTecnica = recAF.ValidacionTecnica,
-                                     FechaRecepcion = recAF.FechaRecepcion,
-                                     IdProveedor = recAF.IdProveedor,
-                                     Proveedor = new Proveedor { IdProveedor = prov.IdProveedor, Nombre = prov.Nombre, Apellidos = prov.Apellidos
-                                     }
-                                 }
-                             });
-                return await (predicado != null ? lista.Where(predicado).ToListAsync() : lista.ToListAsync());
-            }
-            catch (Exception ex)
-            {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new List<RecepcionActivoFijoDetalle>();
-            }
-        }
         private async Task<Response> ObtenerDetalleActivoFijo(int idRecepcionActivoFijoDetalle, Expression<Func<RecepcionActivoFijoDetalle, bool>> predicadoDetalleActivoFijo = null)
         {
             try
@@ -773,16 +659,18 @@ namespace bd.swrm.web.Controllers.API
                 var recepcionActivoFijoDetalleBD = db.RecepcionActivoFijoDetalle
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Proveedor)
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.MotivoRecepcion)
+                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.FondoFinanciamiento)
                     .Include(c => c.ActivoFijo).ThenInclude(c => c.SubClaseActivoFijo).ThenInclude(c => c.ClaseActivoFijo).ThenInclude(c => c.TipoActivoFijo)
                     .Include(c => c.ActivoFijo).ThenInclude(c => c.Modelo).ThenInclude(c => c.Marca)
                     .Include(c => c.ActivoFijo).ThenInclude(c => c.CodigoActivoFijo)
                     .Include(c => c.ActivoFijo)
                     .Include(c => c.Estado)
                     .Include(c => c.RecepcionActivoFijo.Proveedor.Factura)
-                    .Include(c=> c.AltaActivoFijo)
+                    .Include(c=> c.AltaActivoFijo).ThenInclude(c=> c.Factura)
                     .Include(c=> c.BajaActivoFijo);
 
                 var recepcionActivoFijoDetalle = await (predicadoDetalleActivoFijo != null ? recepcionActivoFijoDetalleBD.Where(predicadoDetalleActivoFijo).SingleOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle) : recepcionActivoFijoDetalleBD.SingleOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle));
+                recepcionActivoFijoDetalle.UbicacionActivoFijoActual = await ObtenerUbicacionActualDetalleActivoFijo(recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
                 return new Response { IsSuccess = recepcionActivoFijoDetalle != null, Message = recepcionActivoFijoDetalle != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = recepcionActivoFijoDetalle };
             }
             catch (Exception ex)
