@@ -548,11 +548,12 @@ namespace bd.swrm.web.Controllers.API
 
             foreach (var item in recepcionActivoFijoDetalle)
             {
-                item.UbicacionActivoFijoActual = db.UbicacionActivoFijo
+                item.UbicacionActivoFijoActual = ObtenerUbicacionActivoFijoActual(db.UbicacionActivoFijo
                     .Include(c => c.LibroActivoFijo).ThenInclude(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais)
                     .Include(c => c.Empleado).ThenInclude(c => c.Persona)
                     .Include(c => c.Bodega)
-                    .LastOrDefault(c => c.IdRecepcionActivoFijoDetalle == item.IdRecepcionActivoFijoDetalle);
+                    .LastOrDefault(c => c.IdRecepcionActivoFijoDetalle == item.IdRecepcionActivoFijoDetalle));
+                item.UbicacionActivoFijo.Clear();
             }
             recepcionActivoFijoDetalle = recepcionActivoFijoDetalle.OrderBy(c => c.UbicacionActivoFijoActual.IdBodega).ThenBy(c => c.UbicacionActivoFijoActual.IdEmpleado);
             return idActivoFijo != null ? recepcionActivoFijoDetalle.Where(c => c.IdActivoFijo == idActivoFijo) : recepcionActivoFijoDetalle;
@@ -573,51 +574,7 @@ namespace bd.swrm.web.Controllers.API
                 NumeroClaveCatastral = rafdOld.NumeroClaveCatastral,
                 Serie = rafdOld.Serie,
                 Estado = new Estado { Nombre = rafdOld.Estado.Nombre },
-                UbicacionActivoFijoActual = new UbicacionActivoFijo
-                {
-                    IdUbicacionActivoFijo = rafdOld.UbicacionActivoFijoActual.IdUbicacionActivoFijo,
-                    IdEmpleado = rafdOld.UbicacionActivoFijoActual.IdEmpleado,
-                    IdBodega = rafdOld.UbicacionActivoFijoActual.IdBodega,
-                    IdRecepcionActivoFijoDetalle = rafdOld.UbicacionActivoFijoActual.IdRecepcionActivoFijoDetalle,
-                    IdLibroActivoFijo = rafdOld.UbicacionActivoFijoActual.IdLibroActivoFijo,
-                    FechaUbicacion = rafdOld.UbicacionActivoFijoActual.FechaUbicacion,
-                    LibroActivoFijo = rafdOld.UbicacionActivoFijoActual.LibroActivoFijo != null ? new LibroActivoFijo
-                    {
-                        IdSucursal = rafdOld.UbicacionActivoFijoActual.LibroActivoFijo.IdSucursal,
-                        Sucursal = rafdOld.UbicacionActivoFijoActual.LibroActivoFijo.Sucursal != null ? new Sucursal
-                        {
-                            Nombre = rafdOld.UbicacionActivoFijoActual.LibroActivoFijo.Sucursal.Nombre,
-                            IdCiudad = rafdOld.UbicacionActivoFijoActual.LibroActivoFijo.Sucursal.IdCiudad,
-                            Ciudad = rafdOld.UbicacionActivoFijoActual.LibroActivoFijo.Sucursal.Ciudad != null ? new Ciudad
-                            {
-                                Nombre = rafdOld.UbicacionActivoFijoActual.LibroActivoFijo.Sucursal.Ciudad.Nombre,
-                                IdProvincia = rafdOld.UbicacionActivoFijoActual.LibroActivoFijo.Sucursal.Ciudad.IdProvincia,
-                                Provincia = rafdOld.UbicacionActivoFijoActual.LibroActivoFijo.Sucursal.Ciudad.Provincia != null ? new Provincia
-                                {
-                                    Nombre = rafdOld.UbicacionActivoFijoActual.LibroActivoFijo.Sucursal.Ciudad.Provincia.Nombre,
-                                    IdPais = rafdOld.UbicacionActivoFijoActual.LibroActivoFijo.Sucursal.Ciudad.Provincia.IdPais,
-                                    Pais = rafdOld.UbicacionActivoFijoActual.LibroActivoFijo.Sucursal.Ciudad.Provincia.Pais != null ? new Pais
-                                    {
-                                        Nombre = rafdOld.UbicacionActivoFijoActual.LibroActivoFijo.Sucursal.Ciudad.Provincia.Pais.Nombre
-                                    } : null
-                                } : null
-                            } : null
-                        } : null
-                    } : null,
-                    Bodega = rafdOld.UbicacionActivoFijoActual.Bodega != null ? new Bodega
-                    {
-                        Nombre = rafdOld.UbicacionActivoFijoActual.Bodega.Nombre
-                    } : null,
-                    Empleado = rafdOld.UbicacionActivoFijoActual.Empleado != null ? new Empleado
-                    {
-                        Persona = rafdOld.UbicacionActivoFijoActual.Empleado.Persona != null ? new Persona
-                        {
-                            IdPersona = rafdOld.UbicacionActivoFijoActual.Empleado.Persona.IdPersona,
-                            Nombres = rafdOld.UbicacionActivoFijoActual.Empleado.Persona.Nombres,
-                            Apellidos = rafdOld.UbicacionActivoFijoActual.Empleado.Persona.Apellidos
-                        } : null
-                    } : null
-                },
+                UbicacionActivoFijoActual = rafdOld.UbicacionActivoFijoActual,
                 RecepcionActivoFijo = new RecepcionActivoFijo
                 {
                     FechaRecepcion = rafdOld.RecepcionActivoFijo.FechaRecepcion,
@@ -648,6 +605,54 @@ namespace bd.swrm.web.Controllers.API
                 Modelo = new Modelo { Nombre = activoFijo.Modelo.Nombre, IdMarca = activoFijo.Modelo.IdMarca, Marca = new Marca { Nombre = activoFijo.Modelo.Marca.Nombre } },
                 PolizaSeguroActivoFijo = new PolizaSeguroActivoFijo { NumeroPoliza = activoFijo.PolizaSeguroActivoFijo.NumeroPoliza, IdSubramo = activoFijo.PolizaSeguroActivoFijo.IdSubramo, IdCompaniaSeguro = activoFijo.PolizaSeguroActivoFijo.IdCompaniaSeguro, Subramo = new Subramo { Nombre = activoFijo.PolizaSeguroActivoFijo.Subramo.Nombre, IdRamo = activoFijo.PolizaSeguroActivoFijo.Subramo.IdRamo, Ramo = new Ramo { Nombre = activoFijo.PolizaSeguroActivoFijo.Subramo.Ramo.Nombre } }, CompaniaSeguro = new CompaniaSeguro { Nombre = activoFijo.PolizaSeguroActivoFijo.CompaniaSeguro.Nombre } },
                 RecepcionActivoFijoDetalle = listaRecepcionActivoFijoDetalle
+            };
+        }
+        private UbicacionActivoFijo ObtenerUbicacionActivoFijoActual(UbicacionActivoFijo ubicacionActivoFijo)
+        {
+            return new UbicacionActivoFijo
+            {
+                IdUbicacionActivoFijo = ubicacionActivoFijo.IdUbicacionActivoFijo,
+                IdEmpleado = ubicacionActivoFijo.IdEmpleado,
+                IdBodega = ubicacionActivoFijo.IdBodega,
+                IdRecepcionActivoFijoDetalle = ubicacionActivoFijo.IdRecepcionActivoFijoDetalle,
+                IdLibroActivoFijo = ubicacionActivoFijo.IdLibroActivoFijo,
+                FechaUbicacion = ubicacionActivoFijo.FechaUbicacion,
+                LibroActivoFijo = ubicacionActivoFijo.LibroActivoFijo != null ? new LibroActivoFijo
+                {
+                    IdSucursal = ubicacionActivoFijo.LibroActivoFijo.IdSucursal,
+                    Sucursal = ubicacionActivoFijo.LibroActivoFijo.Sucursal != null ? new Sucursal
+                    {
+                        Nombre = ubicacionActivoFijo.LibroActivoFijo.Sucursal.Nombre,
+                        IdCiudad = ubicacionActivoFijo.LibroActivoFijo.Sucursal.IdCiudad,
+                        Ciudad = ubicacionActivoFijo.LibroActivoFijo.Sucursal.Ciudad != null ? new Ciudad
+                        {
+                            Nombre = ubicacionActivoFijo.LibroActivoFijo.Sucursal.Ciudad.Nombre,
+                            IdProvincia = ubicacionActivoFijo.LibroActivoFijo.Sucursal.Ciudad.IdProvincia,
+                            Provincia = ubicacionActivoFijo.LibroActivoFijo.Sucursal.Ciudad.Provincia != null ? new Provincia
+                            {
+                                Nombre = ubicacionActivoFijo.LibroActivoFijo.Sucursal.Ciudad.Provincia.Nombre,
+                                IdPais = ubicacionActivoFijo.LibroActivoFijo.Sucursal.Ciudad.Provincia.IdPais,
+                                Pais = ubicacionActivoFijo.LibroActivoFijo.Sucursal.Ciudad.Provincia.Pais != null ? new Pais
+                                {
+                                    Nombre = ubicacionActivoFijo.LibroActivoFijo.Sucursal.Ciudad.Provincia.Pais.Nombre
+                                } : null
+                            } : null
+                        } : null
+                    } : null
+                } : null,
+                Bodega = ubicacionActivoFijo.Bodega != null ? new Bodega
+                {
+                    Nombre = ubicacionActivoFijo.Bodega.Nombre
+                } : null,
+                Empleado = ubicacionActivoFijo.Empleado != null ? new Empleado
+                {
+                    Persona = ubicacionActivoFijo.Empleado.Persona != null ? new Persona
+                    {
+                        IdPersona = ubicacionActivoFijo.Empleado.Persona.IdPersona,
+                        Nombres = ubicacionActivoFijo.Empleado.Persona.Nombres,
+                        Apellidos = ubicacionActivoFijo.Empleado.Persona.Apellidos
+                    } : null
+                } : null
             };
         }
         #endregion
