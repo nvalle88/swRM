@@ -6,52 +6,52 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using bd.swrm.datos;
 using bd.swrm.entidades.Negocio;
-using Microsoft.EntityFrameworkCore;
 using bd.log.guardar.Servicios;
+using bd.log.guardar.Enumeradores;
+using Microsoft.EntityFrameworkCore;
 using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
-using bd.log.guardar.Enumeradores;
 using bd.log.guardar.Utiles;
 using bd.swrm.entidades.Utils;
 
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/AltaActivoFijo")]
-    public class AltaActivoFijoController : Controller
+    [Route("api/MotivoAlta")]
+    public class MotivoAltaController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public AltaActivoFijoController(SwRMDbContext db)
+        public MotivoAltaController(SwRMDbContext db)
         {
             this.db = db;
         }
-        
+
         [HttpGet]
-        [Route("ListarAltaActivoFijo")]
-        public async Task<List<AltaActivoFijo>> GetAltaActivoFijo()
+        [Route("ListarMotivoAlta")]
+        public async Task<List<MotivoAlta>> GetMotivoAlta()
         {
             try
             {
-                return await db.AltaActivoFijo.Include(x=> x.FacturaActivoFijo).Include(c=> c.MotivoAlta).ToListAsync();
+                return await db.MotivoAlta.OrderBy(x => x.Descripcion).ToListAsync();
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new List<AltaActivoFijo>();
+                return new List<MotivoAlta>();
             }
         }
-        
+
         [HttpGet("{id}")]
-        public async Task<Response> GetAltaActivoFijo([FromRoute]int id)
+        public async Task<Response> GetMotivoAlta([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var altaActivoFijo = await db.AltaActivoFijo.Include(x => x.FacturaActivoFijo).Include(c=> c.MotivoAlta).SingleOrDefaultAsync(m => m.IdAltaActivoFijo == id);
-                return new Response { IsSuccess = altaActivoFijo != null, Message = altaActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = altaActivoFijo };
+                var motivoAlta = await db.MotivoAlta.SingleOrDefaultAsync(m => m.IdMotivoAlta == id);
+                return new Response { IsSuccess = motivoAlta != null, Message = motivoAlta != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = motivoAlta };
             }
             catch (Exception ex)
             {
@@ -59,51 +59,24 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
-        [HttpPost]
-        [Route("InsertarAltaActivoFijo")]
-        public async Task<Response> PostAltaActivoFijo([FromBody]AltaActivoFijo altaActivoFijo)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.AltaActivoFijo.AnyAsync(c => c.FechaAlta == altaActivoFijo.FechaAlta && c.IdMotivoAlta == altaActivoFijo.IdMotivoAlta && c.IdFacturaActivoFijo == altaActivoFijo.IdFacturaActivoFijo))
-                {
-                    db.AltaActivoFijo.Add(altaActivoFijo);
-                    await db.SaveChangesAsync();
-                    Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
-                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
-                }
-                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro, Resultado = altaActivoFijo };
-            }
-            catch (Exception ex)
-            {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new Response { IsSuccess = false, Message = Mensaje.Error };
-            }
-        }
-        
         [HttpPut("{id}")]
-        public async Task<Response> PutAltaActivoFijo([FromRoute] int id, [FromBody]AltaActivoFijo altaActivoFijo)
+        public async Task<Response> PutMotivoAlta([FromRoute] int id, [FromBody] MotivoAlta motivoAlta)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.AltaActivoFijo.Where(c => c.FechaAlta == altaActivoFijo.FechaAlta && c.IdMotivoAlta == altaActivoFijo.IdMotivoAlta && c.IdFacturaActivoFijo == altaActivoFijo.IdFacturaActivoFijo).AnyAsync(c => c.IdAltaActivoFijo != altaActivoFijo.IdAltaActivoFijo))
+                if (!await db.MotivoAlta.Where(c => c.Descripcion.ToUpper().Trim() == motivoAlta.Descripcion.ToUpper().Trim()).AnyAsync(c => c.IdMotivoAlta != motivoAlta.IdMotivoAlta))
                 {
-                    var altaActivoFijoActualizar = await db.AltaActivoFijo.FirstOrDefaultAsync(c=> c.IdAltaActivoFijo == id);
-                    if (altaActivoFijoActualizar != null)
+                    var motivoAltaActualizar = await db.MotivoAlta.Where(x => x.IdMotivoAlta == id).FirstOrDefaultAsync();
+                    if (motivoAltaActualizar != null)
                     {
                         try
                         {
-                            altaActivoFijoActualizar.FechaAlta = altaActivoFijo.FechaAlta;
-                            altaActivoFijoActualizar.IdMotivoAlta = altaActivoFijo.IdMotivoAlta;
-                            altaActivoFijoActualizar.IdFacturaActivoFijo = altaActivoFijo.IdFacturaActivoFijo;
-                            db.AltaActivoFijo.Update(altaActivoFijoActualizar);
+                            motivoAltaActualizar.Descripcion = motivoAlta.Descripcion;
+                            db.MotivoAlta.Update(motivoAltaActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                         }
@@ -122,19 +95,43 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        [HttpDelete("{id}")]
-        public async Task<Response> DeleteAltaActivoFijo([FromRoute] int id)
+        [HttpPost]
+        [Route("InsertarMotivoAlta")]
+        public async Task<Response> PostMotivoAlta([FromBody] MotivoAlta motivoAlta)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = await db.AltaActivoFijo.SingleOrDefaultAsync(m => m.IdAltaActivoFijo == id);
+                if (!await db.MotivoAlta.AnyAsync(c => c.Descripcion.ToUpper().Trim() == motivoAlta.Descripcion.ToUpper().Trim()))
+                {
+                    db.MotivoAlta.Add(motivoAlta);
+                    await db.SaveChangesAsync();
+                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                }
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<Response> DeleteMotivoAlta([FromRoute] int id)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
+                var respuesta = await db.MotivoAlta.SingleOrDefaultAsync(m => m.IdMotivoAlta == id);
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                db.AltaActivoFijo.Remove(respuesta);
+                db.MotivoAlta.Remove(respuesta);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
@@ -143,6 +140,13 @@ namespace bd.swrm.web.Controllers.API
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
+        }
+
+        public Response Existe(MotivoAlta motivoAlta)
+        {
+            var bdd = motivoAlta.Descripcion.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.MotivoAlta.Where(p => p.Descripcion.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }
 }

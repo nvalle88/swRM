@@ -28,6 +28,5 @@ namespace bd.swrm.entidades.Negocio
         public virtual MaestroArticuloSucursal MaestroArticuloSucursal { get; set; }
 
         public virtual ICollection<DetalleFactura> DetalleFactura { get; set; }
-        public virtual ICollection<AltaActivoFijo> AltaActivosFijos { get; set; }
     }
 }

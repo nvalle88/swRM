@@ -26,6 +26,7 @@ namespace bd.swrm.datos
         public virtual DbSet<ConfiguracionContabilidad> ConfiguracionContabilidad { get; set; }
         public virtual DbSet<DetalleFactura> DetalleFactura { get; set; }
         public virtual DbSet<Factura> Factura { get; set; }
+        public virtual DbSet<FacturaActivoFijo> FacturaActivoFijo { get; set; }
         public virtual DbSet<FondoFinanciamiento> FondoFinanciamiento { get; set; }
         public virtual DbSet<LibroActivoFijo> LibroActivoFijo { get; set; }
         public virtual DbSet<CatalogoCuenta> CatalogoCuenta { get; set; }
@@ -35,6 +36,7 @@ namespace bd.swrm.datos
         public virtual DbSet<MantenimientoActivoFijo> MantenimientoActivoFijo { get; set; }
         public virtual DbSet<Marca> Marca { get; set; }
         public virtual DbSet<Modelo> Modelo { get; set; }
+        public virtual DbSet<MotivoAlta> MotivoAlta { get; set; }
         public virtual DbSet<MotivoRecepcion> MotivoRecepcion { get; set; }
         public virtual DbSet<Pais> Pais { get; set; }
         public virtual DbSet<Parroquia> Parroquia { get; set; }
@@ -42,6 +44,7 @@ namespace bd.swrm.datos
         public virtual DbSet<Provincia> Provincia { get; set; }
         public virtual DbSet<RecepcionActivoFijo> RecepcionActivoFijo { get; set; }
         public virtual DbSet<RecepcionActivoFijoDetalle> RecepcionActivoFijoDetalle { get; set; }
+        public virtual DbSet<RecepcionActivoFijoDetalleAltaActivoFijo> RecepcionActivoFijoDetalleAltaActivoFijo { get; set; }
         public virtual DbSet<RecepcionArticulos> RecepcionArticulos { get; set; }
         public virtual DbSet<SolicitudProveeduria> SolicitudProveeduria { get; set; }
         public virtual DbSet<SolicitudProveeduriaDetalle> SolicitudProveeduriaDetalle { get; set; }
@@ -51,6 +54,7 @@ namespace bd.swrm.datos
         public virtual DbSet<TablaDepreciacion> TablaDepreciacion { get; set; }
         public virtual DbSet<TipoActivoFijo> TipoActivoFijo { get; set; }
         public virtual DbSet<TipoArticulo> TipoArticulo { get; set; }
+        public virtual DbSet<TipoUtilizacionAlta> TipoUtilizacionAlta { get; set; }
         public virtual DbSet<TranferenciaArticulo> TranferenciaArticulo { get; set; }
         public virtual DbSet<TransferenciaActivoFijo> TransferenciaActivoFijo { get; set; }
         public virtual DbSet<UnidadMedida> UnidadMedida { get; set; }
@@ -1153,23 +1157,21 @@ namespace bd.swrm.datos
 
             modelBuilder.Entity<AltaActivoFijo>(entity =>
             {
-                entity.HasKey(e => e.IdRecepcionActivoFijoDetalle)
+                entity.HasKey(e => e.IdAltaActivoFijo)
                     .HasName("PK_ActivosFijosAlta_1");
-
-                entity.Property(e => e.IdRecepcionActivoFijoDetalle).ValueGeneratedOnAdd();
 
                 entity.Property(e => e.FechaAlta).HasColumnType("datetime");
 
-                entity.HasOne(d => d.Factura)
-                    .WithMany(p => p.AltaActivosFijos)
-                    .HasForeignKey(d => d.IdFactura)
-                    .HasConstraintName("FK_ActivosFijosAlta_Factura");
+                entity.HasOne(d => d.FacturaActivoFijo)
+                    .WithMany(p => p.AltaActivoFijo)
+                    .HasForeignKey(d => d.IdFacturaActivoFijo)
+                    .HasConstraintName("FK_AltaActivoFijo_FacturaActivoFijo");
 
-                entity.HasOne(d => d.RecepcionActivoFijoDetalle)
-                    .WithOne(p => p.AltaActivoFijo)
-                    .HasForeignKey<AltaActivoFijo>(d => d.IdRecepcionActivoFijoDetalle)
+                entity.HasOne(d => d.MotivoAlta)
+                    .WithMany(p => p.AltaActivoFijo)
+                    .HasForeignKey(d => d.IdMotivoAlta)
                     .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_AltaActivoFijo_RecepcionActivoFijoDetalle");
+                    .HasConstraintName("FK_AltaActivoFijo_MotivoAlta");
             });
 
             modelBuilder.Entity<EstadoCivil>(entity =>
@@ -1445,6 +1447,60 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdSubramo)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_PolizaSeguroActivoFijo_Subramo");
+            });
+
+            modelBuilder.Entity<FacturaActivoFijo>(entity =>
+            {
+                entity.HasKey(e => e.IdFacturaActivoFijo)
+                    .HasName("PK_FacturaActivoFijo");
+
+                entity.Property(e => e.NumeroFactura)
+                    .IsRequired()
+                    .HasMaxLength(100);
+            });
+
+            modelBuilder.Entity<MotivoAlta>(entity =>
+            {
+                entity.HasKey(e => e.IdMotivoAlta)
+                    .HasName("PK_MotivoAlta");
+
+                entity.Property(e => e.Descripcion)
+                    .IsRequired()
+                    .HasMaxLength(200);
+            });
+
+            modelBuilder.Entity<RecepcionActivoFijoDetalleAltaActivoFijo>(entity =>
+            {
+                entity.HasKey(e => new { e.IdRecepcionActivoFijoDetalle, e.IdAltaActivoFijo })
+                    .HasName("PK_RecepcionActivoFijoDetalleAltaActivoFijo");
+
+                entity.HasOne(d => d.AltaActivoFijo)
+                    .WithMany(p => p.RecepcionActivoFijoDetalleAltaActivoFijo)
+                    .HasForeignKey(d => d.IdAltaActivoFijo)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_RecepcionActivoFijoDetalleAltaActivoFijo_AltaActivoFijo");
+
+                entity.HasOne(d => d.RecepcionActivoFijoDetalle)
+                    .WithMany(p => p.RecepcionActivoFijoDetalleAltaActivoFijo)
+                    .HasForeignKey(d => d.IdRecepcionActivoFijoDetalle)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_RecepcionActivoFijoDetalleAltaActivoFijo_RecepcionActivoFijoDetalle");
+
+                entity.HasOne(d => d.TipoUtilizacionAlta)
+                    .WithMany(p => p.RecepcionActivoFijoDetalleAltaActivoFijo)
+                    .HasForeignKey(d => d.IdTipoUtilizacionAlta)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_RecepcionActivoFijoDetalleAltaActivoFijo_TipoUtilizacionAlta");
+            });
+
+            modelBuilder.Entity<TipoUtilizacionAlta>(entity =>
+            {
+                entity.HasKey(e => e.IdTipoUtilizacionAlta)
+                    .HasName("PK_TipoUtilizacionAlta");
+
+                entity.Property(e => e.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(200);
             });
 
             foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
