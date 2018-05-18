@@ -81,23 +81,12 @@ namespace bd.swrm.web.Controllers.API
         {
             return await ObtenerActivoFijo(id);
         }
-
-        [HttpGet("{id}/{estado}")]
-        public async Task<Response> GetActivoFijoPorEstado([FromRoute]int id, [FromRoute] string estado)
+        
+        [HttpPost]
+        [Route("ObtenerActivoFijoPorEstado")]
+        public async Task<Response> GetActivoFijoPorEstado([FromBody] IdEstadosTransfer idActivoFijoEstadosTransfer)
         {
-            return await ObtenerActivoFijo(id, predicadoDetalleActivoFijo: c => c.Estado.Nombre == estado);
-        }
-
-        [HttpGet("DetalleActivoFijo/{id}")]
-        public async Task<Response> GetDetalleActivoFijo([FromRoute] int id)
-        {
-            return await ObtenerDetalleActivoFijo(id);
-        }
-
-        [HttpGet("DetalleActivoFijoPorEstado/{id}/{estado}")]
-        public async Task<Response> GetDetalleActivoFijo([FromRoute] int id, [FromRoute] string estado)
-        {
-            return await ObtenerDetalleActivoFijo(id, predicadoDetalleActivoFijo: c => c.Estado.Nombre == estado);
+            return await ObtenerActivoFijo(idActivoFijoEstadosTransfer.Id, predicadoDetalleActivoFijo: c=> idActivoFijoEstadosTransfer.Estados.Contains(c.Estado.Nombre));//c => c.Estado.Nombre == idActivoFijoEstadosTransfer.Estado);
         }
 
         [HttpPost]
@@ -123,9 +112,9 @@ namespace bd.swrm.web.Controllers.API
 
         [HttpPost]
         [Route("ListarActivoFijoPorEstado")]
-        public async Task<List<ActivoFijo>> GetActivosFijosPorEstado([FromBody] string estado)
+        public async Task<List<ActivoFijo>> GetActivosFijosPorEstado([FromBody] List<string> estados)
         {
-            return await ListarActivosFijos(predicadoRecepcionActivoFijoDetalle: c => c.Estado.Nombre == estado);
+            return await ListarActivosFijos(predicadoRecepcionActivoFijoDetalle: c => estados.Contains(c.Estado.Nombre));
         }
 
         [HttpPost]
@@ -546,8 +535,19 @@ namespace bd.swrm.web.Controllers.API
                 db.MantenimientoActivoFijo.RemoveRange(db.MantenimientoActivoFijo.Include(c=> c.RecepcionActivoFijoDetalle).Where(c => c.RecepcionActivoFijoDetalle.IdActivoFijo == respuesta.IdActivoFijo));
                 db.TransferenciaActivoFijo.RemoveRange(db.TransferenciaActivoFijo.Include(c=> c.UbicacionActivoFijoOrigen).ThenInclude(c=> c.RecepcionActivoFijoDetalle).Include(c => c.UbicacionActivoFijoDestino).ThenInclude(c => c.RecepcionActivoFijoDetalle).Where(c => c.UbicacionActivoFijoOrigen.RecepcionActivoFijoDetalle.IdActivoFijo == respuesta.IdActivoFijo || c.UbicacionActivoFijoDestino.RecepcionActivoFijoDetalle.IdActivoFijo == respuesta.IdActivoFijo));
                 db.PolizaSeguroActivoFijo.Remove(db.PolizaSeguroActivoFijo.FirstOrDefault(c => c.IdActivo == respuesta.IdActivoFijo));
-                db.AltaActivoFijo.RemoveRange(db.AltaActivoFijo.Include(c=> c.RecepcionActivoFijoDetalle).Where(c => c.RecepcionActivoFijoDetalle.IdActivoFijo == respuesta.IdActivoFijo));
                 db.BajaActivoFijo.RemoveRange(db.BajaActivoFijo.Include(c => c.RecepcionActivoFijoDetalle).Where(c => c.RecepcionActivoFijoDetalle.IdActivoFijo == respuesta.IdActivoFijo));
+
+                var recepcionActivoFijoDetalleAltaActivoFijo = db.RecepcionActivoFijoDetalleAltaActivoFijo.Include(c => c.RecepcionActivoFijoDetalle).Include(c => c.AltaActivoFijo).Where(c => c.RecepcionActivoFijoDetalle.IdActivoFijo == respuesta.IdActivoFijo);
+                foreach (var item in recepcionActivoFijoDetalleAltaActivoFijo)
+                {
+                    var listadoAltasRecepcion = db.AltaActivoFijo.Where(c => c.IdAltaActivoFijo == item.IdAltaActivoFijo);
+                    if (listadoAltasRecepcion.Count() == 1)
+                    {
+                        db.FacturaActivoFijo.Remove(listadoAltasRecepcion.FirstOrDefault().FacturaActivoFijo);
+                        db.AltaActivoFijo.Remove(listadoAltasRecepcion.FirstOrDefault());
+                    }
+                    db.RecepcionActivoFijoDetalleAltaActivoFijo.Remove(item);
+                }
 
                 var listaDocumentosActivoFijo = await db.DocumentoActivoFijo.Where(c => c.IdActivoFijo == respuesta.IdActivoFijo).ToListAsync();
                 db.DocumentoActivoFijo.RemoveRange(listaDocumentosActivoFijo);
@@ -572,7 +572,8 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        [HttpDelete("EliminarDetalleActivoFijo/{id}")]
+        [HttpDelete("{id}")]
+        [Route("EliminarDetalleActivoFijo")]
         public async Task<Response> DeleteDetalleActivoFijo([FromRoute] int id)
         {
             try
@@ -593,8 +594,12 @@ namespace bd.swrm.web.Controllers.API
                 db.DepreciacionActivoFijo.RemoveRange(db.DepreciacionActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalle == respuesta.IdRecepcionActivoFijoDetalle));
                 db.MantenimientoActivoFijo.RemoveRange(db.MantenimientoActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalle == respuesta.IdRecepcionActivoFijoDetalle));
                 db.TransferenciaActivoFijo.RemoveRange(db.TransferenciaActivoFijo.Where(c => c.IdUbicacionActivoFijoOrigen == respuesta.IdRecepcionActivoFijoDetalle || c.IdUbicacionActivoFijoDestino == respuesta.IdRecepcionActivoFijoDetalle));
-                db.AltaActivoFijo.RemoveRange(db.AltaActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalle == respuesta.IdRecepcionActivoFijoDetalle));
                 db.BajaActivoFijo.RemoveRange(db.BajaActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalle == respuesta.IdRecepcionActivoFijoDetalle));
+
+                var recepcionActivoFijoDetalleAltaActivoFijo = db.RecepcionActivoFijoDetalleAltaActivoFijo.Include(c => c.RecepcionActivoFijoDetalle).Include(c => c.AltaActivoFijo).FirstOrDefault(c => c.IdRecepcionActivoFijoDetalle == respuesta.IdRecepcionActivoFijoDetalle);
+                db.FacturaActivoFijo.Remove(recepcionActivoFijoDetalleAltaActivoFijo.AltaActivoFijo.FacturaActivoFijo);
+                db.AltaActivoFijo.Remove(recepcionActivoFijoDetalleAltaActivoFijo.AltaActivoFijo);
+                db.RecepcionActivoFijoDetalleAltaActivoFijo.Remove(recepcionActivoFijoDetalleAltaActivoFijo);
 
                 var listaDocumentosActivoFijo = await db.DocumentoActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalle == respuesta.IdRecepcionActivoFijoDetalle).ToListAsync();
                 db.DocumentoActivoFijo.RemoveRange(listaDocumentosActivoFijo);
@@ -647,7 +652,6 @@ namespace bd.swrm.web.Controllers.API
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.MotivoRecepcion)
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.FondoFinanciamiento)
                     .Include(c => c.Estado)
-                    .Include(c => c.AltaActivoFijo).ThenInclude(c => c.Factura)
                     .Include(c => c.BajaActivoFijo)
                     .OrderBy(c => c.RecepcionActivoFijo.IdProveedor)
                     .ThenBy(c => c.RecepcionActivoFijo.FechaRecepcion)
@@ -659,7 +663,6 @@ namespace bd.swrm.web.Controllers.API
                     .ThenBy(c => c.RecepcionActivoFijo.MotivoRecepcion)
                     .ThenBy(c => c.RecepcionActivoFijo.FondoFinanciamiento)
                     .ThenBy(c => c.Estado.Nombre)
-                    .ThenBy(c => c.AltaActivoFijo.FechaAlta)
                     .ThenBy(c => c.BajaActivoFijo.FechaBaja);
 
             foreach (var item in recepcionActivoFijoDetalle)
@@ -671,6 +674,16 @@ namespace bd.swrm.web.Controllers.API
                     .LastOrDefault(c => c.IdRecepcionActivoFijoDetalle == item.IdRecepcionActivoFijoDetalle));
                 item.UbicacionActivoFijo.Clear();
                 item.SucursalActual = item.UbicacionActivoFijoActual.LibroActivoFijo.Sucursal;
+
+                var recepcionActivoFijoDetalleAltaActivoFijo = db.RecepcionActivoFijoDetalleAltaActivoFijo
+                    .Include(c => c.AltaActivoFijo).ThenInclude(c => c.MotivoAlta)
+                    .Include(c => c.AltaActivoFijo).ThenInclude(c => c.FacturaActivoFijo)
+                    .FirstOrDefault(c => c.IdRecepcionActivoFijoDetalle == item.IdRecepcionActivoFijoDetalle);
+                if (recepcionActivoFijoDetalleAltaActivoFijo != null)
+                {
+                    item.AltaActivoFijoActual = ObtenerAltaActivoFijoActual(recepcionActivoFijoDetalleAltaActivoFijo.AltaActivoFijo);
+                    item.RecepcionActivoFijoDetalleAltaActivoFijo.Clear();
+                }
 
                 if (incluirActivoFijo != null)
                 {
@@ -800,6 +813,18 @@ namespace bd.swrm.web.Controllers.API
                 IdRecepcionActivoFijoDetalleComponente = c.IdRecepcionActivoFijoDetalleComponente
             }));
             return nuevaListaComponenteActivoFijo;
+        }
+        private AltaActivoFijo ObtenerAltaActivoFijoActual(AltaActivoFijo altaActivoFijo)
+        {
+            return new AltaActivoFijo
+            {
+                IdAltaActivoFijo = altaActivoFijo.IdAltaActivoFijo,
+                FechaAlta = altaActivoFijo.FechaAlta,
+                IdMotivoAlta = altaActivoFijo.IdMotivoAlta,
+                IdFacturaActivoFijo = altaActivoFijo.IdFacturaActivoFijo,
+                MotivoAlta = new MotivoAlta { Descripcion = altaActivoFijo.MotivoAlta.Descripcion },
+                FacturaActivoFijo = new FacturaActivoFijo { NumeroFactura = altaActivoFijo.FacturaActivoFijo.NumeroFactura, FechaFactura = altaActivoFijo.FacturaActivoFijo.FechaFactura }
+            };
         }
         #endregion
 
