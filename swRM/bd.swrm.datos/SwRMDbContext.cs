@@ -54,6 +54,7 @@ namespace bd.swrm.datos
         public virtual DbSet<TablaDepreciacion> TablaDepreciacion { get; set; }
         public virtual DbSet<TipoActivoFijo> TipoActivoFijo { get; set; }
         public virtual DbSet<TipoArticulo> TipoArticulo { get; set; }
+        public virtual DbSet<TipoUtilizacionAlta> TipoUtilizacionAlta { get; set; }
         public virtual DbSet<TranferenciaArticulo> TranferenciaArticulo { get; set; }
         public virtual DbSet<TransferenciaActivoFijo> TransferenciaActivoFijo { get; set; }
         public virtual DbSet<UnidadMedida> UnidadMedida { get; set; }
@@ -1484,6 +1485,22 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdRecepcionActivoFijoDetalle)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_RecepcionActivoFijoDetalleAltaActivoFijo_RecepcionActivoFijoDetalle");
+
+                entity.HasOne(d => d.TipoUtilizacionAlta)
+                    .WithMany(p => p.RecepcionActivoFijoDetalleAltaActivoFijo)
+                    .HasForeignKey(d => d.IdTipoUtilizacionAlta)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_RecepcionActivoFijoDetalleAltaActivoFijo_TipoUtilizacionAlta");
+            });
+
+            modelBuilder.Entity<TipoUtilizacionAlta>(entity =>
+            {
+                entity.HasKey(e => e.IdTipoUtilizacionAlta)
+                    .HasName("PK_TipoUtilizacionAlta");
+
+                entity.Property(e => e.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(200);
             });
 
             foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))

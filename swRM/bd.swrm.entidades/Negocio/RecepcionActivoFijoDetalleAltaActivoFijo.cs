@@ -22,5 +22,11 @@ namespace bd.swrm.entidades.Negocio
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int IdAltaActivoFijo { get; set; }
         public virtual AltaActivoFijo AltaActivoFijo { get; set; }
+
+        [Display(Name = "Tipo de utilización:")]
+        [Required(ErrorMessage = "Debe seleccionar el {0} ")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        public int IdTipoUtilizacionAlta { get; set; }
+        public virtual TipoUtilizacionAlta TipoUtilizacionAlta { get; set; }
     }
 }

@@ -81,6 +81,39 @@ namespace bd.swrm.web.Controllers.API
         {
             return await ObtenerActivoFijo(id);
         }
+
+        [HttpGet("{id}")]
+        [Route("ObtenerAltaActivosFijos")]
+        public async Task<Response> GetAltaActivoFijo([FromRoute] int id)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
+                var altaActivoFijo = await db.AltaActivoFijo.Include(x => x.FacturaActivoFijo).Include(c => c.MotivoAlta).SingleOrDefaultAsync(m => m.IdAltaActivoFijo == id);
+                var listadoIdsRecepcionActivoFijoDetalleAltaActivoFijo = db.RecepcionActivoFijoDetalleAltaActivoFijo.Where(c => c.IdAltaActivoFijo == altaActivoFijo.IdAltaActivoFijo).Select(c=> c.IdRecepcionActivoFijoDetalle);
+                foreach (var item in listadoIdsRecepcionActivoFijoDetalleAltaActivoFijo)
+                {
+                    var recepcionActivoFijoDetalle = await ObtenerDetalleActivoFijo(item);
+                    if (recepcionActivoFijoDetalle != null)
+                    {
+                        altaActivoFijo.RecepcionActivoFijoDetalleAltaActivoFijo.Add(new RecepcionActivoFijoDetalleAltaActivoFijo
+                        {
+                            IdRecepcionActivoFijoDetalle = item,
+                            IdAltaActivoFijo = altaActivoFijo.IdAltaActivoFijo,
+                            RecepcionActivoFijoDetalle = recepcionActivoFijoDetalle
+                        });
+                    }
+                }
+                return new Response { IsSuccess = altaActivoFijo != null, Message = altaActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = altaActivoFijo };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
         
         [HttpPost]
         [Route("ObtenerActivoFijoPorEstado")]
@@ -98,9 +131,9 @@ namespace bd.swrm.web.Controllers.API
             {
                 foreach (var item in listadoRecepcionActivoFijoDetalleSeleccionado)
                 {
-                    var response = await ObtenerDetalleActivoFijo(item.idRecepcionActivoFijoDetalle);
-                    if (response.IsSuccess)
-                        lista.Add(new RecepcionActivoFijoDetalleSeleccionado { RecepcionActivoFijoDetalle = response.Resultado as RecepcionActivoFijoDetalle, Seleccionado = item.seleccionado });
+                    var recepcionActivoFijoDetalle = await ObtenerDetalleActivoFijo(item.idRecepcionActivoFijoDetalle);
+                    if (recepcionActivoFijoDetalle != null)
+                        lista.Add(new RecepcionActivoFijoDetalleSeleccionado { RecepcionActivoFijoDetalle = recepcionActivoFijoDetalle, Seleccionado = item.seleccionado });
                 }
             }
             catch (Exception)
@@ -200,9 +233,10 @@ namespace bd.swrm.web.Controllers.API
                 var listaRecepcionActivoFijoDetalle = new List<RecepcionActivoFijoDetalle>();
                 foreach (var item in idsRecepcionActivoFijoDetalle)
                 {
-                    var response = await ObtenerDetalleActivoFijo(item);
-                    if (response.IsSuccess)
-                        listaRecepcionActivoFijoDetalle.Add(response.Resultado as RecepcionActivoFijoDetalle);
+                    var recepcionActivoFijoDetalle = await ObtenerDetalleActivoFijo(item);
+                    if (recepcionActivoFijoDetalle != null)
+                        listaRecepcionActivoFijoDetalle.Add(recepcionActivoFijoDetalle);
+
                 }
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = listaRecepcionActivoFijoDetalle };
             }
@@ -696,7 +730,7 @@ namespace bd.swrm.web.Controllers.API
         }
         #endregion
 
-        #region Objetos de Retorno Comunes
+        #region Objetos de Clonación Comunes
         private RecepcionActivoFijoDetalle ObtenerRecepcionActivoFijoDetalle(RecepcionActivoFijoDetalle rafdOld, bool? incluirComponentes = null, bool? incluirActivoFijo = null)
         {
             var recepcionActivoFijoDetalle = new RecepcionActivoFijoDetalle
@@ -921,21 +955,16 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        private async Task<Response> ObtenerDetalleActivoFijo(int idRecepcionActivoFijoDetalle, Expression<Func<RecepcionActivoFijoDetalle, bool>> predicadoDetalleActivoFijo = null)
+        private async Task<RecepcionActivoFijoDetalle> ObtenerDetalleActivoFijo(int idRecepcionActivoFijoDetalle, Expression<Func<RecepcionActivoFijoDetalle, bool>> predicadoDetalleActivoFijo = null)
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
-
                 var recepcionActivoFijoDetalleBD = ObtenerListadoDetallesActivosFijos();
-                var recepcionActivoFijoDetalle = ObtenerRecepcionActivoFijoDetalle(await (predicadoDetalleActivoFijo != null ? recepcionActivoFijoDetalleBD.Where(predicadoDetalleActivoFijo).SingleOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle) : recepcionActivoFijoDetalleBD.SingleOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle)), incluirComponentes: true);
-                return new Response { IsSuccess = recepcionActivoFijoDetalle != null, Message = recepcionActivoFijoDetalle != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = recepcionActivoFijoDetalle };
+                return ObtenerRecepcionActivoFijoDetalle(await (predicadoDetalleActivoFijo != null ? recepcionActivoFijoDetalleBD.Where(predicadoDetalleActivoFijo).SingleOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle) : recepcionActivoFijoDetalleBD.SingleOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle)), incluirComponentes: true);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new Response { IsSuccess = false, Message = Mensaje.Error };
+                return null;
             }
         }
         #endregion
