@@ -17,41 +17,41 @@ using bd.swrm.entidades.Utils;
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/AltaActivoFijo")]
-    public class AltaActivoFijoController : Controller
+    [Route("api/FacturaActivoFijo")]
+    public class FacturaActivoFijoController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public AltaActivoFijoController(SwRMDbContext db)
+        public FacturaActivoFijoController(SwRMDbContext db)
         {
             this.db = db;
         }
-        
+
         [HttpGet]
-        [Route("ListarAltaActivoFijo")]
-        public async Task<List<AltaActivoFijo>> GetAltaActivoFijo()
+        [Route("ListarFacturaActivoFijo")]
+        public async Task<List<FacturaActivoFijo>> GetFacturaActivoFijo()
         {
             try
             {
-                return await db.AltaActivoFijo.Include(x=> x.FacturaActivoFijo).Include(c=> c.MotivoAlta).ToListAsync();
+                return await db.FacturaActivoFijo.OrderBy(x => x.NumeroFactura).ToListAsync();
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new List<AltaActivoFijo>();
+                return new List<FacturaActivoFijo>();
             }
         }
-        
+
         [HttpGet("{id}")]
-        public async Task<Response> GetAltaActivoFijo([FromRoute]int id)
+        public async Task<Response> GetFacturaActivoFijo([FromRoute]int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var altaActivoFijo = await db.AltaActivoFijo.Include(x => x.FacturaActivoFijo).Include(c=> c.MotivoAlta).SingleOrDefaultAsync(m => m.IdAltaActivoFijo == id);
-                return new Response { IsSuccess = altaActivoFijo != null, Message = altaActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = altaActivoFijo };
+                var facturaActivoFijo = await db.FacturaActivoFijo.SingleOrDefaultAsync(m => m.IdFacturaActivoFijo == id);
+                return new Response { IsSuccess = facturaActivoFijo != null, Message = facturaActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = facturaActivoFijo };
             }
             catch (Exception ex)
             {
@@ -59,24 +59,23 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
+
         [HttpPost]
-        [Route("InsertarAltaActivoFijo")]
-        public async Task<Response> PostAltaActivoFijo([FromBody]AltaActivoFijo altaActivoFijo)
+        [Route("InsertarFacturaActivoFijo")]
+        public async Task<Response> PostFacturaActivoFijo([FromBody]FacturaActivoFijo facturaActivoFijo)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.AltaActivoFijo.AnyAsync(c => c.FechaAlta == altaActivoFijo.FechaAlta && c.IdMotivoAlta == altaActivoFijo.IdMotivoAlta && c.IdFacturaActivoFijo == altaActivoFijo.IdFacturaActivoFijo))
+                if (!await db.FacturaActivoFijo.AnyAsync(c => c.NumeroFactura.ToUpper().Trim() == facturaActivoFijo.NumeroFactura.ToUpper().Trim()))
                 {
-                    db.AltaActivoFijo.Add(altaActivoFijo);
+                    db.FacturaActivoFijo.Add(facturaActivoFijo);
                     await db.SaveChangesAsync();
-                    Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
-                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro, Resultado = altaActivoFijo };
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
             }
             catch (Exception ex)
             {
@@ -84,26 +83,25 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
+
         [HttpPut("{id}")]
-        public async Task<Response> PutAltaActivoFijo([FromRoute] int id, [FromBody]AltaActivoFijo altaActivoFijo)
+        public async Task<Response> PutFacturaActivoFijo([FromRoute] int id, [FromBody]FacturaActivoFijo facturaActivoFijo)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.AltaActivoFijo.Where(c => c.FechaAlta == altaActivoFijo.FechaAlta && c.IdMotivoAlta == altaActivoFijo.IdMotivoAlta && c.IdFacturaActivoFijo == altaActivoFijo.IdFacturaActivoFijo).AnyAsync(c => c.IdAltaActivoFijo != altaActivoFijo.IdAltaActivoFijo))
+                if (!await db.FacturaActivoFijo.Where(c => c.NumeroFactura.ToUpper().Trim() == facturaActivoFijo.NumeroFactura.ToUpper().Trim()).AnyAsync(c => c.IdFacturaActivoFijo != facturaActivoFijo.IdFacturaActivoFijo))
                 {
-                    var altaActivoFijoActualizar = await db.AltaActivoFijo.FirstOrDefaultAsync(c=> c.IdAltaActivoFijo == id);
-                    if (altaActivoFijoActualizar != null)
+                    var facturaActivoFijoActualizar = await db.FacturaActivoFijo.Where(x => x.IdFacturaActivoFijo == id).FirstOrDefaultAsync();
+                    if (facturaActivoFijoActualizar != null)
                     {
                         try
                         {
-                            altaActivoFijoActualizar.FechaAlta = altaActivoFijo.FechaAlta;
-                            altaActivoFijoActualizar.IdMotivoAlta = altaActivoFijo.IdMotivoAlta;
-                            altaActivoFijoActualizar.IdFacturaActivoFijo = altaActivoFijo.IdFacturaActivoFijo;
-                            db.AltaActivoFijo.Update(altaActivoFijoActualizar);
+                            facturaActivoFijoActualizar.NumeroFactura = facturaActivoFijo.NumeroFactura;
+                            facturaActivoFijoActualizar.FechaFactura = facturaActivoFijo.FechaFactura;
+                            db.FacturaActivoFijo.Update(facturaActivoFijoActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                         }
@@ -123,18 +121,18 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteAltaActivoFijo([FromRoute] int id)
+        public async Task<Response> DeleteFacturaActivoFijo([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = await db.AltaActivoFijo.SingleOrDefaultAsync(m => m.IdAltaActivoFijo == id);
+                var respuesta = await db.FacturaActivoFijo.SingleOrDefaultAsync(m => m.IdFacturaActivoFijo == id);
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                db.AltaActivoFijo.Remove(respuesta);
+                db.FacturaActivoFijo.Remove(respuesta);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
@@ -143,6 +141,13 @@ namespace bd.swrm.web.Controllers.API
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
+        }
+
+        public Response Existe(FacturaActivoFijo facturaActivoFijo)
+        {
+            var bdd = facturaActivoFijo.NumeroFactura.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.FacturaActivoFijo.Where(p => p.NumeroFactura.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }
 }
