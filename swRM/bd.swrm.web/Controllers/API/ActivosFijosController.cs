@@ -92,7 +92,7 @@ namespace bd.swrm.web.Controllers.API
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
                 
                 var altaActivoFijo = ObtenerAltaActivoFijoActual(await db.AltaActivoFijo.Include(x => x.FacturaActivoFijo).Include(c => c.MotivoAlta).SingleOrDefaultAsync(m => m.IdAltaActivoFijo == id));
-                var listadoIdsRecepcionActivoFijoDetalleAltaActivoFijo = await db.RecepcionActivoFijoDetalleAltaActivoFijo.Where(c => c.IdAltaActivoFijo == altaActivoFijo.IdAltaActivoFijo).ToListAsync();
+                var listadoIdsRecepcionActivoFijoDetalleAltaActivoFijo = await db.RecepcionActivoFijoDetalleAltaActivoFijo.Include(c=> c.RecepcionActivoFijoDetalle).ThenInclude(c=> c.Estado).Where(c => c.IdAltaActivoFijo == altaActivoFijo.IdAltaActivoFijo && c.RecepcionActivoFijoDetalle.Estado.Nombre == Estados.Alta).ToListAsync();
                 altaActivoFijo.RecepcionActivoFijoDetalleAltaActivoFijo = new List<RecepcionActivoFijoDetalleAltaActivoFijo>();
                 foreach (var item in listadoIdsRecepcionActivoFijoDetalleAltaActivoFijo)
                 {
@@ -117,6 +117,40 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
+        [HttpGet]
+        [Route("ObtenerBajaActivosFijos/{id}")]
+        public async Task<Response> GetBajaActivoFijo([FromRoute] int id)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
+                var bajaActivoFijo = ObtenerBajaActivoFijoActual(await db.BajaActivoFijo.Include(c => c.MotivoBaja).SingleOrDefaultAsync(m => m.IdBajaActivoFijo == id));
+                var listadoIdsRecepcionActivoFijoDetalleBajaActivoFijo = await db.RecepcionActivoFijoDetalleBajaActivoFijo.Include(c => c.RecepcionActivoFijoDetalle).ThenInclude(c => c.Estado).Where(c => c.IdBajaActivoFijo == bajaActivoFijo.IdBajaActivoFijo && c.RecepcionActivoFijoDetalle.Estado.Nombre == Estados.Baja).ToListAsync();
+                bajaActivoFijo.RecepcionActivoFijoDetalleBajaActivoFijo = new List<RecepcionActivoFijoDetalleBajaActivoFijo>();
+                foreach (var item in listadoIdsRecepcionActivoFijoDetalleBajaActivoFijo)
+                {
+                    var recepcionActivoFijoDetalle = await ObtenerDetalleActivoFijo(item.IdRecepcionActivoFijoDetalle, incluirActivoFijo: true, incluirComponentes: true);
+                    if (recepcionActivoFijoDetalle != null)
+                    {
+                        bajaActivoFijo.RecepcionActivoFijoDetalleBajaActivoFijo.Add(new RecepcionActivoFijoDetalleBajaActivoFijo
+                        {
+                            IdRecepcionActivoFijoDetalle = item.IdRecepcionActivoFijoDetalle,
+                            IdBajaActivoFijo = bajaActivoFijo.IdBajaActivoFijo,
+                            RecepcionActivoFijoDetalle = recepcionActivoFijoDetalle
+                        });
+                    }
+                }
+                return new Response { IsSuccess = bajaActivoFijo != null, Message = bajaActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = bajaActivoFijo };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+
         [HttpPost]
         [Route("ObtenerActivoFijoPorEstado")]
         public async Task<Response> GetActivoFijoPorEstado([FromBody] IdEstadosTransfer idActivoFijoEstadosTransfer)
@@ -133,7 +167,7 @@ namespace bd.swrm.web.Controllers.API
             {
                 foreach (var item in listadoRecepcionActivoFijoDetalleSeleccionado)
                 {
-                    var recepcionActivoFijoDetalle = await ObtenerDetalleActivoFijo(item.idRecepcionActivoFijoDetalle, incluirActivoFijo: true, incluirComponentes: true, incluirAltasActivoFijo: true);
+                    var recepcionActivoFijoDetalle = await ObtenerDetalleActivoFijo(item.idRecepcionActivoFijoDetalle, incluirActivoFijo: true, incluirComponentes: true, incluirAltasActivoFijo: true, incluirBajasActivoFijo: true);
                     if (recepcionActivoFijoDetalle != null)
                         lista.Add(new RecepcionActivoFijoDetalleSeleccionado { RecepcionActivoFijoDetalle = recepcionActivoFijoDetalle, Seleccionado = item.seleccionado });
                 }
@@ -184,11 +218,11 @@ namespace bd.swrm.web.Controllers.API
 
         [HttpPost]
         [Route("DetallesActivoFijoSeleccionadoPorEstadoAlta")]
-        public async Task<List<RecepcionActivoFijoDetalleSeleccionado>> PostDetallesActivoFijoSeleccionadoPorEstado([FromBody] IdRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja)
+        public async Task<List<RecepcionActivoFijoDetalleSeleccionado>> PostDetallesActivoFijoSeleccionadoPorEstadoAlta([FromBody] IdRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja)
         {
-            var lista = new List<RecepcionActivoFijoDetalleSeleccionado>();
             try
             {
+                var lista = new List<RecepcionActivoFijoDetalleSeleccionado>();
                 var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true).Where(c => c.Estado.Nombre == Estados.Recepcionado || (c.Estado.Nombre == Estados.Alta && idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja.ListaIdRecepcionActivoFijoDetalleSeleccionadoInicialesAltaBaja.Select(x=> x.idRecepcionActivoFijoDetalle).Contains(c.IdRecepcionActivoFijoDetalle))).ToListAsync();
                 var listaIdsRAFDSeleccionados = idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja.ListaIdRecepcionActivoFijoDetalleSeleccionado.Select(c => c.idRecepcionActivoFijoDetalle);
                 foreach (var item in listaRecepcionActivoFijoDetalle)
@@ -196,6 +230,31 @@ namespace bd.swrm.web.Controllers.API
                     lista.Add(new RecepcionActivoFijoDetalleSeleccionado
                     {
                         RecepcionActivoFijoDetalle = ObtenerRecepcionActivoFijoDetalle(item, incluirComponentes: true, incluirActivoFijo: true),
+                        Seleccionado = listaIdsRAFDSeleccionados.Contains(item.IdRecepcionActivoFijoDetalle)
+                    });
+                }
+                return lista;
+            }
+            catch (Exception)
+            {
+                return new List<RecepcionActivoFijoDetalleSeleccionado>();
+            }
+        }
+
+        [HttpPost]
+        [Route("DetallesActivoFijoSeleccionadoPorEstadoBaja")]
+        public async Task<List<RecepcionActivoFijoDetalleSeleccionado>> PostDetallesActivoFijoSeleccionadoPorEstadoBaja([FromBody] IdRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja)
+        {
+            try
+            {
+                var lista = new List<RecepcionActivoFijoDetalleSeleccionado>();
+                var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true).Where(c => c.Estado.Nombre == Estados.Alta || (c.Estado.Nombre == Estados.Baja && idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja.ListaIdRecepcionActivoFijoDetalleSeleccionadoInicialesAltaBaja.Select(x => x.idRecepcionActivoFijoDetalle).Contains(c.IdRecepcionActivoFijoDetalle))).ToListAsync();
+                var listaIdsRAFDSeleccionados = idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja.ListaIdRecepcionActivoFijoDetalleSeleccionado.Select(c => c.idRecepcionActivoFijoDetalle);
+                foreach (var item in listaRecepcionActivoFijoDetalle)
+                {
+                    lista.Add(new RecepcionActivoFijoDetalleSeleccionado
+                    {
+                        RecepcionActivoFijoDetalle = await ObtenerDetalleActivoFijo(item.IdRecepcionActivoFijoDetalle, incluirComponentes: true, incluirActivoFijo: true, incluirAltasActivoFijo: true),
                         Seleccionado = listaIdsRAFDSeleccionados.Contains(item.IdRecepcionActivoFijoDetalle)
                     });
                 }
@@ -385,6 +444,45 @@ namespace bd.swrm.web.Controllers.API
                     transaction.Commit();
                 }
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = nuevaAltaActivoFijo };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+
+        [HttpPost]
+        [Route("InsertarBajaActivoFijo")]
+        public async Task<Response> PostBajaActivosFijos([FromBody] BajaActivoFijo bajaActivoFijo)
+        {
+            try
+            {
+                var nuevaBajaActivoFijo = new BajaActivoFijo();
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    nuevaBajaActivoFijo.IdBajaActivoFijo = bajaActivoFijo.IdBajaActivoFijo;
+                    nuevaBajaActivoFijo.FechaBaja = bajaActivoFijo.FechaBaja;
+                    nuevaBajaActivoFijo.IdMotivoBaja = bajaActivoFijo.IdMotivoBaja;
+                    nuevaBajaActivoFijo.MemoOficioResolucion = bajaActivoFijo.MemoOficioResolucion;
+                    db.BajaActivoFijo.Add(nuevaBajaActivoFijo);
+                    await db.SaveChangesAsync();
+
+                    var estadoBaja = await db.Estado.FirstOrDefaultAsync(c => c.Nombre == Estados.Baja);
+                    foreach (var item in bajaActivoFijo.RecepcionActivoFijoDetalleBajaActivoFijo)
+                    {
+                        db.RecepcionActivoFijoDetalleBajaActivoFijo.Add(new RecepcionActivoFijoDetalleBajaActivoFijo
+                        {
+                            IdRecepcionActivoFijoDetalle = item.IdRecepcionActivoFijoDetalle,
+                            IdBajaActivoFijo = nuevaBajaActivoFijo.IdBajaActivoFijo
+                        });
+                        var rafd = await db.RecepcionActivoFijoDetalle.Include(c => c.RecepcionActivoFijo).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == item.IdRecepcionActivoFijoDetalle);
+                        rafd.IdEstado = estadoBaja.IdEstado;
+                        await db.SaveChangesAsync();
+                    }
+                    transaction.Commit();
+                }
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = nuevaBajaActivoFijo };
             }
             catch (Exception ex)
             {
@@ -667,6 +765,33 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
+        [HttpPut("EditarBajaActivoFijo/{id}")]
+        public async Task<Response> PutBajaActivosFijos([FromRoute] int id, [FromBody] BajaActivoFijo bajaActivoFijo)
+        {
+            try
+            {
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    var bajaActivoFijoActualizar = await db.BajaActivoFijo.FirstOrDefaultAsync(c => c.IdBajaActivoFijo == id);
+                    if (bajaActivoFijoActualizar != null)
+                    {
+                        bajaActivoFijoActualizar.IdMotivoBaja = bajaActivoFijo.IdMotivoBaja;
+                        bajaActivoFijoActualizar.FechaBaja = bajaActivoFijo.FechaBaja;
+                        bajaActivoFijoActualizar.MemoOficioResolucion = bajaActivoFijo.MemoOficioResolucion;
+
+                        db.BajaActivoFijo.Update(bajaActivoFijoActualizar);
+                        await db.SaveChangesAsync();
+                    }
+                    transaction.Commit();
+                }
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = bajaActivoFijo };
+            }
+            catch (Exception)
+            {
+                return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
+            }
+        }
+
         [HttpDelete("{id}")]
         public async Task<Response> DeleteActivosFijos([FromRoute] int id)
         {
@@ -685,7 +810,6 @@ namespace bd.swrm.web.Controllers.API
                 db.MantenimientoActivoFijo.RemoveRange(db.MantenimientoActivoFijo.Include(c=> c.RecepcionActivoFijoDetalle).Where(c => c.RecepcionActivoFijoDetalle.IdActivoFijo == respuesta.IdActivoFijo));
                 db.TransferenciaActivoFijo.RemoveRange(db.TransferenciaActivoFijo.Include(c=> c.UbicacionActivoFijoOrigen).ThenInclude(c=> c.RecepcionActivoFijoDetalle).Include(c => c.UbicacionActivoFijoDestino).ThenInclude(c => c.RecepcionActivoFijoDetalle).Where(c => c.UbicacionActivoFijoOrigen.RecepcionActivoFijoDetalle.IdActivoFijo == respuesta.IdActivoFijo || c.UbicacionActivoFijoDestino.RecepcionActivoFijoDetalle.IdActivoFijo == respuesta.IdActivoFijo));
                 db.PolizaSeguroActivoFijo.Remove(db.PolizaSeguroActivoFijo.FirstOrDefault(c => c.IdActivo == respuesta.IdActivoFijo));
-                db.BajaActivoFijo.RemoveRange(db.BajaActivoFijo.Include(c => c.RecepcionActivoFijoDetalle).Where(c => c.RecepcionActivoFijoDetalle.IdActivoFijo == respuesta.IdActivoFijo));
 
                 var recepcionActivoFijoDetalleAltaActivoFijo = db.RecepcionActivoFijoDetalleAltaActivoFijo.Include(c => c.RecepcionActivoFijoDetalle).Include(c => c.AltaActivoFijo).Where(c => c.RecepcionActivoFijoDetalle.IdActivoFijo == respuesta.IdActivoFijo);
                 foreach (var item in recepcionActivoFijoDetalleAltaActivoFijo)
@@ -697,6 +821,15 @@ namespace bd.swrm.web.Controllers.API
                         db.AltaActivoFijo.Remove(listadoAltasRecepcion.FirstOrDefault());
                     }
                     db.RecepcionActivoFijoDetalleAltaActivoFijo.Remove(item);
+                }
+
+                var recepcionActivoFijoDetalleBajaActivoFijo = db.RecepcionActivoFijoDetalleBajaActivoFijo.Include(c => c.RecepcionActivoFijoDetalle).Include(c => c.BajaActivoFijo).Where(c => c.RecepcionActivoFijoDetalle.IdActivoFijo == respuesta.IdActivoFijo);
+                foreach (var item in recepcionActivoFijoDetalleBajaActivoFijo)
+                {
+                    var listadoBajasRecepcion = db.BajaActivoFijo.Where(c => c.IdBajaActivoFijo == item.IdBajaActivoFijo);
+                    if (listadoBajasRecepcion.Count() == 1)
+                        db.BajaActivoFijo.Remove(listadoBajasRecepcion.FirstOrDefault());
+                    db.RecepcionActivoFijoDetalleBajaActivoFijo.Remove(item);
                 }
 
                 var listaDocumentosActivoFijo = await db.DocumentoActivoFijo.Where(c => c.IdActivoFijo == respuesta.IdActivoFijo).ToListAsync();
@@ -744,12 +877,15 @@ namespace bd.swrm.web.Controllers.API
                 db.DepreciacionActivoFijo.RemoveRange(db.DepreciacionActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalle == respuesta.IdRecepcionActivoFijoDetalle));
                 db.MantenimientoActivoFijo.RemoveRange(db.MantenimientoActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalle == respuesta.IdRecepcionActivoFijoDetalle));
                 db.TransferenciaActivoFijo.RemoveRange(db.TransferenciaActivoFijo.Where(c => c.IdUbicacionActivoFijoOrigen == respuesta.IdRecepcionActivoFijoDetalle || c.IdUbicacionActivoFijoDestino == respuesta.IdRecepcionActivoFijoDetalle));
-                db.BajaActivoFijo.RemoveRange(db.BajaActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalle == respuesta.IdRecepcionActivoFijoDetalle));
 
                 var recepcionActivoFijoDetalleAltaActivoFijo = db.RecepcionActivoFijoDetalleAltaActivoFijo.Include(c => c.RecepcionActivoFijoDetalle).Include(c => c.AltaActivoFijo).FirstOrDefault(c => c.IdRecepcionActivoFijoDetalle == respuesta.IdRecepcionActivoFijoDetalle);
                 db.FacturaActivoFijo.Remove(recepcionActivoFijoDetalleAltaActivoFijo.AltaActivoFijo.FacturaActivoFijo);
                 db.AltaActivoFijo.Remove(recepcionActivoFijoDetalleAltaActivoFijo.AltaActivoFijo);
                 db.RecepcionActivoFijoDetalleAltaActivoFijo.Remove(recepcionActivoFijoDetalleAltaActivoFijo);
+
+                var recepcionActivoFijoDetalleBajaActivoFijo = db.RecepcionActivoFijoDetalleBajaActivoFijo.Include(c => c.RecepcionActivoFijoDetalle).Include(c => c.BajaActivoFijo).FirstOrDefault(c => c.IdRecepcionActivoFijoDetalle == respuesta.IdRecepcionActivoFijoDetalle);
+                db.BajaActivoFijo.Remove(recepcionActivoFijoDetalleBajaActivoFijo.BajaActivoFijo);
+                db.RecepcionActivoFijoDetalleBajaActivoFijo.Remove(recepcionActivoFijoDetalleBajaActivoFijo);
 
                 var listaDocumentosActivoFijo = await db.DocumentoActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalle == respuesta.IdRecepcionActivoFijoDetalle).ToListAsync();
                 db.DocumentoActivoFijo.RemoveRange(listaDocumentosActivoFijo);
@@ -795,14 +931,13 @@ namespace bd.swrm.web.Controllers.API
                     .ThenBy(c=> c.SubClaseActivoFijo.ClaseActivoFijo.IdTipoActivoFijo)
                     .ThenBy(c=> c.Nombre);
         }
-        private IQueryable<RecepcionActivoFijoDetalle> ObtenerListadoDetallesActivosFijos(int? idActivoFijo = null, bool? incluirActivoFijo = null, bool? incluirAltasActivoFijo = null)
+        private IQueryable<RecepcionActivoFijoDetalle> ObtenerListadoDetallesActivosFijos(int? idActivoFijo = null, bool? incluirActivoFijo = null, bool? incluirAltasActivoFijo = null, bool? incluirBajasActivoFijo = null)
         {
             var recepcionActivoFijoDetalle = db.RecepcionActivoFijoDetalle
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Proveedor)
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.MotivoRecepcion)
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.FondoFinanciamiento)
                     .Include(c => c.Estado)
-                    .Include(c => c.BajaActivoFijo)
                     .OrderBy(c => c.RecepcionActivoFijo.IdProveedor)
                     .ThenBy(c => c.RecepcionActivoFijo.FechaRecepcion)
                     .ThenBy(c => c.Serie)
@@ -812,8 +947,7 @@ namespace bd.swrm.web.Controllers.API
                     .ThenBy(c => c.NumeroClaveCatastral)
                     .ThenBy(c => c.RecepcionActivoFijo.MotivoRecepcion)
                     .ThenBy(c => c.RecepcionActivoFijo.FondoFinanciamiento)
-                    .ThenBy(c => c.Estado.Nombre)
-                    .ThenBy(c => c.BajaActivoFijo.FechaBaja);
+                    .ThenBy(c => c.Estado.Nombre);
 
             foreach (var item in recepcionActivoFijoDetalle)
             {
@@ -835,6 +969,20 @@ namespace bd.swrm.web.Controllers.API
                             item.AltaActivoFijoActual = ObtenerAltaActivoFijoActual(recepcionActivoFijoDetalleAltaActivoFijo.AltaActivoFijo);
                             item.AltaActivoFijoActual.RecepcionActivoFijoDetalleAltaActivoFijo.Clear();
                             item.RecepcionActivoFijoDetalleAltaActivoFijo.Clear();
+                        }
+                    }
+                }
+
+                if (incluirBajasActivoFijo != null)
+                {
+                    if ((bool)incluirBajasActivoFijo)
+                    {
+                        var recepcionActivoFijoDetalleBajaActivoFijo = db.RecepcionActivoFijoDetalleBajaActivoFijo.Include(c => c.BajaActivoFijo).FirstOrDefault(c => c.IdRecepcionActivoFijoDetalle == item.IdRecepcionActivoFijoDetalle);
+                        if (recepcionActivoFijoDetalleBajaActivoFijo != null)
+                        {
+                            item.BajaActivoFijoActual = ObtenerBajaActivoFijoActual(recepcionActivoFijoDetalleBajaActivoFijo.BajaActivoFijo);
+                            item.BajaActivoFijoActual.RecepcionActivoFijoDetalleBajaActivoFijo.Clear();
+                            item.RecepcionActivoFijoDetalleBajaActivoFijo.Clear();
                         }
                     }
                 }
@@ -866,6 +1014,7 @@ namespace bd.swrm.web.Controllers.API
                 Estado = new Estado { Nombre = rafdOld.Estado.Nombre },
                 UbicacionActivoFijoActual = rafdOld.UbicacionActivoFijoActual,
                 AltaActivoFijoActual = rafdOld.AltaActivoFijoActual,
+                BajaActivoFijoActual = rafdOld.BajaActivoFijoActual,
                 RecepcionActivoFijo = new RecepcionActivoFijo
                 {
                     FechaRecepcion = rafdOld.RecepcionActivoFijo.FechaRecepcion,
@@ -982,6 +1131,18 @@ namespace bd.swrm.web.Controllers.API
                 RecepcionActivoFijoDetalleAltaActivoFijo = altaActivoFijo.RecepcionActivoFijoDetalleAltaActivoFijo
             };
         }
+        private BajaActivoFijo ObtenerBajaActivoFijoActual(BajaActivoFijo bajaActivoFijo)
+        {
+            return new BajaActivoFijo
+            {
+                IdBajaActivoFijo = bajaActivoFijo.IdBajaActivoFijo,
+                FechaBaja = bajaActivoFijo.FechaBaja,
+                IdMotivoBaja = bajaActivoFijo.IdMotivoBaja,
+                MemoOficioResolucion = bajaActivoFijo.MemoOficioResolucion,
+                MotivoBaja = new MotivoBaja { Nombre = bajaActivoFijo.MotivoBaja.Nombre },
+                RecepcionActivoFijoDetalleBajaActivoFijo = bajaActivoFijo.RecepcionActivoFijoDetalleBajaActivoFijo
+            };
+        }
         #endregion
 
         #region Métodos
@@ -1077,11 +1238,11 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        private async Task<RecepcionActivoFijoDetalle> ObtenerDetalleActivoFijo(int idRecepcionActivoFijoDetalle, int? idActivoFijo = null, bool? incluirActivoFijo = null, bool? incluirAltasActivoFijo = null, bool? incluirComponentes = null, Expression < Func<RecepcionActivoFijoDetalle, bool>> predicadoDetalleActivoFijo = null)
+        private async Task<RecepcionActivoFijoDetalle> ObtenerDetalleActivoFijo(int idRecepcionActivoFijoDetalle, int? idActivoFijo = null, bool? incluirActivoFijo = null, bool? incluirAltasActivoFijo = null, bool? incluirBajasActivoFijo = null, bool? incluirComponentes = null, Expression < Func<RecepcionActivoFijoDetalle, bool>> predicadoDetalleActivoFijo = null)
         {
             try
             {
-                var recepcionActivoFijoDetalleBD = ObtenerListadoDetallesActivosFijos(idActivoFijo: idActivoFijo, incluirActivoFijo: incluirActivoFijo, incluirAltasActivoFijo: incluirAltasActivoFijo);
+                var recepcionActivoFijoDetalleBD = ObtenerListadoDetallesActivosFijos(idActivoFijo: idActivoFijo, incluirActivoFijo: incluirActivoFijo, incluirAltasActivoFijo: incluirAltasActivoFijo, incluirBajasActivoFijo: incluirBajasActivoFijo);
                 return ObtenerRecepcionActivoFijoDetalle(await (predicadoDetalleActivoFijo != null ? recepcionActivoFijoDetalleBD.Where(predicadoDetalleActivoFijo).SingleOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle) : recepcionActivoFijoDetalleBD.SingleOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle)), incluirComponentes, incluirActivoFijo: incluirActivoFijo);
             }
             catch (Exception)
