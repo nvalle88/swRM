@@ -14,6 +14,7 @@ namespace bd.swrm.entidades.Negocio
             DocumentoActivoFijo = new HashSet<DocumentoActivoFijo>();
             MantenimientoActivoFijo = new HashSet<MantenimientoActivoFijo>();
             RecepcionActivoFijoDetalleAltaActivoFijo = new HashSet<RecepcionActivoFijoDetalleAltaActivoFijo>();
+            RecepcionActivoFijoDetalleBajaActivoFijo = new HashSet<RecepcionActivoFijoDetalleBajaActivoFijo>();
             UbicacionActivoFijo = new HashSet<UbicacionActivoFijo>();
         }
 
@@ -69,7 +70,9 @@ namespace bd.swrm.entidades.Negocio
         [NotMapped]
         public AltaActivoFijo AltaActivoFijoActual { get; set; }
 
-        public virtual BajaActivoFijo BajaActivoFijo { get; set; }
+        [NotMapped]
+        public BajaActivoFijo BajaActivoFijoActual { get; set; }
+
         public virtual ICollection<ComponenteActivoFijo> ComponentesActivoFijoComponente { get; set; }
         public virtual ICollection<ComponenteActivoFijo> ComponentesActivoFijoOrigen { get; set; }
         public virtual ICollection<DepreciacionActivoFijo> DepreciacionActivoFijo { get; set; }
@@ -77,5 +80,6 @@ namespace bd.swrm.entidades.Negocio
         public virtual ICollection<MantenimientoActivoFijo> MantenimientoActivoFijo { get; set; }
         public virtual ICollection<UbicacionActivoFijo> UbicacionActivoFijo { get; set; }
         public virtual ICollection<RecepcionActivoFijoDetalleAltaActivoFijo> RecepcionActivoFijoDetalleAltaActivoFijo { get; set; }
+        public virtual ICollection<RecepcionActivoFijoDetalleBajaActivoFijo> RecepcionActivoFijoDetalleBajaActivoFijo { get; set; }
     }
 }
