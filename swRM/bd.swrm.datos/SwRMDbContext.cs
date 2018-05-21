@@ -276,6 +276,16 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdActivoFijo)
                     .HasConstraintName("FK_ActivoFijoDocumento_ActivoFijo");
 
+                entity.HasOne(d => d.AltaActivoFijo)
+                    .WithMany(p => p.DocumentoActivoFijo)
+                    .HasForeignKey(d => d.IdAltaActivoFijo)
+                    .HasConstraintName("FK_DocumentoActivoFijo_AltaActivoFijo");
+
+                entity.HasOne(d => d.FacturaActivoFijo)
+                    .WithMany(p => p.DocumentoActivoFijo)
+                    .HasForeignKey(d => d.IdFacturaActivoFijo)
+                    .HasConstraintName("FK_DocumentoActivoFijo_FacturaActivoFijo");
+
                 entity.HasOne(d => d.RecepcionActivoFijoDetalle)
                     .WithMany(p => p.DocumentoActivoFijo)
                     .HasForeignKey(d => d.IdRecepcionActivoFijoDetalle)

@@ -75,7 +75,15 @@ namespace bd.swrm.web.Controllers.API
 
                 if (!await db.DocumentoActivoFijo.AnyAsync(c => c.Nombre.ToUpper().Trim() == documentoActivoFijoTransfer.Nombre.ToUpper().Trim()))
                 {
-                    var documentoActivoFijo = await InsertarDocumentoActivoFijo(new DocumentoActivoFijo { Nombre = documentoActivoFijoTransfer.Nombre, Fecha = DateTime.Now, IdActivoFijo = documentoActivoFijoTransfer.IdActivoFijo, IdRecepcionActivoFijoDetalle = documentoActivoFijoTransfer.IdRecepcionActivoFijoDetalle });
+                    var documentoActivoFijo = await InsertarDocumentoActivoFijo(new DocumentoActivoFijo
+                    {
+                        Nombre = documentoActivoFijoTransfer.Nombre,
+                        Fecha = DateTime.Now,
+                        IdActivoFijo = documentoActivoFijoTransfer.IdActivoFijo,
+                        IdRecepcionActivoFijoDetalle = documentoActivoFijoTransfer.IdRecepcionActivoFijoDetalle,
+                        IdAltaActivoFijo = documentoActivoFijoTransfer.IdAltaActivoFijo,
+                        IdFacturaActivoFijo = documentoActivoFijoTransfer.IdFacturaActivoFijo
+                    });
                     string extensionFile = uploadFileService.FileExtension(documentoActivoFijoTransfer.Nombre);
                     await uploadFileService.UploadFile(documentoActivoFijoTransfer.Fichero, Mensaje.CarpetaActivoFijoDocumento, $"{documentoActivoFijo.IdDocumentoActivoFijo}{extensionFile}");
 
@@ -146,7 +154,7 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteDocumentoInformacionInstitucional([FromRoute] int id)
+        public async Task<Response> DeleteDocumentoActivoFijo([FromRoute] int id)
         {
             try
             {
