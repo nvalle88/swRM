@@ -76,7 +76,6 @@ namespace bd.swrm.web.Controllers.API
                         try
                         {
                             CodigoActivoFijoActualizar.Codigosecuencial = codigoActivoFijo.Codigosecuencial;
-                            CodigoActivoFijoActualizar.CodigoBarras = codigoActivoFijo.CodigoBarras;
                             db.CodigoActivoFijo.Update(CodigoActivoFijoActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };

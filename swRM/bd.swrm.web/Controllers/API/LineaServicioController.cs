@@ -6,52 +6,52 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using bd.swrm.datos;
 using bd.swrm.entidades.Negocio;
-using bd.log.guardar.Servicios;
-using bd.log.guardar.Enumeradores;
 using Microsoft.EntityFrameworkCore;
+using bd.log.guardar.Servicios;
 using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
+using bd.log.guardar.Enumeradores;
 using bd.log.guardar.Utiles;
 using bd.swrm.entidades.Utils;
 
 namespace bd.swrm.web.Controllers.API
 {
     [Produces("application/json")]
-    [Route("api/Genero")]
-    public class GeneroController : Controller
+    [Route("api/LineaServicio")]
+    public class LineaServicioController : Controller
     {
         private readonly SwRMDbContext db;
 
-        public GeneroController(SwRMDbContext db)
+        public LineaServicioController(SwRMDbContext db)
         {
             this.db = db;
         }
-        
+
         [HttpGet]
-        [Route("ListarGeneros")]
-        public async Task<List<Genero>> GetGenero()
+        [Route("ListarLineaServicio")]
+        public async Task<List<LineaServicio>> GetLineaServicio()
         {
             try
             {
-                return await db.Genero.OrderBy(x => x.Nombre).ToListAsync();
+                return await db.LineaServicio.OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new List<Genero>();
+                return new List<LineaServicio>();
             }
         }
-        
+
         [HttpGet("{id}")]
-        public async Task<Response> GetGenero([FromRoute] int id)
+        public async Task<Response> GetLineaServicio([FromRoute]int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var genero = await db.Genero.SingleOrDefaultAsync(m => m.IdGenero == id);
-                return new Response { IsSuccess = genero != null, Message = genero != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = genero };
+                var lineaServicio = await db.LineaServicio.SingleOrDefaultAsync(m => m.IdLineaServicio == id);
+                return new Response { IsSuccess = lineaServicio != null, Message = lineaServicio != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = lineaServicio };
             }
             catch (Exception ex)
             {
@@ -59,24 +59,48 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
-        [HttpPut("{id}")]
-        public async Task<Response> PutGenero([FromRoute] int id, [FromBody] Genero genero)
+
+        [HttpPost]
+        [Route("InsertarLineaServicio")]
+        public async Task<Response> PostLineaServicio([FromBody]LineaServicio lineaServicio)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.Genero.Where(c => c.Nombre.ToUpper().Trim() == genero.Nombre.ToUpper().Trim()).AnyAsync(c => c.IdGenero != genero.IdGenero))
+                if (!await db.LineaServicio.AnyAsync(c => c.Nombre.ToUpper().Trim() == lineaServicio.Nombre.ToUpper().Trim()))
                 {
-                    var generoActualizar = await db.Genero.Where(x => x.IdGenero == id).FirstOrDefaultAsync();
-                    if (generoActualizar != null)
+                    db.LineaServicio.Add(lineaServicio);
+                    await db.SaveChangesAsync();
+                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                }
+                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<Response> PutLineaServicio([FromRoute] int id, [FromBody]LineaServicio lineaServicio)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
+                if (!await db.LineaServicio.Where(c => c.Nombre.ToUpper().Trim() == lineaServicio.Nombre.ToUpper().Trim()).AnyAsync(c => c.IdLineaServicio != lineaServicio.IdLineaServicio))
+                {
+                    var lineaServicioActualizar = await db.LineaServicio.Where(x => x.IdLineaServicio == id).FirstOrDefaultAsync();
+                    if (lineaServicioActualizar != null)
                     {
                         try
                         {
-                            generoActualizar.Nombre = genero.Nombre;
-                            db.Genero.Update(generoActualizar);
+                            lineaServicioActualizar.Nombre = lineaServicio.Nombre;
+                            db.LineaServicio.Update(lineaServicioActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                         }
@@ -94,44 +118,20 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
-        
-        [HttpPost]
-        [Route("InsertarGenero")]
-        public async Task<Response> PostGenero([FromBody] Genero genero)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.Genero.AnyAsync(c => c.Nombre.ToUpper().Trim() == genero.Nombre.ToUpper().Trim()))
-                {
-                    db.Genero.Add(genero);
-                    await db.SaveChangesAsync();
-                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
-                }
-                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
-            }
-            catch (Exception ex)
-            {
-                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new Response { IsSuccess = false, Message = Mensaje.Error };
-            }
-        }
-        
         [HttpDelete("{id}")]
-        public async Task<Response> DeleteGenero([FromRoute] int id)
+        public async Task<Response> DeleteLineaServicio([FromRoute] int id)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var respuesta = await db.Genero.SingleOrDefaultAsync(m => m.IdGenero == id);
+                var respuesta = await db.LineaServicio.SingleOrDefaultAsync(m => m.IdLineaServicio == id);
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                db.Genero.Remove(respuesta);
+                db.LineaServicio.Remove(respuesta);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
@@ -142,10 +142,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(Genero genero)
+        public Response Existe(LineaServicio lineaServicio)
         {
-            var bdd = genero.Nombre.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.Genero.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
+            var bdd = lineaServicio.Nombre.ToUpper().TrimEnd().TrimStart();
+            var loglevelrespuesta = db.LineaServicio.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
             return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }
