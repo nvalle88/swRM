@@ -33,7 +33,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.ClaseActivoFijo.OrderBy(x => x.Nombre).Include(c=> c.TipoActivoFijo).Include(c=> c.TablaDepreciacion).ToListAsync();
+                return await db.ClaseActivoFijo.OrderBy(x => x.Nombre).Include(c=> c.TipoActivoFijo).Include(c => c.CategoriaActivoFijo).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,7 +48,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.ClaseActivoFijo.Where(c=> c.IdTipoActivoFijo == idTipoActivoFijo).OrderBy(x => x.Nombre).Include(c => c.TipoActivoFijo).Include(c => c.TablaDepreciacion).ToListAsync();
+                return await db.ClaseActivoFijo.Where(c=> c.IdTipoActivoFijo == idTipoActivoFijo).OrderBy(x => x.Nombre).Include(c => c.TipoActivoFijo).Include(c => c.CategoriaActivoFijo).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -83,7 +83,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.ClaseActivoFijo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == claseActivoFijo.Nombre.ToUpper().Trim() && p.IdTablaDepreciacion == claseActivoFijo.IdTablaDepreciacion && p.IdTipoActivoFijo == claseActivoFijo.IdTipoActivoFijo).AnyAsync(c => c.IdClaseActivoFijo != claseActivoFijo.IdClaseActivoFijo))
+                if (!await db.ClaseActivoFijo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == claseActivoFijo.Nombre.ToUpper().Trim() && p.IdCategoriaActivoFijo == claseActivoFijo.IdCategoriaActivoFijo && p.IdTipoActivoFijo == claseActivoFijo.IdTipoActivoFijo).AnyAsync(c => c.IdClaseActivoFijo != claseActivoFijo.IdClaseActivoFijo))
                 {
                     var claseActivoFijoActualizar = await db.ClaseActivoFijo.Where(x => x.IdClaseActivoFijo == id).FirstOrDefaultAsync();
                     if (claseActivoFijoActualizar != null)
@@ -92,7 +92,7 @@ namespace bd.swrm.web.Controllers.API
                         {
                             claseActivoFijoActualizar.Nombre = claseActivoFijo.Nombre;
                             claseActivoFijoActualizar.IdTipoActivoFijo = claseActivoFijo.IdTipoActivoFijo;
-                            claseActivoFijoActualizar.IdTablaDepreciacion = claseActivoFijo.IdTablaDepreciacion;
+                            claseActivoFijoActualizar.IdCategoriaActivoFijo = claseActivoFijo.IdCategoriaActivoFijo;
                             db.ClaseActivoFijo.Update(claseActivoFijoActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
@@ -121,7 +121,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.ClaseActivoFijo.AnyAsync(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == claseActivoFijo.Nombre.ToUpper().Trim() && p.IdTablaDepreciacion == claseActivoFijo.IdTablaDepreciacion && p.IdTipoActivoFijo == claseActivoFijo.IdTipoActivoFijo))
+                if (!await db.ClaseActivoFijo.AnyAsync(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == claseActivoFijo.Nombre.ToUpper().Trim() && p.IdCategoriaActivoFijo == claseActivoFijo.IdCategoriaActivoFijo && p.IdTipoActivoFijo == claseActivoFijo.IdTipoActivoFijo))
                 {
                     db.ClaseActivoFijo.Add(claseActivoFijo);
                     await db.SaveChangesAsync();
@@ -162,7 +162,7 @@ namespace bd.swrm.web.Controllers.API
         public Response Existe(ClaseActivoFijo claseActivoFijo)
         {
             var bdd = claseActivoFijo.Nombre.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.ClaseActivoFijo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd && p.IdTablaDepreciacion == claseActivoFijo.IdTablaDepreciacion && p.IdTipoActivoFijo == claseActivoFijo.IdTipoActivoFijo).FirstOrDefault();
+            var loglevelrespuesta = db.ClaseActivoFijo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd && p.IdCategoriaActivoFijo == claseActivoFijo.IdCategoriaActivoFijo && p.IdTipoActivoFijo == claseActivoFijo.IdTipoActivoFijo).FirstOrDefault();
             return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }

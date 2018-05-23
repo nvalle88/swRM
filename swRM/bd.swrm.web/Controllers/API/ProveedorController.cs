@@ -13,6 +13,7 @@ using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
 using bd.log.guardar.Utiles;
 using bd.swrm.entidades.Utils;
+using bd.swrm.entidades.ObjectTransfer;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -33,7 +34,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.Proveedor.OrderBy(x => x.Nombre).Include(x => x.Factura).ToListAsync();
+                return await db.Proveedor.Include(c=> c.LineaServicio).Include(x => x.Factura).OrderBy(x => x.Nombre).ThenBy(c=> c.Apellidos).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -41,7 +42,22 @@ namespace bd.swrm.web.Controllers.API
                 return new List<Proveedor>();
             }
         }
-        
+
+        [HttpPost]
+        [Route("ListarProveedoresPorLineaServicioEstado")]
+        public async Task<List<Proveedor>> GetProveedorPorLineaServicioEstado([FromBody] ProveedorTransfer proveedorTransfer)
+        {
+            try
+            {
+                return await db.Proveedor.Include(c => c.LineaServicio).Include(x => x.Factura).Where(c=> c.LineaServicio.Nombre == proveedorTransfer.LineaServicio && c.Activo == proveedorTransfer.Activo).OrderBy(x => x.Nombre).ThenBy(c => c.Apellidos).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<Proveedor>();
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<Response> GetProveedor([FromRoute] int id)
         {
@@ -50,7 +66,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var proveedor = await db.Proveedor.Include(x => x.Factura).SingleOrDefaultAsync(m => m.IdProveedor == id);
+                var proveedor = await db.Proveedor.Include(c => c.LineaServicio).Include(x => x.Factura).SingleOrDefaultAsync(m => m.IdProveedor == id);
                 return new Response { IsSuccess = proveedor != null, Message = proveedor != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = proveedor };
             }
             catch (Exception ex)
@@ -81,13 +97,12 @@ namespace bd.swrm.web.Controllers.API
                             ProveedorActualizar.Direccion = proveedor.Direccion;
                             ProveedorActualizar.Codigo = proveedor.Codigo;
                             ProveedorActualizar.Activo = proveedor.Activo;
-                            ProveedorActualizar.LineaServicio = proveedor.LineaServicio;
+                            ProveedorActualizar.IdLineaServicio = proveedor.IdLineaServicio;
                             ProveedorActualizar.RazonSocial = proveedor.RazonSocial;
                             ProveedorActualizar.Telefono = proveedor.Telefono;
                             ProveedorActualizar.Email = proveedor.Email;
                             ProveedorActualizar.Cargo = proveedor.Cargo;
                             ProveedorActualizar.Observaciones = proveedor.Observaciones;
-                            ProveedorActualizar.Emision = proveedor.Emision;
                             db.Proveedor.Update(ProveedorActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };

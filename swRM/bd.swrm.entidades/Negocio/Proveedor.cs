@@ -39,12 +39,15 @@ namespace bd.swrm.entidades.Negocio
 
         [Required(ErrorMessage = "Debe introducir el {0}")]
         [Display(Name = "Código:")]
-        [StringLength(200, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
+        [StringLength(200, ErrorMessage = "El {0} no puede tener más de {1}")]
+        [RegularExpression(@"^\d*$", ErrorMessage = "El {0} solo puede contener números.")]
         public string Codigo { get; set; }
 
-        [Display(Name = "Línea de servicio:")]
-        [StringLength(200, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
-        public string LineaServicio { get; set; }
+        [Display(Name = "Linea de servicio:")]
+        [Required(ErrorMessage = "Debe seleccionar la {0}")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar la {0} ")]
+        public int IdLineaServicio { get; set; }
+        public virtual LineaServicio LineaServicio { get; set; }
 
         [Required(ErrorMessage = "Debe introducir la {0}")]
         [Display(Name = "Razón social:")]
@@ -67,10 +70,6 @@ namespace bd.swrm.entidades.Negocio
         [Display(Name = "Observaciones:")]
         [StringLength(200, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string Observaciones { get; set; }
-
-        [Display(Name = "Emisión:")]
-        [StringLength(200, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
-        public string Emision { get; set; }
 
         [Required(ErrorMessage = "Debe introducir el {0}")]
         [Display(Name = "¿Activo?")]

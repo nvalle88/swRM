@@ -59,23 +59,23 @@ namespace bd.swrm.web.Temporizador
                     foreach (var recepcionActivoFijoDetalle in listaRecepcionActivoFijoDetalle)
                     {
                         var ultimaDepreciacion = recepcionActivoFijoDetalle?.DepreciacionActivoFijo.FirstOrDefault();
-                        if (ultimaDepreciacion != null)
-                        {
-                            if ((ultimaDepreciacion.FechaDepreciacion.Subtract(DateTime.Now).TotalDays) * (-1) >= 30)
-                            {
-                                if (ultimaDepreciacion.ValorResidual > 1)
-                                    insertarDepreciacionActivoFijo((ultimaDepreciacion.DepreciacionAcumulada + recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), (ultimaDepreciacion.ValorResidual - recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
-                            }
-                        }
-                        else
-                        {
-                            var recepcionActivoFijoDetalleAltaActivoFijo = await db.RecepcionActivoFijoDetalleAltaActivoFijo
-                                .Include(c => c.AltaActivoFijo).ThenInclude(c => c.FacturaActivoFijo)
-                                .Where(c=> c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle)
-                                .FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijo);
-                            if ((recepcionActivoFijoDetalleAltaActivoFijo.AltaActivoFijo.FechaAlta.Subtract(DateTime.Now).TotalDays) *(-1) >= 30)
-                                insertarDepreciacionActivoFijo((recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), (recepcionActivoFijoDetalle.ActivoFijo.ValorCompra - recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
-                        }
+                        //if (ultimaDepreciacion != null)
+                        //{
+                        //    if ((ultimaDepreciacion.FechaDepreciacion.Subtract(DateTime.Now).TotalDays) * (-1) >= 30)
+                        //    {
+                        //        if (ultimaDepreciacion.ValorResidual > 1)
+                        //            insertarDepreciacionActivoFijo((ultimaDepreciacion.DepreciacionAcumulada + recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), (ultimaDepreciacion.ValorResidual - recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    var recepcionActivoFijoDetalleAltaActivoFijo = await db.RecepcionActivoFijoDetalleAltaActivoFijo
+                        //        .Include(c => c.AltaActivoFijo).ThenInclude(c => c.FacturaActivoFijo)
+                        //        .Where(c=> c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle)
+                        //        .FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijo);
+                        //    if ((recepcionActivoFijoDetalleAltaActivoFijo.AltaActivoFijo.FechaAlta.Subtract(DateTime.Now).TotalDays) *(-1) >= 30)
+                        //        insertarDepreciacionActivoFijo((recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), (recepcionActivoFijoDetalle.ActivoFijo.ValorCompra - recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
+                        //}
                     }
                 }
             }
