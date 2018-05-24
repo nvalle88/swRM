@@ -63,6 +63,52 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpGet]
+        [Route("ListarAltasActivosFijos")]
+        public async Task<List<AltaActivoFijo>> GetAltasActivosFijos()
+        {
+            try
+            {
+                var lista = new List<AltaActivoFijo>();
+                var idsAltas = await db.AltaActivoFijo.Select(c => c.IdAltaActivoFijo).ToListAsync();
+                foreach (var item in idsAltas)
+                {
+                    var response = await GetAltaActivoFijo(item);
+                    if (response.IsSuccess)
+                        lista.Add(response.Resultado as AltaActivoFijo);
+                }
+                return lista;
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<AltaActivoFijo>();
+            }
+        }
+
+        [HttpGet]
+        [Route("ListarBajasActivosFijos")]
+        public async Task<List<BajaActivoFijo>> GetBajasActivosFijos()
+        {
+            try
+            {
+                var lista = new List<BajaActivoFijo>();
+                var idsAltas = await db.BajaActivoFijo.Select(c => c.IdBajaActivoFijo).ToListAsync();
+                foreach (var item in idsAltas)
+                {
+                    var response = await GetBajaActivoFijo(item);
+                    if (response.IsSuccess)
+                        lista.Add(response.Resultado as BajaActivoFijo);
+                }
+                return lista;
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<BajaActivoFijo>();
+            }
+        }
+
+        [HttpGet]
         [Route("ListarRecepcionActivoFijoConPoliza")]
         public async Task<List<ActivoFijo>> GetActivosFijosConPoliza()
         {
@@ -104,7 +150,14 @@ namespace bd.swrm.web.Controllers.API
                             IdRecepcionActivoFijoDetalle = item.IdRecepcionActivoFijoDetalle,
                             IdAltaActivoFijo = altaActivoFijo.IdAltaActivoFijo,
                             IdTipoUtilizacionAlta = item.IdTipoUtilizacionAlta,
-                            RecepcionActivoFijoDetalle = recepcionActivoFijoDetalle
+                            RecepcionActivoFijoDetalle = recepcionActivoFijoDetalle,
+                            IdUbicacionActivoFijo = item.IdUbicacionActivoFijo,
+                            TipoUtilizacionAlta = await db.TipoUtilizacionAlta.FirstOrDefaultAsync(c=> c.IdTipoUtilizacionAlta == item.IdTipoUtilizacionAlta),
+                            UbicacionActivoFijo = ObtenerUbicacionActivoFijoActual(await db.UbicacionActivoFijo
+                            .Include(c=> c.LibroActivoFijo).ThenInclude(c=> c.Sucursal)
+                            .Include(c=> c.Bodega)
+                            .Include(c=> c.Empleado).ThenInclude(c=> c.Persona)
+                            .FirstOrDefaultAsync(c=> c.IdUbicacionActivoFijo == item.IdUbicacionActivoFijo))
                         });
                     }
                 }
@@ -1017,7 +1070,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     if ((bool)incluirBajasActivoFijo)
                     {
-                        var recepcionActivoFijoDetalleBajaActivoFijo = db.RecepcionActivoFijoDetalleBajaActivoFijo.Include(c => c.BajaActivoFijo).FirstOrDefault(c => c.IdRecepcionActivoFijoDetalle == item.IdRecepcionActivoFijoDetalle);
+                        var recepcionActivoFijoDetalleBajaActivoFijo = db.RecepcionActivoFijoDetalleBajaActivoFijo.Include(c => c.BajaActivoFijo).ThenInclude(c=> c.MotivoBaja).FirstOrDefault(c => c.IdRecepcionActivoFijoDetalle == item.IdRecepcionActivoFijoDetalle);
                         if (recepcionActivoFijoDetalleBajaActivoFijo != null)
                         {
                             item.BajaActivoFijoActual = ObtenerBajaActivoFijoActual(recepcionActivoFijoDetalleBajaActivoFijo.BajaActivoFijo);
