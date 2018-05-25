@@ -9,8 +9,8 @@ namespace bd.swrm.entidades.Negocio
         public UbicacionActivoFijo()
         {
             AltaActivoFijoDetalle = new HashSet<AltaActivoFijoDetalle>();
-            TransferenciasActivoFijoDestino = new HashSet<TransferenciaActivoFijo>();
-            TransferenciasActivoFijoUbicacion = new HashSet<TransferenciaActivoFijo>();
+            TransferenciasActivoFijoDetalleDestino = new HashSet<TransferenciaActivoFijoDetalle>();
+            TransferenciasActivoFijoDetalleOrigen = new HashSet<TransferenciaActivoFijoDetalle>();
         }
 
         [Key]
@@ -43,9 +43,9 @@ namespace bd.swrm.entidades.Negocio
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = true)]
         public DateTime FechaUbicacion { get; set; }
-
-        public virtual ICollection<TransferenciaActivoFijo> TransferenciasActivoFijoDestino { get; set; }
-        public virtual ICollection<TransferenciaActivoFijo> TransferenciasActivoFijoUbicacion { get; set; }
+        
         public virtual ICollection<AltaActivoFijoDetalle> AltaActivoFijoDetalle { get; set; }
+        public virtual ICollection<TransferenciaActivoFijoDetalle> TransferenciasActivoFijoDetalleDestino { get; set; }
+        public virtual ICollection<TransferenciaActivoFijoDetalle> TransferenciasActivoFijoDetalleOrigen { get; set; }
     }
 }

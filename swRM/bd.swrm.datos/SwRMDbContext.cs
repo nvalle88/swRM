@@ -80,6 +80,7 @@ namespace bd.swrm.datos
         public virtual DbSet<TipoUtilizacionAlta> TipoUtilizacionAlta { get; set; }
         public virtual DbSet<TranferenciaArticulo> TranferenciaArticulo { get; set; }
         public virtual DbSet<TransferenciaActivoFijo> TransferenciaActivoFijo { get; set; }
+        public virtual DbSet<TransferenciaActivoFijoDetalle> TransferenciaActivoFijoDetalle { get; set; }
         public virtual DbSet<UbicacionActivoFijo> UbicacionActivoFijo { get; set; }
         public virtual DbSet<UnidadMedida> UnidadMedida { get; set; }
 
@@ -1439,9 +1440,6 @@ namespace bd.swrm.datos
                 entity.HasKey(e => e.IdTransferenciaActivoFijo)
                     .HasName("PK_TransferenciaActivoFijo");
 
-                entity.HasIndex(e => e.IdEmpleadoRegistra)
-                    .HasName("Ref15169");
-
                 entity.HasIndex(e => e.IdEmpleadoResponsableEnvio)
                     .HasName("IX_TransferenciaActivoFijo_IdEmpleado");
 
@@ -1450,33 +1448,14 @@ namespace bd.swrm.datos
 
                 entity.Property(e => e.Observaciones).HasColumnType("text");
 
-                entity.HasOne(d => d.CodigoActivoFijo)
-                    .WithMany(p => p.TransferenciaActivoFijo)
-                    .HasForeignKey(d => d.IdCodigoActivoFijo)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_TransferenciaActivoFijo_CodigoActivoFijo");
-
-                entity.HasOne(d => d.EmpleadoRecibo)
-                    .WithMany(p => p.TransferenciaActivoFijoIdEmpleadoReciboNavigation)
-                    .HasForeignKey(d => d.IdEmpleadoRecibo)
-                    .HasConstraintName("FK_TransferenciaActivoFijo_Empleado3");
-
-                entity.HasOne(d => d.EmpleadoRegistra)
-                    .WithMany(p => p.TransferenciaActivoFijoIdEmpleadoRegistraNavigation)
-                    .HasForeignKey(d => d.IdEmpleadoRegistra)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_TransferenciaActivoFijo_Empleado");
-
                 entity.HasOne(d => d.EmpleadoResponsableEnvio)
-                    .WithMany(p => p.TransferenciaActivoFijoIdEmpleadoResponsableEnvioNavigation)
+                    .WithMany(p => p.TransferenciasActivoFijoEmpleadoResponsableEnvio)
                     .HasForeignKey(d => d.IdEmpleadoResponsableEnvio)
-                    .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_TransferenciaActivoFijo_Empleado1");
 
                 entity.HasOne(d => d.EmpleadoResponsableRecibo)
-                    .WithMany(p => p.TransferenciaActivoFijoIdEmpleadoResponsableReciboNavigation)
+                    .WithMany(p => p.TransferenciasActivoFijoEmpleadoResponsableRecibo)
                     .HasForeignKey(d => d.IdEmpleadoResponsableRecibo)
-                    .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_TransferenciaActivoFijo_Empleado2");
 
                 entity.HasOne(d => d.Estado)
@@ -1490,18 +1469,41 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdMotivoTransferencia)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_TransferenciaActivoFijo_MotivoTransferencia");
+            });
+
+            modelBuilder.Entity<TransferenciaActivoFijoDetalle>(entity =>
+            {
+                entity.HasKey(e => new { e.IdRecepcionActivoFijoDetalle, e.IdTransferenciaActivoFijo })
+                    .HasName("PK_TransferenciaActivoFijoDetalle");
+
+                entity.HasOne(d => d.CodigoActivoFijo)
+                    .WithMany(p => p.TransferenciaActivoFijoDetalle)
+                    .HasForeignKey(d => d.IdCodigoActivoFijo)
+                    .HasConstraintName("FK_TransferenciaActivoFijoDetalle_CodigoActivoFijo");
+
+                entity.HasOne(d => d.RecepcionActivoFijoDetalle)
+                    .WithMany(p => p.TransferenciaActivoFijoDetalle)
+                    .HasForeignKey(d => d.IdRecepcionActivoFijoDetalle)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_TransferenciaActivoFijoDetalle_RecepcionActivoFijoDetalle");
+
+                entity.HasOne(d => d.TransferenciaActivoFijo)
+                    .WithMany(p => p.TransferenciaActivoFijoDetalle)
+                    .HasForeignKey(d => d.IdTransferenciaActivoFijo)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_TransferenciaActivoFijoDetalle_TransferenciaActivoFijo");
 
                 entity.HasOne(d => d.UbicacionActivoFijoDestino)
-                    .WithMany(p => p.TransferenciasActivoFijoDestino)
+                    .WithMany(p => p.TransferenciasActivoFijoDetalleDestino)
                     .HasForeignKey(d => d.IdUbicacionActivoFijoDestino)
                     .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_TransferenciaActivoFijo_UbicacionActivoFijo1");
+                    .HasConstraintName("FK_TransferenciaActivoFijoDetalle_UbicacionActivoFijo1");
 
                 entity.HasOne(d => d.UbicacionActivoFijoOrigen)
-                    .WithMany(p => p.TransferenciasActivoFijoUbicacion)
+                    .WithMany(p => p.TransferenciasActivoFijoDetalleOrigen)
                     .HasForeignKey(d => d.IdUbicacionActivoFijoOrigen)
                     .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_TransferenciaActivoFijo_UbicacionActivoFijo");
+                    .HasConstraintName("FK_TransferenciaActivoFijoDetalle_UbicacionActivoFijo");
             });
 
             modelBuilder.Entity<UbicacionActivoFijo>(entity =>
