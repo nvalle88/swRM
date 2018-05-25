@@ -9,7 +9,7 @@ namespace bd.swrm.entidades.Negocio
         public CodigoActivoFijo()
         {
             RecepcionActivoFijoDetalle = new HashSet<RecepcionActivoFijoDetalle>();
-            TransferenciaActivoFijo = new HashSet<TransferenciaActivoFijo>();
+            TransferenciaActivoFijoDetalle = new HashSet<TransferenciaActivoFijoDetalle>();
         }
 
         [Key]
@@ -27,6 +27,6 @@ namespace bd.swrm.entidades.Negocio
         //Propiedades Virtuales Referencias a otras clases
         public virtual ICollection<RecepcionActivoFijoDetalle> RecepcionActivoFijoDetalle { get; set; }
 
-        public virtual ICollection<TransferenciaActivoFijo> TransferenciaActivoFijo { get; set; }
+        public virtual ICollection<TransferenciaActivoFijoDetalle> TransferenciaActivoFijoDetalle { get; set; }
     }
 }

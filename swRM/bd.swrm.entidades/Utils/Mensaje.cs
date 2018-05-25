@@ -27,4 +27,13 @@ namespace bd.swrm.entidades.Utils
         public static string Aceptada { get { return "Aceptada"; } }
         public static string Rechazada { get { return "Rechazada"; } }
     }
+
+    public static class MotivosTransferencia
+    {
+        public static string CambioCustodio { get { return "Cambio de Custodio"; } }
+        public static string CambioUbicacion { get { return "Cambio de Ubicación"; } }
+        public static string PrestamoUsoExterno { get { return "Préstamo de Uso Externo"; } }
+        public static string PrestamoUsoInterno { get { return "Préstamo de Uso Interno"; } }
+        public static string TransferenciaBodegas { get { return "Transferencia entre Bodegas"; } }
+    }
 }
