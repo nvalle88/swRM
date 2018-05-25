@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace bd.swrm.entidades.Negocio
 {
-    public partial class RecepcionActivoFijoDetalleBajaActivoFijo
+    public partial class BajaActivoFijoDetalle
     {
         [Key]
         [Column(Order = 0)]

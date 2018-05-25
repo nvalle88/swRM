@@ -63,8 +63,8 @@ namespace bd.swrm.datos
         public virtual DbSet<Ramo> Ramo { get; set; }
         public virtual DbSet<RecepcionActivoFijo> RecepcionActivoFijo { get; set; }
         public virtual DbSet<RecepcionActivoFijoDetalle> RecepcionActivoFijoDetalle { get; set; }
-        public virtual DbSet<RecepcionActivoFijoDetalleAltaActivoFijo> RecepcionActivoFijoDetalleAltaActivoFijo { get; set; }
-        public virtual DbSet<RecepcionActivoFijoDetalleBajaActivoFijo> RecepcionActivoFijoDetalleBajaActivoFijo { get; set; }
+        public virtual DbSet<AltaActivoFijoDetalle> AltaActivoFijoDetalle { get; set; }
+        public virtual DbSet<BajaActivoFijoDetalle> BajaActivoFijoDetalle { get; set; }
         public virtual DbSet<RecepcionArticulos> RecepcionArticulos { get; set; }
         public virtual DbSet<Sexo> Sexo { get; set; }
         public virtual DbSet<SolicitudProveeduria> SolicitudProveeduria { get; set; }
@@ -1147,49 +1147,49 @@ namespace bd.swrm.datos
                     .HasConstraintName("FK_RecepcionActivoFijoDetalle_RecepcionActivoFijo");
             });
 
-            modelBuilder.Entity<RecepcionActivoFijoDetalleAltaActivoFijo>(entity =>
+            modelBuilder.Entity<AltaActivoFijoDetalle>(entity =>
             {
                 entity.HasKey(e => new { e.IdRecepcionActivoFijoDetalle, e.IdAltaActivoFijo })
                     .HasName("PK_RecepcionActivoFijoDetalleAltaActivoFijo");
 
                 entity.HasOne(d => d.AltaActivoFijo)
-                    .WithMany(p => p.RecepcionActivoFijoDetalleAltaActivoFijo)
+                    .WithMany(p => p.AltaActivoFijoDetalle)
                     .HasForeignKey(d => d.IdAltaActivoFijo)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_RecepcionActivoFijoDetalleAltaActivoFijo_AltaActivoFijo");
 
                 entity.HasOne(d => d.RecepcionActivoFijoDetalle)
-                    .WithMany(p => p.RecepcionActivoFijoDetalleAltaActivoFijo)
+                    .WithMany(p => p.AltaActivoFijoDetalle)
                     .HasForeignKey(d => d.IdRecepcionActivoFijoDetalle)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_RecepcionActivoFijoDetalleAltaActivoFijo_RecepcionActivoFijoDetalle");
 
                 entity.HasOne(d => d.TipoUtilizacionAlta)
-                    .WithMany(p => p.RecepcionActivoFijoDetalleAltaActivoFijo)
+                    .WithMany(p => p.AltaActivoFijoDetalle)
                     .HasForeignKey(d => d.IdTipoUtilizacionAlta)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_RecepcionActivoFijoDetalleAltaActivoFijo_TipoUtilizacionAlta");
 
                 entity.HasOne(d => d.UbicacionActivoFijo)
-                    .WithMany(p => p.RecepcionActivoFijoDetalleAltaActivoFijo)
+                    .WithMany(p => p.AltaActivoFijoDetalle)
                     .HasForeignKey(d => d.IdUbicacionActivoFijo)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_RecepcionActivoFijoDetalleAltaActivoFijo_UbicacionActivoFijo");
             });
 
-            modelBuilder.Entity<RecepcionActivoFijoDetalleBajaActivoFijo>(entity =>
+            modelBuilder.Entity<BajaActivoFijoDetalle>(entity =>
             {
                 entity.HasKey(e => new { e.IdRecepcionActivoFijoDetalle, e.IdBajaActivoFijo })
                     .HasName("PK_RecepcionActivoFijoDetalleBajaActivoFijo");
 
                 entity.HasOne(d => d.BajaActivoFijo)
-                    .WithMany(p => p.RecepcionActivoFijoDetalleBajaActivoFijo)
+                    .WithMany(p => p.BajaActivoFijoDetalle)
                     .HasForeignKey(d => d.IdBajaActivoFijo)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_RecepcionActivoFijoDetalleBajaActivoFijo_BajaActivoFijo");
 
                 entity.HasOne(d => d.RecepcionActivoFijoDetalle)
-                    .WithMany(p => p.RecepcionActivoFijoDetalleBajaActivoFijo)
+                    .WithMany(p => p.BajaActivoFijoDetalle)
                     .HasForeignKey(d => d.IdRecepcionActivoFijoDetalle)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_RecepcionActivoFijoDetalleBajaActivoFijo_RecepcionActivoFijoDetalle");
