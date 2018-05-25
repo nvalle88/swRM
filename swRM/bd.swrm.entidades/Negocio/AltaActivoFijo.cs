@@ -31,7 +31,7 @@
         public int? IdFacturaActivoFijo { get; set; }
         public virtual FacturaActivoFijo FacturaActivoFijo { get; set; }
 
-        public virtual ICollection<RecepcionActivoFijoDetalleAltaActivoFijo> RecepcionActivoFijoDetalleAltaActivoFijo { get; set; }
+        public virtual ICollection<AltaActivoFijoDetalle> AltaActivoFijoDetalle { get; set; }
         public virtual ICollection<DocumentoActivoFijo> DocumentoActivoFijo { get; set; }
     }
 }

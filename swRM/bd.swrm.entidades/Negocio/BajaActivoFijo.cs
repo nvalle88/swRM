@@ -28,6 +28,6 @@ namespace bd.swrm.entidades.Negocio
         public int IdMotivoBaja { get; set; }
         public virtual MotivoBaja MotivoBaja { get; set; }
 
-        public virtual ICollection<RecepcionActivoFijoDetalleBajaActivoFijo> RecepcionActivoFijoDetalleBajaActivoFijo { get; set; }
+        public virtual ICollection<BajaActivoFijoDetalle> BajaActivoFijoDetalle { get; set; }
     }
 }

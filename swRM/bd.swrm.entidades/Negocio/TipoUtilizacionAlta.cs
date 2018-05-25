@@ -8,7 +8,7 @@ namespace bd.swrm.entidades.Negocio
     {
         public TipoUtilizacionAlta()
         {
-            RecepcionActivoFijoDetalleAltaActivoFijo = new HashSet<RecepcionActivoFijoDetalleAltaActivoFijo>();
+            AltaActivoFijoDetalle = new HashSet<AltaActivoFijoDetalle>();
         }
 
         [Key]
@@ -19,6 +19,6 @@ namespace bd.swrm.entidades.Negocio
         [StringLength(200, MinimumLength = 2, ErrorMessage = "El {0} no puede tener menos de {2} y más de {1}")]
         public string Nombre { get; set; }
 
-        public virtual ICollection<RecepcionActivoFijoDetalleAltaActivoFijo> RecepcionActivoFijoDetalleAltaActivoFijo { get; set; }
+        public virtual ICollection<AltaActivoFijoDetalle> AltaActivoFijoDetalle { get; set; }
     }
 }

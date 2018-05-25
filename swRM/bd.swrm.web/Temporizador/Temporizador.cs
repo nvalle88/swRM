@@ -51,31 +51,32 @@ namespace bd.swrm.web.Temporizador
 
             try
             {
-                var listaRecepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle.Where(c => c.Estado.Nombre == Estados.Alta && c.ActivoFijo.Depreciacion).Include(c => c.DepreciacionActivoFijo.OrderByDescending(p=> p.FechaDepreciacion)).ToListAsync();
+                var listaRecepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle.Include(c=> c.ActivoFijo).ThenInclude(c=> c.SubClaseActivoFijo).ThenInclude(c=> c.ClaseActivoFijo).ThenInclude(c=> c.CategoriaActivoFijo).Where(c => c.Estado.Nombre == Estados.Alta && c.ActivoFijo.Depreciacion).Include(c => c.DepreciacionActivoFijo.OrderByDescending(p=> p.FechaDepreciacion)).ToListAsync();
                 if (listaRecepcionActivoFijoDetalle.Count == 0)
                     timerDepreciacion.Dispose();
                 else
                 {
                     foreach (var recepcionActivoFijoDetalle in listaRecepcionActivoFijoDetalle)
                     {
+                        var porCientoDepreciacionAnual = recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.CategoriaActivoFijo.PorCientoDepreciacionAnual;
+                        var totalDepreciacionAnual = (recepcionActivoFijoDetalle.ActivoFijo.ValorCompra * porCientoDepreciacionAnual) / 100;
+                        var indiceDepreciacionMensual = totalDepreciacionAnual / 12;
+
                         var ultimaDepreciacion = recepcionActivoFijoDetalle?.DepreciacionActivoFijo.FirstOrDefault();
-                        //if (ultimaDepreciacion != null)
-                        //{
-                        //    if ((ultimaDepreciacion.FechaDepreciacion.Subtract(DateTime.Now).TotalDays) * (-1) >= 30)
-                        //    {
-                        //        if (ultimaDepreciacion.ValorResidual > 1)
-                        //            insertarDepreciacionActivoFijo((ultimaDepreciacion.DepreciacionAcumulada + recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), (ultimaDepreciacion.ValorResidual - recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
-                        //    }
-                        //}
-                        //else
-                        //{
-                        //    var recepcionActivoFijoDetalleAltaActivoFijo = await db.RecepcionActivoFijoDetalleAltaActivoFijo
-                        //        .Include(c => c.AltaActivoFijo).ThenInclude(c => c.FacturaActivoFijo)
-                        //        .Where(c=> c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle)
-                        //        .FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijo);
-                        //    if ((recepcionActivoFijoDetalleAltaActivoFijo.AltaActivoFijo.FechaAlta.Subtract(DateTime.Now).TotalDays) *(-1) >= 30)
-                        //        insertarDepreciacionActivoFijo((recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), (recepcionActivoFijoDetalle.ActivoFijo.ValorCompra - recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.TablaDepreciacion.IndiceDepreciacion), recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
-                        //}
+                        if (ultimaDepreciacion != null)
+                        {
+                            if ((ultimaDepreciacion.FechaDepreciacion.Subtract(DateTime.Now).TotalDays) * (-1) >= 30)
+                            {
+                                if (ultimaDepreciacion.ValorResidual > 1)
+                                    insertarDepreciacionActivoFijo((ultimaDepreciacion.DepreciacionAcumulada + indiceDepreciacionMensual), (ultimaDepreciacion.ValorResidual - indiceDepreciacionMensual), recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
+                            }
+                        }
+                        else
+                        {
+                            var recepcionActivoFijoDetalleAltaActivoFijo = await db.AltaActivoFijoDetalle.Include(c => c.AltaActivoFijo).ThenInclude(c => c.FacturaActivoFijo).Where(c => c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijo);
+                            if ((recepcionActivoFijoDetalleAltaActivoFijo.AltaActivoFijo.FechaAlta.Subtract(DateTime.Now).TotalDays) * (-1) >= 30)
+                                insertarDepreciacionActivoFijo((indiceDepreciacionMensual), (recepcionActivoFijoDetalle.ActivoFijo.ValorCompra - indiceDepreciacionMensual), recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
+                        }
                     }
                 }
             }
