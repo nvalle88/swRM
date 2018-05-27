@@ -3,6 +3,7 @@ namespace bd.swrm.entidades.Negocio
     using System;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
+    using System.ComponentModel.DataAnnotations.Schema;
 
     public partial class TransferenciaActivoFijo
     {
@@ -46,6 +47,14 @@ namespace bd.swrm.entidades.Negocio
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int IdEstado { get; set; }
         public virtual Estado Estado { get; set; }
+
+        [NotMapped]
+        [Display(Name = "Sucursal de origen:")]
+        public Sucursal SucursalOrigen { get; set; }
+
+        [NotMapped]
+        [Display(Name = "Sucursal de destino:")]
+        public Sucursal SucursalDestino { get; set; }
 
         public virtual ICollection<TransferenciaActivoFijoDetalle> TransferenciaActivoFijoDetalle { get; set; }
     }
