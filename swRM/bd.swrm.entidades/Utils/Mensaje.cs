@@ -24,8 +24,7 @@ namespace bd.swrm.entidades.Utils
         public static string Alta { get { return "Alta"; } }
         public static string Baja { get { return "Baja"; } }
         public static string Creada { get { return "Creado"; } }
-        public static string Aceptada { get { return "Aceptada"; } }
-        public static string Rechazada { get { return "Rechazada"; } }
+        public static string Aceptada { get { return "Aceptado"; } }
     }
 
     public static class MotivosTransferencia
