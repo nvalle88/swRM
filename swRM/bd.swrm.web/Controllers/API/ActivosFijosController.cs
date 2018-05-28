@@ -85,14 +85,14 @@ namespace bd.swrm.web.Controllers.API
         [Route("ListarRecepcionActivoFijoConPoliza")]
         public async Task<List<ActivoFijo>> GetActivosFijosConPoliza()
         {
-            return await ListarActivosFijos(predicadoActivoFijo: c=> c.PolizaSeguroActivoFijo.NumeroPoliza != null, predicadoRecepcionActivoFijoDetalle: c=> c.Estado.Nombre == Estados.Recepcionado);
+            return await ListarActivosFijos(predicadoActivoFijo: c=> c.PolizaSeguroActivoFijo.NumeroPoliza != null);
         }
 
         [HttpGet]
         [Route("ListarRecepcionActivoFijoSinPoliza")]
         public async Task<List<ActivoFijo>> GetActivosFijosSinPoliza()
         {
-            return await ListarActivosFijos(predicadoActivoFijo: c => c.PolizaSeguroActivoFijo.NumeroPoliza == null, predicadoRecepcionActivoFijoDetalle: c => c.Estado.Nombre == Estados.Recepcionado);
+            return await ListarActivosFijos(predicadoActivoFijo: c => c.PolizaSeguroActivoFijo.NumeroPoliza == null);
         }
 
         [HttpGet("{id}")]
@@ -126,7 +126,7 @@ namespace bd.swrm.web.Controllers.API
         [Route("ObtenerActivoFijoPorEstado")]
         public async Task<Response> GetActivoFijoPorEstado([FromBody] IdEstadosTransfer idActivoFijoEstadosTransfer)
         {
-            return await ObtenerActivoFijo(idActivoFijoEstadosTransfer.Id, predicadoDetalleActivoFijo: c=> idActivoFijoEstadosTransfer.Estados.Contains(c.Estado.Nombre));//c => c.Estado.Nombre == idActivoFijoEstadosTransfer.Estado);
+            return idActivoFijoEstadosTransfer.Estados.Count > 0 ? await ObtenerActivoFijo(idActivoFijoEstadosTransfer.Id, predicadoDetalleActivoFijo: c=> idActivoFijoEstadosTransfer.Estados.Contains(c.Estado.Nombre)) : await ObtenerActivoFijo(idActivoFijoEstadosTransfer.Id);
         }
 
         [HttpPost]
@@ -265,22 +265,22 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpPost]
-        [Route("AsignarPoliza")]
-        public async Task<Response> AsignarPoliza([FromBody] PolizaSeguroActivoFijo polizaSeguroActivoFijo)
+        [Route("AsignarPolizaSeguro")]
+        public async Task<Response> AsignarPoliza([FromBody] ActivoFijo activoFijo)
         {
             try
             {
-                if (String.IsNullOrEmpty(polizaSeguroActivoFijo.NumeroPoliza))
+                if (String.IsNullOrEmpty(activoFijo?.PolizaSeguroActivoFijo?.NumeroPoliza))
                     return new Response { IsSuccess = false, Message = "Debe introducir el Número de Póliza." };
 
-                var polizaSeguroActivoFijoActualizar = await db.PolizaSeguroActivoFijo.FirstOrDefaultAsync(c=> c.IdActivo == polizaSeguroActivoFijo.IdActivo);
+                var polizaSeguroActivoFijoActualizar = await db.PolizaSeguroActivoFijo.FirstOrDefaultAsync(c=> c.IdActivo == activoFijo.IdActivoFijo);
                 if (polizaSeguroActivoFijoActualizar != null)
                 {
-                    if (!(polizaSeguroActivoFijoActualizar.NumeroPoliza == null ? await db.PolizaSeguroActivoFijo.AnyAsync(c => c.NumeroPoliza == polizaSeguroActivoFijo.NumeroPoliza) : await db.PolizaSeguroActivoFijo.Where(c => c.NumeroPoliza == polizaSeguroActivoFijo.NumeroPoliza).AnyAsync(c => c.IdActivo != polizaSeguroActivoFijo.IdActivo)))
+                    if (!(polizaSeguroActivoFijoActualizar.NumeroPoliza == null ? await db.PolizaSeguroActivoFijo.AnyAsync(c => c.NumeroPoliza == activoFijo.PolizaSeguroActivoFijo.NumeroPoliza) : await db.PolizaSeguroActivoFijo.Where(c => c.NumeroPoliza == activoFijo.PolizaSeguroActivoFijo.NumeroPoliza).AnyAsync(c => c.IdActivo != activoFijo.IdActivoFijo)))
                     {
                         try
                         {
-                            polizaSeguroActivoFijoActualizar.NumeroPoliza = polizaSeguroActivoFijo.NumeroPoliza;
+                            polizaSeguroActivoFijoActualizar.NumeroPoliza = activoFijo.PolizaSeguroActivoFijo.NumeroPoliza;
                             db.PolizaSeguroActivoFijo.Update(polizaSeguroActivoFijoActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
@@ -992,7 +992,7 @@ namespace bd.swrm.web.Controllers.API
                 }
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = cambioUbicacionSucursalViewModel };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
