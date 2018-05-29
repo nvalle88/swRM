@@ -9,6 +9,7 @@ using System.Threading;
 using System;
 using bd.swrm.servicios.Interfaces;
 using bd.swrm.servicios.Servicios;
+using bd.swrm.entidades.Constantes;
 
 namespace bd.swrm.web
 {
@@ -33,7 +34,17 @@ namespace bd.swrm.web
             services.AddMvc().AddJsonOptions(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
             services.AddDbContext<SwRMDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("SwRMConnection")));
             services.AddSingleton<IUploadFileService, UploadFileService>();
+            services.AddTransient<IEmailSender, AuthMessageSender>();
             Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
+
+            // Constantes de correo
+            ConstantesCorreo.Smtp = Configuration.GetSection("Smtp").Value;
+            ConstantesCorreo.PrimaryPort = Configuration.GetSection("PrimaryPort").Value;
+            ConstantesCorreo.SecureSocketOptions = Configuration.GetSection("SecureSocketOptions").Value;
+            ConstantesCorreo.CorreoRM = Configuration.GetSection("CorreoRM").Value;
+            ConstantesCorreo.PasswordCorreo = Configuration.GetSection("PasswordCorreo").Value;
+            ConstantesCorreo.NameFrom = Configuration.GetSection("NameFrom").Value;
+            ConstantesCorreo.MensajeCorreoSuperior = Configuration.GetSection("MensajeCorreoSuperior").Value;
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
