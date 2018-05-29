@@ -25,11 +25,13 @@ namespace bd.swrm.web.Controllers.API
     {
         private readonly IUploadFileService uploadFileService;
         private readonly SwRMDbContext db;
+        private readonly IEmailSender emailSender;
 
-        public ActivosFijosController(SwRMDbContext db, IUploadFileService uploadFileService)
+        public ActivosFijosController(SwRMDbContext db, IUploadFileService uploadFileService, IEmailSender emailSender)
         {
             this.uploadFileService = uploadFileService;
             this.db = db;
+            this.emailSender = emailSender;
         }
 
         [HttpGet]
@@ -154,6 +156,7 @@ namespace bd.swrm.web.Controllers.API
         [Route("ListarActivoFijoPorEstado")]
         public async Task<List<ActivoFijo>> GetActivosFijosPorEstado([FromBody] List<string> estados)
         {
+            await emailSender.SendEmailAsync("carlos.avila8909@gmail.com", "Nueva recepción de Activos Fijos", "Se han recepcionado nuevos Activos Fijos.");
             return await ListarActivosFijos(predicadoRecepcionActivoFijoDetalle: c => estados.Contains(c.Estado.Nombre));
         }
 
@@ -374,6 +377,7 @@ namespace bd.swrm.web.Controllers.API
                         await db.SaveChangesAsync();
                     }
                     transaction.Commit();
+                    //await emailSender.SendEmailAsync("carlos.avila8909@gmail.com", "Nueva recepción de Activos Fijos", "Se han recepcionado nuevos Activos Fijos.");
                 }
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = listaRecepcionActivoFijoDetalleTransfer };
             }
