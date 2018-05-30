@@ -29,13 +29,10 @@ namespace bd.swrm.servicios.Servicios
                     NameTo = "Name To",
                     Subject = subject
                 };
-                //await Emails.SendEmailAsync(mail);
-                Emails.SendEmail(mail);
+                await Emails.SendEmailAsync(mail);
             }
-            catch (Exception ex)
-            {
-
-            }
+            catch (Exception)
+            { }
         }
     }
 }
