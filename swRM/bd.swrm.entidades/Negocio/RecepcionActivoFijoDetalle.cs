@@ -17,6 +17,9 @@ namespace bd.swrm.entidades.Negocio
             BajaActivoFijoDetalle = new HashSet<BajaActivoFijoDetalle>();
             UbicacionActivoFijo = new HashSet<UbicacionActivoFijo>();
             TransferenciaActivoFijoDetalle = new HashSet<TransferenciaActivoFijoDetalle>();
+            ProcesoJudicialActivoFijo = new HashSet<ProcesoJudicialActivoFijo>();
+            InventarioActivoFijoDetalle = new HashSet<InventarioActivoFijoDetalle>();
+            MovilizacionActivoFijoDetalle = new HashSet<MovilizacionActivoFijoDetalle>();
         }
 
         [Key]
@@ -94,5 +97,8 @@ namespace bd.swrm.entidades.Negocio
         public virtual ICollection<AltaActivoFijoDetalle> AltaActivoFijoDetalle { get; set; }
         public virtual ICollection<BajaActivoFijoDetalle> BajaActivoFijoDetalle { get; set; }
         public virtual ICollection<TransferenciaActivoFijoDetalle> TransferenciaActivoFijoDetalle { get; set; }
+        public virtual ICollection<ProcesoJudicialActivoFijo> ProcesoJudicialActivoFijo { get; set; }
+        public virtual ICollection<InventarioActivoFijoDetalle> InventarioActivoFijoDetalle { get; set; }
+        public virtual ICollection<MovilizacionActivoFijoDetalle> MovilizacionActivoFijoDetalle { get; set; }
     }
 }

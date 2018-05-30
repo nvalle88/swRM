@@ -11,6 +11,7 @@
             RecepcionActivoFijoDetalle = new HashSet<RecepcionActivoFijoDetalle>();
             SolicitudProveeduriaDetalle = new HashSet<SolicitudProveeduriaDetalle>();
             TransferenciaActivoFijo = new HashSet<TransferenciaActivoFijo>();
+            InventarioActivoFijo = new HashSet<InventarioActivoFijo>();
         }
 
         [Key]
@@ -27,5 +28,7 @@
         public virtual ICollection<SolicitudProveeduriaDetalle> SolicitudProveeduriaDetalle { get; set; }
 
         public virtual ICollection<TransferenciaActivoFijo> TransferenciaActivoFijo { get; set; }
+
+        public virtual ICollection<InventarioActivoFijo> InventarioActivoFijo { get; set; }
     }
 }

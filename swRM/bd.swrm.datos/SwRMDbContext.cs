@@ -41,6 +41,8 @@ namespace bd.swrm.datos
         public virtual DbSet<FacturasPorAltaProveeduria> FacturasPorAltaProveeduria { get; set; }
         public virtual DbSet<FondoFinanciamiento> FondoFinanciamiento { get; set; }
         public virtual DbSet<Genero> Genero { get; set; }
+        public virtual DbSet<InventarioActivoFijo> InventarioActivoFijo { get; set; }
+        public virtual DbSet<InventarioActivoFijoDetalle> InventarioActivoFijoDetalle { get; set; }
         public virtual DbSet<LibroActivoFijo> LibroActivoFijo { get; set; }
         public virtual DbSet<LineaServicio> LineaServicio { get; set; }
         public virtual DbSet<MaestroArticuloSucursal> MaestroArticuloSucursal { get; set; }
@@ -53,11 +55,15 @@ namespace bd.swrm.datos
         public virtual DbSet<MotivoBaja> MotivoBaja { get; set; }
         public virtual DbSet<MotivoRecepcion> MotivoRecepcion { get; set; }
         public virtual DbSet<MotivoTransferencia> MotivoTransferencia { get; set; }
+        public virtual DbSet<MotivoTraslado> MotivoTraslado { get; set; }
+        public virtual DbSet<MovilizacionActivoFijo> MovilizacionActivoFijo { get; set; }
+        public virtual DbSet<MovilizacionActivoFijoDetalle> MovilizacionActivoFijoDetalle { get; set; }
         public virtual DbSet<Nacionalidad> Nacionalidad { get; set; }
         public virtual DbSet<Pais> Pais { get; set; }
         public virtual DbSet<Parroquia> Parroquia { get; set; }
         public virtual DbSet<Persona> Persona { get; set; }
         public virtual DbSet<PolizaSeguroActivoFijo> PolizaSeguroActivoFijo { get; set; }
+        public virtual DbSet<ProcesoJudicialActivoFijo> ProcesoJudicialActivoFijo { get; set; }
         public virtual DbSet<Proveedor> Proveedor { get; set; }
         public virtual DbSet<Provincia> Provincia { get; set; }
         public virtual DbSet<Ramo> Ramo { get; set; }
@@ -510,6 +516,11 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdFacturaActivoFijo)
                     .HasConstraintName("FK_DocumentoActivoFijo_FacturaActivoFijo");
 
+                entity.HasOne(d => d.IdProcesoJudicialActivoFijoNavigation)
+                    .WithMany(p => p.DocumentoActivoFijo)
+                    .HasForeignKey(d => d.IdProcesoJudicialActivoFijo)
+                    .HasConstraintName("FK_DocumentoActivoFijo_ProcesoJudicialActivoFijo");
+
                 entity.HasOne(d => d.RecepcionActivoFijoDetalle)
                     .WithMany(p => p.DocumentoActivoFijo)
                     .HasForeignKey(d => d.IdRecepcionActivoFijoDetalle)
@@ -665,6 +676,40 @@ namespace bd.swrm.datos
                 entity.Property(e => e.Nombre)
                     .IsRequired()
                     .HasMaxLength(20);
+            });
+
+            modelBuilder.Entity<InventarioActivoFijo>(entity =>
+            {
+                entity.HasKey(e => e.IdInventarioActivoFijo)
+                    .HasName("PK_InventarioActivoFijo");
+
+                entity.Property(e => e.NumeroInforme)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.HasOne(d => d.Estado)
+                    .WithMany(p => p.InventarioActivoFijo)
+                    .HasForeignKey(d => d.IdEstado)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_InventarioActivoFijo_Estado");
+            });
+
+            modelBuilder.Entity<InventarioActivoFijoDetalle>(entity =>
+            {
+                entity.HasKey(e => new { e.IdRecepcionActivoFijoDetalle, e.IdInventarioActivoFijo })
+                    .HasName("PK_InventarioActivoFijoDetalle");
+
+                entity.HasOne(d => d.InventarioActivoFijo)
+                    .WithMany(p => p.InventarioActivoFijoDetalle)
+                    .HasForeignKey(d => d.IdInventarioActivoFijo)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_InventarioActivoFijoDetalle_InventarioActivoFijo");
+
+                entity.HasOne(d => d.RecepcionActivoFijoDetalle)
+                    .WithMany(p => p.InventarioActivoFijoDetalle)
+                    .HasForeignKey(d => d.IdRecepcionActivoFijoDetalle)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_InventarioActivoFijoDetalle_RecepcionActivoFijoDetalle");
             });
 
             modelBuilder.Entity<LibroActivoFijo>(entity =>
@@ -846,6 +891,48 @@ namespace bd.swrm.datos
                     .HasColumnType("varchar(150)");
             });
 
+            modelBuilder.Entity<MotivoTraslado>(entity =>
+            {
+                entity.HasKey(e => e.IdMotivoTraslado)
+                    .HasName("PK_MotivoTraslado");
+
+                entity.Property(e => e.Descripcion)
+                    .IsRequired()
+                    .HasMaxLength(200);
+            });
+
+            modelBuilder.Entity<MovilizacionActivoFijo>(entity =>
+            {
+                entity.HasKey(e => e.IdMovilizacionActivoFijo)
+                    .HasName("PK_MovilizacionActivoFijo");
+
+                entity.HasOne(d => d.MotivoTraslado)
+                    .WithMany(p => p.MovilizacionActivoFijo)
+                    .HasForeignKey(d => d.IdMotivoTraslado)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_MovilizacionActivoFijo_MotivoTraslado");
+            });
+
+            modelBuilder.Entity<MovilizacionActivoFijoDetalle>(entity =>
+            {
+                entity.HasKey(e => new { e.IdRecepcionActivoFijoDetalle, e.IdMovilizacionActivoFijo })
+                    .HasName("PK_MovilizacionActivoFijoDetalle");
+
+                entity.Property(e => e.Observaciones).HasMaxLength(500);
+
+                entity.HasOne(d => d.MovilizacionActivoFijo)
+                    .WithMany(p => p.MovilizacionActivoFijoDetalle)
+                    .HasForeignKey(d => d.IdMovilizacionActivoFijo)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_MovilizacionActivoFijoDetalle_MovilizacionActivoFijo");
+
+                entity.HasOne(d => d.RecepcionActivoFijoDetalle)
+                    .WithMany(p => p.MovilizacionActivoFijoDetalle)
+                    .HasForeignKey(d => d.IdRecepcionActivoFijoDetalle)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_MovilizacionActivoFijoDetalle_RecepcionActivoFijoDetalle");
+            });
+
             modelBuilder.Entity<Nacionalidad>(entity =>
             {
                 entity.HasKey(e => e.IdNacionalidad)
@@ -993,6 +1080,22 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdSubramo)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_PolizaSeguroActivoFijo_Subramo");
+            });
+
+            modelBuilder.Entity<ProcesoJudicialActivoFijo>(entity =>
+            {
+                entity.HasKey(e => e.IdProcesoJudicialActivoFijo)
+                    .HasName("PK_ProcesoJudicialActivoFijo");
+
+                entity.Property(e => e.NumeroDenuncia)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.HasOne(d => d.RecepcionActivoFijoDetalle)
+                    .WithMany(p => p.ProcesoJudicialActivoFijo)
+                    .HasForeignKey(d => d.IdRecepcionActivoFijoDetalle)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_ProcesoJudicialActivoFijo_RecepcionActivoFijoDetalle");
             });
 
             modelBuilder.Entity<Proveedor>(entity =>

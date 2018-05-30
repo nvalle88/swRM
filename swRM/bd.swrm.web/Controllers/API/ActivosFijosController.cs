@@ -156,7 +156,6 @@ namespace bd.swrm.web.Controllers.API
         [Route("ListarActivoFijoPorEstado")]
         public async Task<List<ActivoFijo>> GetActivosFijosPorEstado([FromBody] List<string> estados)
         {
-            await emailSender.SendEmailAsync("carlos.avila8909@gmail.com", "Nueva recepción de Activos Fijos", "Se han recepcionado nuevos Activos Fijos.");
             return await ListarActivosFijos(predicadoRecepcionActivoFijoDetalle: c => estados.Contains(c.Estado.Nombre));
         }
 
