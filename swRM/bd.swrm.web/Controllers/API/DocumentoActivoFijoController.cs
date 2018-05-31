@@ -82,7 +82,8 @@ namespace bd.swrm.web.Controllers.API
                         IdActivoFijo = documentoActivoFijoTransfer.IdActivoFijo,
                         IdRecepcionActivoFijoDetalle = documentoActivoFijoTransfer.IdRecepcionActivoFijoDetalle,
                         IdAltaActivoFijo = documentoActivoFijoTransfer.IdAltaActivoFijo,
-                        IdFacturaActivoFijo = documentoActivoFijoTransfer.IdFacturaActivoFijo
+                        IdFacturaActivoFijo = documentoActivoFijoTransfer.IdFacturaActivoFijo,
+                        IdProcesoJudicialActivoFijo = documentoActivoFijoTransfer.IdProcesoJudicialActivoFijo
                     });
                     string extensionFile = uploadFileService.FileExtension(documentoActivoFijoTransfer.Nombre);
                     await uploadFileService.UploadFile(documentoActivoFijoTransfer.Fichero, Mensaje.CarpetaActivoFijoDocumento, $"{documentoActivoFijo.IdDocumentoActivoFijo}{extensionFile}");
@@ -165,7 +166,7 @@ namespace bd.swrm.web.Controllers.API
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                var respuestaFile = uploadFileService.DeleteFile(Mensaje.CarpetaActivoFijoDocumento, $"{id}{uploadFileService.FileExtension(respuesta.Nombre)}");
+                var respuestaFile = uploadFileService.DeleteFile(respuesta.Url);
                 db.DocumentoActivoFijo.Remove(respuesta);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };

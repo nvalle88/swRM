@@ -34,11 +34,6 @@ namespace bd.swrm.servicios.Servicios
             }
         }
 
-        public bool DeleteFile(string folder, string fileName)
-        {
-            return DeleteFile(Path.Combine(_hostingEnvironment.WebRootPath, $"{folder}/{fileName}"));
-        }
-
         public bool DeleteFile(string url)
         {
             try

@@ -1064,7 +1064,7 @@ namespace bd.swrm.web.Controllers.API
                 await db.SaveChangesAsync();
 
                 foreach (var item in listaDocumentosActivoFijo)
-                    uploadFileService.DeleteFile(Mensaje.CarpetaActivoFijoDocumento, item.Url);
+                    uploadFileService.DeleteFile(item.Url);
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
             catch (Exception ex)
@@ -1125,7 +1125,7 @@ namespace bd.swrm.web.Controllers.API
                 await db.SaveChangesAsync();
 
                 foreach (var item in listaDocumentosActivoFijo)
-                    uploadFileService.DeleteFile(Mensaje.CarpetaActivoFijoDocumento, item.Url);
+                    uploadFileService.DeleteFile(item.Url);
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
             catch (Exception ex)

@@ -12,5 +12,6 @@ namespace bd.swrm.entidades.ObjectTransfer
         public int? IdRecepcionActivoFijoDetalle { get; set; }
         public int? IdAltaActivoFijo { get; set; }
         public int? IdFacturaActivoFijo { get; set; }
+        public int? IdProcesoJudicialActivoFijo { get; set; }
     }
 }

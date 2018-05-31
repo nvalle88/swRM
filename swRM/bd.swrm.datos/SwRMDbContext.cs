@@ -516,7 +516,7 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdFacturaActivoFijo)
                     .HasConstraintName("FK_DocumentoActivoFijo_FacturaActivoFijo");
 
-                entity.HasOne(d => d.IdProcesoJudicialActivoFijoNavigation)
+                entity.HasOne(d => d.ProcesoJudicialActivoFijo)
                     .WithMany(p => p.DocumentoActivoFijo)
                     .HasForeignKey(d => d.IdProcesoJudicialActivoFijo)
                     .HasConstraintName("FK_DocumentoActivoFijo_ProcesoJudicialActivoFijo");
