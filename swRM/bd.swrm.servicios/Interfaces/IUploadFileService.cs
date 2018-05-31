@@ -10,7 +10,6 @@ namespace bd.swrm.servicios.Interfaces
     public interface IUploadFileService
     {
         Task<bool> UploadFile(byte[] file, string folder, string fileName);
-        bool DeleteFile(string folder, string fileName);
         bool DeleteFile(string url);
         string FileExtension(string fileName);
         DocumentoActivoFijoTransfer GetFileDocumentoActivoFijo(string folder, string fileName);
