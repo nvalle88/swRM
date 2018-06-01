@@ -45,7 +45,7 @@ namespace bd.swrm.web.Controllers.API
         [Route("ListarActivosFijosPorAgrupacion")]
         public async Task<List<ActivoFijo>> GetActivosFijosPorAgrupacion()
         {
-            return await ListarActivosFijosPorAgrupacion();
+            return await ListarActivosFijosPorAgrupacionSucursalNombre();
         }
 
         [HttpGet]
@@ -81,6 +81,20 @@ namespace bd.swrm.web.Controllers.API
         public async Task<List<TransferenciaActivoFijo>> GetTransferenciasCambiosUbicacionAceptadasActivosFijos()
         {
             return await ListarTransferenciasActivoFijo(new TransferenciaEstadoTransfer { MotivoTransferencia = MotivosTransferencia.CambioUbicacion, Estado = Estados.Aceptada });
+        }
+
+        [HttpGet]
+        [Route("ListarInventariosActivosFijos")]
+        public async Task<List<InventarioActivoFijo>> GetInventarioActivosFijos()
+        {
+            return await ListarInventariosActivosFijos();
+        }
+
+        [HttpPost]
+        [Route("ListarInventariosActivosFijosPorRangoFecha")]
+        public async Task<List<InventarioActivoFijo>> PostInventariosActivosFijosPorRangoFecha([FromBody] RangoFechaTransfer rangoFechaTransfer)
+        {
+            return await ListarInventariosActivosFijos(predicado: c=> (c.FechaInforme >= rangoFechaTransfer.FechaInicial && c.FechaInforme <= rangoFechaTransfer.FechaFinal) || (c.FechaCorteInventario >= rangoFechaTransfer.FechaInicial && c.FechaCorteInventario <= rangoFechaTransfer.FechaFinal));
         }
 
         [HttpGet]
@@ -124,9 +138,16 @@ namespace bd.swrm.web.Controllers.API
             return await ObtenerTransferenciaActivoFijo(id);
         }
 
+        [HttpGet]
+        [Route("ObtenerInventarioActivosFijos/{id}")]
+        public async Task<Response> GetInventarioActivoFijo([FromRoute] int id)
+        {
+            return await ObtenerInventarioActivoFijo(id);
+        }
+
         [HttpPost]
         [Route("ObtenerActivoFijoPorEstado")]
-        public async Task<Response> GetActivoFijoPorEstado([FromBody] IdEstadosTransfer idActivoFijoEstadosTransfer)
+        public async Task<Response> PostActivoFijoPorEstado([FromBody] IdEstadosTransfer idActivoFijoEstadosTransfer)
         {
             return idActivoFijoEstadosTransfer.Estados.Count > 0 ? await ObtenerActivoFijo(idActivoFijoEstadosTransfer.Id, predicadoDetalleActivoFijo: c=> idActivoFijoEstadosTransfer.Estados.Contains(c.Estado.Nombre)) : await ObtenerActivoFijo(idActivoFijoEstadosTransfer.Id);
         }
@@ -153,8 +174,49 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpPost]
+        [Route("ObtenerDetalleActivoFijoParaInventario")]
+        public async Task<Response> PostDetalleActivoFijoParaInventario([FromBody] string codigoSecuencial)
+        {
+            try
+            {
+                var recepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true, incluirAltasActivoFijo: true).FirstOrDefaultAsync(c => c.CodigoActivoFijo.Codigosecuencial == codigoSecuencial);
+                return new Response { IsSuccess = recepcionActivoFijoDetalle != null, Message = recepcionActivoFijoDetalle != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = recepcionActivoFijoDetalle };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+
+        [HttpPost]
+        [Route("DetallesActivoFijoSeleccionadoPorEstado")]
+        public async Task<List<RecepcionActivoFijoDetalleSeleccionado>> PostActivoFijoSeleccionadoPorEstado([FromBody] IdRecepcionActivoFijoDetalleSeleccionadoEstado idRecepcionActivoFijoDetalleSeleccionadoEstado)
+        {
+            var lista = new List<RecepcionActivoFijoDetalleSeleccionado>();
+            try
+            {
+                var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true, incluirAltasActivoFijo: true).Where(c => idRecepcionActivoFijoDetalleSeleccionadoEstado.Estados.Contains(c.Estado.Nombre)).ToListAsync();
+                var listaIdsRAFDSeleccionados = idRecepcionActivoFijoDetalleSeleccionadoEstado.ListaIdRecepcionActivoFijoDetalleSeleccionado.Where(c=> c.seleccionado).Select(c => c.idRecepcionActivoFijoDetalle);
+                foreach (var item in listaRecepcionActivoFijoDetalle)
+                {
+                    lista.Add(new RecepcionActivoFijoDetalleSeleccionado
+                    {
+                        RecepcionActivoFijoDetalle = ObtenerRecepcionActivoFijoDetalle(item, incluirComponentes: true, incluirActivoFijo: true),
+                        Seleccionado = listaIdsRAFDSeleccionados.Contains(item.IdRecepcionActivoFijoDetalle)
+                    });
+                }
+            }
+            catch (Exception)
+            {
+                return new List<RecepcionActivoFijoDetalleSeleccionado>();
+            }
+            return lista;
+        }
+
+        [HttpPost]
         [Route("ListarActivoFijoPorEstado")]
-        public async Task<List<ActivoFijo>> GetActivosFijosPorEstado([FromBody] List<string> estados)
+        public async Task<List<ActivoFijo>> PostActivosFijosPorEstado([FromBody] List<string> estados)
         {
             return await ListarActivosFijos(predicadoRecepcionActivoFijoDetalle: c => estados.Contains(c.Estado.Nombre));
         }
@@ -263,7 +325,7 @@ namespace bd.swrm.web.Controllers.API
         [Route("ListarActivosFijosPorAgrupacionPorEstado")]
         public async Task<List<ActivoFijo>> GetActivosFijosPorAgrupacionPorEstado([FromBody] string estado)
         {
-            return await ListarActivosFijosPorAgrupacion(predicadoRecepcionActivoFijoDetalle: c => c.Estado.Nombre == estado);
+            return await ListarActivosFijosPorAgrupacionSucursalNombre(predicadoRecepcionActivoFijoDetalle: c => c.Estado.Nombre == estado);
         }
 
         [HttpPost]
@@ -571,6 +633,44 @@ namespace bd.swrm.web.Controllers.API
                     transaction.Commit();
                 }
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+
+        [HttpPost]
+        [Route("InsertarInventarioActivoFijo")]
+        public async Task<Response> PostInsertarInventarioActivoFijo([FromBody] InventarioActivoFijo inventarioActivoFijo)
+        {
+            try
+            {
+                var nuevoInventarioActivoFijo = new InventarioActivoFijo();
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    nuevoInventarioActivoFijo.FechaCorteInventario = inventarioActivoFijo.FechaCorteInventario;
+                    nuevoInventarioActivoFijo.FechaInforme = inventarioActivoFijo.FechaInforme;
+                    nuevoInventarioActivoFijo.NumeroInforme = inventarioActivoFijo.NumeroInforme;
+                    nuevoInventarioActivoFijo.IdEstado = inventarioActivoFijo.IdEstado;
+                    nuevoInventarioActivoFijo.InventarioManual = inventarioActivoFijo.InventarioManual;
+                    db.InventarioActivoFijo.Add(nuevoInventarioActivoFijo);
+                    await db.SaveChangesAsync();
+
+                    foreach (var item in inventarioActivoFijo.InventarioActivoFijoDetalle)
+                    {
+                        db.InventarioActivoFijoDetalle.Add(new InventarioActivoFijoDetalle
+                        {
+                            IdRecepcionActivoFijoDetalle = item.IdRecepcionActivoFijoDetalle,
+                            IdInventarioActivoFijo = nuevoInventarioActivoFijo.IdInventarioActivoFijo,
+                            Constatado = item.Constatado
+                        });
+                        await db.SaveChangesAsync();
+                    }
+                    transaction.Commit();
+                }
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = nuevoInventarioActivoFijo };
             }
             catch (Exception ex)
             {
@@ -1001,6 +1101,53 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
+        [HttpPut("EditarInventarioActivoFijo/{id}")]
+        public async Task<Response> PutInventarioActivoFijo([FromRoute] int id, [FromBody] InventarioActivoFijo inventarioActivoFijo)
+        {
+            try
+            {
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    var inventarioActivoFijoActualizar = await db.InventarioActivoFijo.FirstOrDefaultAsync(c => c.IdInventarioActivoFijo == id);
+                    if (inventarioActivoFijoActualizar != null)
+                    {
+                        inventarioActivoFijoActualizar.FechaCorteInventario = inventarioActivoFijo.FechaCorteInventario;
+                        inventarioActivoFijoActualizar.FechaInforme = inventarioActivoFijo.FechaInforme;
+                        inventarioActivoFijoActualizar.NumeroInforme = inventarioActivoFijo.NumeroInforme;
+                        inventarioActivoFijoActualizar.IdEstado = inventarioActivoFijo.IdEstado;
+                        inventarioActivoFijoActualizar.InventarioManual = inventarioActivoFijo.InventarioManual;
+                        db.InventarioActivoFijo.Update(inventarioActivoFijoActualizar);
+                        await db.SaveChangesAsync();
+                    }
+                    foreach (var item in inventarioActivoFijo.InventarioActivoFijoDetalle)
+                    {
+                        var inventarioActivoFijoDetalle = await db.InventarioActivoFijoDetalle.SingleOrDefaultAsync(c => c.IdInventarioActivoFijo == item.IdInventarioActivoFijo && c.IdRecepcionActivoFijoDetalle == item.IdRecepcionActivoFijoDetalle);
+                        if (inventarioActivoFijoDetalle == null)
+                        {
+                            db.InventarioActivoFijoDetalle.Add(new InventarioActivoFijoDetalle
+                            {
+                                IdRecepcionActivoFijoDetalle = item.IdRecepcionActivoFijoDetalle,
+                                IdInventarioActivoFijo = inventarioActivoFijo.IdInventarioActivoFijo,
+                                Constatado = item.Constatado
+                            });
+                        }
+                        else
+                        {
+                            inventarioActivoFijoDetalle.Constatado = item.Constatado;
+                            db.InventarioActivoFijoDetalle.Update(inventarioActivoFijoDetalle);
+                        }
+                        await db.SaveChangesAsync();
+                    }
+                    transaction.Commit();
+                }
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = inventarioActivoFijo };
+            }
+            catch (Exception)
+            {
+                return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
+            }
+        }
+
         [HttpDelete("{id}")]
         public async Task<Response> DeleteActivosFijos([FromRoute] int id)
         {
@@ -1387,6 +1534,20 @@ namespace bd.swrm.web.Controllers.API
                 MotivoTransferencia = new MotivoTransferencia { Motivo_Transferencia = transferenciaActivoFijo.MotivoTransferencia.Motivo_Transferencia }
             } : null;
         }
+        private InventarioActivoFijo ObtenerInventarioActivoFijoFinal(InventarioActivoFijo inventarioActivoFijo)
+        {
+            return inventarioActivoFijo != null ? new InventarioActivoFijo
+            {
+                IdInventarioActivoFijo = inventarioActivoFijo.IdInventarioActivoFijo,
+                FechaCorteInventario = inventarioActivoFijo.FechaCorteInventario,
+                FechaInforme = inventarioActivoFijo.FechaInforme,
+                NumeroInforme = inventarioActivoFijo.NumeroInforme,
+                IdEstado = inventarioActivoFijo.IdEstado,
+                InventarioManual = inventarioActivoFijo.InventarioManual,
+                Estado = new Estado { Nombre = inventarioActivoFijo.Estado.Nombre },
+                InventarioActivoFijoDetalle = inventarioActivoFijo.InventarioActivoFijoDetalle
+            } : null;
+        }
         private CodigoActivoFijo ObtenerCodigoActivoFijoFinal(CodigoActivoFijo codigoActivoFijo)
         {
             return codigoActivoFijo != null ? new CodigoActivoFijo
@@ -1435,7 +1596,7 @@ namespace bd.swrm.web.Controllers.API
                 return new List<ActivoFijo>();
             }
         }
-        private async Task<List<ActivoFijo>> ListarActivosFijosPorAgrupacion(int? idActivoFijo = null, bool? incluirAltasActivoFijo = null, Expression<Func<RecepcionActivoFijoDetalle, bool>> predicadoRecepcionActivoFijoDetalle = null)
+        private async Task<List<ActivoFijo>> ListarActivosFijosPorAgrupacionSucursalNombre(int? idActivoFijo = null, bool? incluirAltasActivoFijo = null, Expression<Func<RecepcionActivoFijoDetalle, bool>> predicadoRecepcionActivoFijoDetalle = null)
         {
             try
             {
@@ -1544,6 +1705,26 @@ namespace bd.swrm.web.Controllers.API
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new List<BajaActivoFijo>();
+            }
+        }
+        private async Task<List<InventarioActivoFijo>> ListarInventariosActivosFijos(Expression<Func<InventarioActivoFijo, bool>> predicado = null)
+        {
+            try
+            {
+                var lista = new List<InventarioActivoFijo>();
+                var idsInventarios = await (predicado != null ? db.InventarioActivoFijo.Where(predicado).Select(c => c.IdInventarioActivoFijo).ToListAsync() : db.InventarioActivoFijo.Select(c => c.IdInventarioActivoFijo).ToListAsync());
+                foreach (var item in idsInventarios)
+                {
+                    var response = await ObtenerInventarioActivoFijo(item);
+                    if (response.IsSuccess)
+                        lista.Add(response.Resultado as InventarioActivoFijo);
+                }
+                return lista;
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<InventarioActivoFijo>();
             }
         }
         #endregion
@@ -1699,6 +1880,39 @@ namespace bd.swrm.web.Controllers.API
                 transferenciaActivoFijo.SucursalOrigen = transferenciaActivoFijo.TransferenciaActivoFijoDetalle.FirstOrDefault().UbicacionActivoFijoOrigen.LibroActivoFijo.Sucursal;
                 transferenciaActivoFijo.SucursalDestino = transferenciaActivoFijo.TransferenciaActivoFijoDetalle.FirstOrDefault().UbicacionActivoFijoDestino.LibroActivoFijo.Sucursal;
                 return new Response { IsSuccess = transferenciaActivoFijo != null, Message = transferenciaActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = transferenciaActivoFijo };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+        private async Task<Response> ObtenerInventarioActivoFijo(int id, Expression<Func<InventarioActivoFijo, bool>> predicado = null)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
+
+                var inventarioAFBD = db.InventarioActivoFijo.Include(c => c.Estado);
+                var inventarioActivoFijo = ObtenerInventarioActivoFijoFinal(predicado != null ? await inventarioAFBD.Where(predicado).SingleOrDefaultAsync(c => c.IdInventarioActivoFijo == id) : await inventarioAFBD.SingleOrDefaultAsync(c => c.IdInventarioActivoFijo == id));
+                var listadoIdsInventarioActivoFijoDetalle = await db.InventarioActivoFijoDetalle.Include(c => c.RecepcionActivoFijoDetalle).ThenInclude(c => c.Estado).Where(c => c.IdInventarioActivoFijo == inventarioActivoFijo.IdInventarioActivoFijo && c.RecepcionActivoFijoDetalle.Estado.Nombre == Estados.Alta).ToListAsync();
+                inventarioActivoFijo.InventarioActivoFijoDetalle = new List<InventarioActivoFijoDetalle>();
+                foreach (var item in listadoIdsInventarioActivoFijoDetalle)
+                {
+                    var recepcionActivoFijoDetalle = await ObtenerDetalleActivoFijo(item.IdRecepcionActivoFijoDetalle, incluirActivoFijo: true, incluirComponentes: true, incluirAltasActivoFijo: true);
+                    if (recepcionActivoFijoDetalle != null)
+                    {
+                        inventarioActivoFijo.InventarioActivoFijoDetalle.Add(new InventarioActivoFijoDetalle
+                        {
+                            IdRecepcionActivoFijoDetalle = item.IdRecepcionActivoFijoDetalle,
+                            IdInventarioActivoFijo = inventarioActivoFijo.IdInventarioActivoFijo,
+                            RecepcionActivoFijoDetalle = recepcionActivoFijoDetalle,
+                            Constatado = item.Constatado
+                        });
+                    }
+                }
+                return new Response { IsSuccess = inventarioActivoFijo != null, Message = inventarioActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = inventarioActivoFijo };
             }
             catch (Exception ex)
             {

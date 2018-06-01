@@ -38,6 +38,10 @@ namespace bd.swrm.entidades.Negocio
         public int IdEstado { get; set; }
         public virtual Estado Estado { get; set; }
 
+        [Required(ErrorMessage = "Debe introducir el {0}")]
+        [Display(Name = "¿Inventario manual?")]
+        public bool InventarioManual { get; set; }
+
         public virtual ICollection<InventarioActivoFijoDetalle> InventarioActivoFijoDetalle { get; set; }
     }
 }
