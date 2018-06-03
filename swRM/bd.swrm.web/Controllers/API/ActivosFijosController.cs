@@ -438,7 +438,22 @@ namespace bd.swrm.web.Controllers.API
                         await db.SaveChangesAsync();
                     }
                     transaction.Commit();
-                    //await emailSender.SendEmailAsync("carlos.avila8909@gmail.com", "Nueva recepción de Activos Fijos", "Se han recepcionado nuevos Activos Fijos.");
+
+                    var response = await ObtenerActivoFijo(activoFijo.IdActivoFijo);
+                    if (response.IsSuccess)
+                    {
+                        var activoFijoBD = (ActivoFijo)response.Resultado;
+                        await emailSender.SendEmailAsync("carlos.avila8909@gmail.com", "Nueva recepción de Activos Fijos.",
+                        $@"Se han recepcionado nuevos Activos Fijos en el sistema de Recursos Materiales con los siguientes datos: \n \n
+                            Tipo de activo fijo: {activoFijoBD.SubClaseActivoFijo.ClaseActivoFijo.TipoActivoFijo.Nombre}, \n \n
+                            Clase de activo fijo: {activoFijoBD.SubClaseActivoFijo.ClaseActivoFijo.Nombre}, \n \n
+                            Subclase de activo fijo: {activoFijoBD.SubClaseActivoFijo.Nombre}, \n \n
+                            Sucursal: {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().SucursalActual.Nombre}, \n \n
+                            Proveedor: {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().RecepcionActivoFijo.Proveedor.Nombre} {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().RecepcionActivoFijo.Proveedor.Apellidos}, \n \n
+                            Fecha de recepción: {recepcionActivoFijo.FechaRecepcion.ToString("dd-MM-yyyy hh:mm tt")}, \n \n
+                            Activo fijo: {activoFijoBD.Nombre}, \n \n
+                            Cantidad: {recepcionActivoFijo.Cantidad}");
+                    }
                 }
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = listaRecepcionActivoFijoDetalleTransfer };
             }
@@ -1389,6 +1404,7 @@ namespace bd.swrm.web.Controllers.API
                 Serie = rafdOld.Serie,
                 Estado = new Estado { Nombre = rafdOld.Estado.Nombre },
                 UbicacionActivoFijoActual = rafdOld.UbicacionActivoFijoActual,
+                SucursalActual = rafdOld.SucursalActual,
                 AltaActivoFijoActual = rafdOld.AltaActivoFijoActual,
                 BajaActivoFijoActual = rafdOld.BajaActivoFijoActual,
                 CodigoActivoFijo = rafdOld.CodigoActivoFijo,
@@ -1734,9 +1750,6 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
-
                 var activoFijoBD = ObtenerDatosActivoFijo();
                 var activoFijo = await (predicadoActivoFijo != null ? activoFijoBD.Where(predicadoActivoFijo).SingleOrDefaultAsync(m => m.IdActivoFijo == id) : activoFijoBD.SingleOrDefaultAsync(m => m.IdActivoFijo == id));
                 if (activoFijo != null)
@@ -1777,9 +1790,6 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
-
                 var altaActivoFijoBD = db.AltaActivoFijo.Include(x => x.FacturaActivoFijo).Include(c => c.MotivoAlta);
                 var altaActivoFijo = ObtenerAltaActivoFijoActual(predicado != null ? await altaActivoFijoBD.Where(predicado).SingleOrDefaultAsync(c => c.IdAltaActivoFijo == id) : await altaActivoFijoBD.SingleOrDefaultAsync(c => c.IdAltaActivoFijo == id));
                 var listadoIdsRecepcionActivoFijoDetalleAltaActivoFijo = await db.AltaActivoFijoDetalle.Include(c => c.RecepcionActivoFijoDetalle).ThenInclude(c => c.Estado).Where(c => c.IdAltaActivoFijo == altaActivoFijo.IdAltaActivoFijo && c.RecepcionActivoFijoDetalle.Estado.Nombre == Estados.Alta).ToListAsync();
@@ -1813,9 +1823,6 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
-
                 var bajaActivoFijoBD = db.BajaActivoFijo.Include(c => c.MotivoBaja);
                 var bajaActivoFijo = ObtenerBajaActivoFijoActual(predicado != null ? await bajaActivoFijoBD.Where(predicado).SingleOrDefaultAsync(c => c.IdBajaActivoFijo == id) : await bajaActivoFijoBD.SingleOrDefaultAsync(c => c.IdBajaActivoFijo == id));
                 var listadoIdsRecepcionActivoFijoDetalleBajaActivoFijo = await db.BajaActivoFijoDetalle.Include(c => c.RecepcionActivoFijoDetalle).ThenInclude(c => c.Estado).Where(c => c.IdBajaActivoFijo == bajaActivoFijo.IdBajaActivoFijo && c.RecepcionActivoFijoDetalle.Estado.Nombre == Estados.Baja).ToListAsync();
@@ -1845,9 +1852,6 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
-
                 var transferenciaBD = db.TransferenciaActivoFijo.Include(c => c.Estado).Include(c => c.MotivoTransferencia);
                 var transferenciaActivoFijo = ObtenerTransferenciaActivoFijoFinal(predicado != null ? await transferenciaBD.Where(predicado).SingleOrDefaultAsync(c => c.IdTransferenciaActivoFijo == id) : await transferenciaBD.SingleOrDefaultAsync(c => c.IdTransferenciaActivoFijo == id));
 
@@ -1891,9 +1895,6 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
-
                 var inventarioAFBD = db.InventarioActivoFijo.Include(c => c.Estado);
                 var inventarioActivoFijo = ObtenerInventarioActivoFijoFinal(predicado != null ? await inventarioAFBD.Where(predicado).SingleOrDefaultAsync(c => c.IdInventarioActivoFijo == id) : await inventarioAFBD.SingleOrDefaultAsync(c => c.IdInventarioActivoFijo == id));
                 var listadoIdsInventarioActivoFijoDetalle = await db.InventarioActivoFijoDetalle.Include(c => c.RecepcionActivoFijoDetalle).ThenInclude(c => c.Estado).Where(c => c.IdInventarioActivoFijo == inventarioActivoFijo.IdInventarioActivoFijo && c.RecepcionActivoFijoDetalle.Estado.Nombre == Estados.Alta).ToListAsync();
