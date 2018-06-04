@@ -10,6 +10,7 @@ using System;
 using bd.swrm.servicios.Interfaces;
 using bd.swrm.servicios.Servicios;
 using bd.swrm.entidades.Constantes;
+using System.Threading.Tasks;
 
 namespace bd.swrm.web
 {
@@ -25,7 +26,7 @@ namespace bd.swrm.web
             Configuration = builder.Build();
         }
 
-        public IConfigurationRoot Configuration { get; }
+        public static IConfigurationRoot Configuration { get; set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)

@@ -14,7 +14,6 @@ namespace bd.swrm.web
                 .UseStartup<Startup>()
                 .UseApplicationInsights()
                 .Build();
-
             host.Run();
         }
     }

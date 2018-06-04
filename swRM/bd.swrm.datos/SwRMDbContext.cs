@@ -455,6 +455,8 @@ namespace bd.swrm.datos
                 entity.HasKey(e => e.IdDepreciacionActivoFijo)
                     .HasName("PK_DepreciacionActivoFijo");
 
+                entity.Property(e => e.ValorCompra).HasColumnType("decimal");
+
                 entity.Property(e => e.DepreciacionAcumulada).HasColumnType("decimal");
 
                 entity.Property(e => e.ValorResidual).HasColumnType("decimal");
