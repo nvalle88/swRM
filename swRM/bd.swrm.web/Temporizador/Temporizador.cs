@@ -38,12 +38,12 @@ namespace bd.swrm.web.Temporizador
             return new SwRMDbContext(builder.Options);
         }
 
+        #region Depreciación de Activos Fijos
         public static void InicializarTemporizadorDepreciacion()
         {
             InicializarTemporizador(timerDepreciacion, async () => { await DepreciacionActivosFijosAlta(); }, new TimeSpan(0, 0, 5), new TimeSpan(24, 0, 0));
         }
 
-        #region Depreciación de Activos Fijos
         private static async Task<DepreciacionActivoFijo> InsertarDepreciacionActivoFijo(decimal valorCompra, decimal depreciacionAcumulada, decimal valorResidual, DateTime ultimaFechaDepreciacionAlta, int idRecepcionActivoFijoDetalle)
         {
             var nuevaDepreciacionActivoFijo = new DepreciacionActivoFijo

@@ -908,6 +908,18 @@ namespace bd.swrm.datos
                 entity.HasKey(e => e.IdMovilizacionActivoFijo)
                     .HasName("PK_MovilizacionActivoFijo");
 
+                entity.HasOne(d => d.EmpleadoResponsable)
+                    .WithMany(p => p.MovilizacionesActivoFijoEmpleadoResponsable)
+                    .HasForeignKey(d => d.IdEmpleadoResponsable)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_MovilizacionActivoFijo_Empleado1");
+
+                entity.HasOne(d => d.EmpleadoSolicita)
+                    .WithMany(p => p.MovilizacionesActivoFijoEmpleadoSolicita)
+                    .HasForeignKey(d => d.IdEmpleadoSolicita)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_MovilizacionActivoFijo_Empleado");
+
                 entity.HasOne(d => d.MotivoTraslado)
                     .WithMany(p => p.MovilizacionActivoFijo)
                     .HasForeignKey(d => d.IdMotivoTraslado)
