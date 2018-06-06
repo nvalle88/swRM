@@ -90,6 +90,13 @@ namespace bd.swrm.web.Controllers.API
             return await ListarInventariosActivosFijos();
         }
 
+        [HttpGet]
+        [Route("ListarMovilizacionesActivosFijos")]
+        public async Task<List<MovilizacionActivoFijo>> GetMovilizacionesActivosFijos()
+        {
+            return await ListarMovilizacionesActivosFijos();
+        }
+
         [HttpPost]
         [Route("ListarInventariosActivosFijosPorRangoFecha")]
         public async Task<List<InventarioActivoFijo>> PostInventariosActivosFijosPorRangoFecha([FromBody] RangoFechaTransfer rangoFechaTransfer)
@@ -145,6 +152,13 @@ namespace bd.swrm.web.Controllers.API
             return await ObtenerInventarioActivoFijo(id);
         }
 
+        [HttpGet]
+        [Route("ObtenerMovilizacionActivosFijos/{id}")]
+        public async Task<Response> GetMovilizacionActivoFijo([FromRoute] int id)
+        {
+            return await ObtenerMovilizacionActivoFijo(id);
+        }
+
         [HttpPost]
         [Route("ObtenerActivoFijoPorEstado")]
         public async Task<Response> PostActivoFijoPorEstado([FromBody] IdEstadosTransfer idActivoFijoEstadosTransfer)
@@ -179,7 +193,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                var recepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true, incluirAltasActivoFijo: true).FirstOrDefaultAsync(c => c.CodigoActivoFijo.Codigosecuencial == codigoSecuencial);
+                var recepcionActivoFijoDetalle = ObtenerRecepcionActivoFijoDetalle(await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true, incluirAltasActivoFijo: true).FirstOrDefaultAsync(c => c.CodigoActivoFijo.Codigosecuencial == codigoSecuencial), incluirActivoFijo: true);
                 return new Response { IsSuccess = recepcionActivoFijoDetalle != null, Message = recepcionActivoFijoDetalle != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = recepcionActivoFijoDetalle };
             }
             catch (Exception ex)
@@ -223,25 +237,32 @@ namespace bd.swrm.web.Controllers.API
 
         [HttpPost]
         [Route("ListarComponentesDisponiblesActivoFijo")]
+        //Where de Sucursal
         public async Task<List<RecepcionActivoFijoDetalleSeleccionado>> PostComponentesActivosFijos([FromBody] IdRecepcionActivoFijoDetalleSeleccionadoIdsComponentesExcluir idRecepcionActivoFijoDetalleSeleccionadoIdsComponentesExcluir)
         {
             var lista = new List<RecepcionActivoFijoDetalleSeleccionado>();
             try
             {
-                var listaIdsExcluirTablaComponenteActivoFijo = await db.ComponenteActivoFijo.Select(c => c.IdRecepcionActivoFijoDetalleOrigen).Except(idRecepcionActivoFijoDetalleSeleccionadoIdsComponentesExcluir.ListaIdRecepcionActivoFijoDetalleSeleccionado.Select(c => c.idRecepcionActivoFijoDetalle)).ToListAsync();
+                var listaIdsExcluirTablaComponenteActivoFijo = await db.ComponenteActivoFijo
+                    .Select(c => c.IdRecepcionActivoFijoDetalleComponente)
+                    .Except(idRecepcionActivoFijoDetalleSeleccionadoIdsComponentesExcluir.ListaIdRecepcionActivoFijoDetalleSeleccionado
+                    .Select(c => c.idRecepcionActivoFijoDetalle))
+                    .ToListAsync();
                 var listaIdsRAFDSeleccionados = idRecepcionActivoFijoDetalleSeleccionadoIdsComponentesExcluir.ListaIdRecepcionActivoFijoDetalleSeleccionado.Select(c => c.idRecepcionActivoFijoDetalle);
                 
-                var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true).Where(c=> c.Estado.Nombre == Estados.Recepcionado || c.Estado.Nombre == Estados.Alta).ToListAsync();
+                var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true)
+                    .Where(c=> (c.Estado.Nombre == Estados.Recepcionado || c.Estado.Nombre == Estados.Alta)
+                    && c.RecepcionActivoFijo.MotivoRecepcion.Descripcion == "Adición"
+                    && c.Estado.Nombre != Estados.ValidacionTecnica
+                && (!idRecepcionActivoFijoDetalleSeleccionadoIdsComponentesExcluir.IdsComponentesExcluir.Contains(c.IdRecepcionActivoFijoDetalle)
+                && !listaIdsExcluirTablaComponenteActivoFijo.Contains(c.IdRecepcionActivoFijoDetalle))).ToListAsync();
                 foreach (var item in listaRecepcionActivoFijoDetalle)
                 {
-                    if (!idRecepcionActivoFijoDetalleSeleccionadoIdsComponentesExcluir.IdsComponentesExcluir.Contains(item.IdRecepcionActivoFijoDetalle) && !listaIdsExcluirTablaComponenteActivoFijo.Contains(item.IdRecepcionActivoFijoDetalle))
+                    lista.Add(new RecepcionActivoFijoDetalleSeleccionado
                     {
-                        lista.Add(new RecepcionActivoFijoDetalleSeleccionado
-                        {
-                            RecepcionActivoFijoDetalle = ObtenerRecepcionActivoFijoDetalle(item, incluirComponentes: true, incluirActivoFijo: true),
-                            Seleccionado = listaIdsRAFDSeleccionados.Contains(item.IdRecepcionActivoFijoDetalle)
-                        });
-                    }
+                        RecepcionActivoFijoDetalle = ObtenerRecepcionActivoFijoDetalle(item, incluirComponentes: true, incluirActivoFijo: true),
+                        Seleccionado = listaIdsRAFDSeleccionados.Contains(item.IdRecepcionActivoFijoDetalle)
+                    });
                 }
                 return lista;
             }
@@ -258,7 +279,7 @@ namespace bd.swrm.web.Controllers.API
             try
             {
                 var lista = new List<RecepcionActivoFijoDetalleSeleccionado>();
-                var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true).Where(c => c.Estado.Nombre == Estados.Recepcionado || (c.Estado.Nombre == Estados.Alta && idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja.ListaIdRecepcionActivoFijoDetalleSeleccionadoInicialesAltaBaja.Select(x=> x.idRecepcionActivoFijoDetalle).Contains(c.IdRecepcionActivoFijoDetalle))).ToListAsync();
+                var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true).Where(c => (c.Estado.Nombre == Estados.Recepcionado || (c.Estado.Nombre == Estados.Alta && idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja.ListaIdRecepcionActivoFijoDetalleSeleccionadoInicialesAltaBaja.Select(x=> x.idRecepcionActivoFijoDetalle).Contains(c.IdRecepcionActivoFijoDetalle))) && c.RecepcionActivoFijo.MotivoRecepcion.Descripcion != "Adición").ToListAsync();
                 var listaIdsRAFDSeleccionados = idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja.ListaIdRecepcionActivoFijoDetalleSeleccionado.Select(c => c.idRecepcionActivoFijoDetalle);
                 foreach (var item in listaRecepcionActivoFijoDetalle)
                 {
@@ -311,7 +332,7 @@ namespace bd.swrm.web.Controllers.API
                 var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true, incluirAltasActivoFijo: true).Where(c => c.UbicacionActivoFijoActual.IdEmpleado == cambioCustodioViewModel.IdEmpleadoEntrega).ToListAsync();
 
                 return listaRecepcionActivoFijoDetalle.Select(c=> new RecepcionActivoFijoDetalleSeleccionado {
-                    RecepcionActivoFijoDetalle = c,
+                    RecepcionActivoFijoDetalle = ObtenerRecepcionActivoFijoDetalle(c, incluirComponentes: true, incluirActivoFijo: true),
                     Seleccionado = cambioCustodioViewModel.ListadoIdRecepcionActivoFijoDetalle.Contains(c.IdRecepcionActivoFijoDetalle)
                 }).ToList();
             }
@@ -438,22 +459,21 @@ namespace bd.swrm.web.Controllers.API
                         await db.SaveChangesAsync();
                     }
                     transaction.Commit();
-
-                    var response = await ObtenerActivoFijo(activoFijo.IdActivoFijo);
-                    if (response.IsSuccess)
-                    {
-                        var activoFijoBD = (ActivoFijo)response.Resultado;
-                        await emailSender.SendEmailAsync("carlos.avila8909@gmail.com", "Nueva recepción de Activos Fijos.",
-                        $@"Se han recepcionado nuevos Activos Fijos en el sistema de Recursos Materiales con los siguientes datos: \n \n
-                            Tipo de activo fijo: {activoFijoBD.SubClaseActivoFijo.ClaseActivoFijo.TipoActivoFijo.Nombre}, \n \n
-                            Clase de activo fijo: {activoFijoBD.SubClaseActivoFijo.ClaseActivoFijo.Nombre}, \n \n
-                            Subclase de activo fijo: {activoFijoBD.SubClaseActivoFijo.Nombre}, \n \n
-                            Sucursal: {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().SucursalActual.Nombre}, \n \n
-                            Proveedor: {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().RecepcionActivoFijo.Proveedor.Nombre} {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().RecepcionActivoFijo.Proveedor.Apellidos}, \n \n
-                            Fecha de recepción: {recepcionActivoFijo.FechaRecepcion.ToString("dd-MM-yyyy hh:mm tt")}, \n \n
-                            Activo fijo: {activoFijoBD.Nombre}, \n \n
-                            Cantidad: {recepcionActivoFijo.Cantidad}");
-                    }
+                    //var response = await ObtenerActivoFijo(activoFijo.IdActivoFijo);
+                    //if (response.IsSuccess)
+                    //{
+                    //    var activoFijoBD = (ActivoFijo)response.Resultado;
+                    //    await emailSender.SendEmailAsync("carlos.avila8909@gmail.com", "Nueva recepción de Activos Fijos.",
+                    //    $@"Se han recepcionado nuevos Activos Fijos en el sistema de Recursos Materiales con los siguientes datos: \n \n
+                    //        Tipo de activo fijo: {activoFijoBD.SubClaseActivoFijo.ClaseActivoFijo.TipoActivoFijo.Nombre}, \n \n
+                    //        Clase de activo fijo: {activoFijoBD.SubClaseActivoFijo.ClaseActivoFijo.Nombre}, \n \n
+                    //        Subclase de activo fijo: {activoFijoBD.SubClaseActivoFijo.Nombre}, \n \n
+                    //        Sucursal: {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().SucursalActual.Nombre}, \n \n
+                    //        Proveedor: {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().RecepcionActivoFijo.Proveedor.Nombre} {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().RecepcionActivoFijo.Proveedor.Apellidos}, \n \n
+                    //        Fecha de recepción: {recepcionActivoFijo.FechaRecepcion.ToString("dd-MM-yyyy hh:mm tt")}, \n \n
+                    //        Activo fijo: {activoFijoBD.Nombre}, \n \n
+                    //        Cantidad: {recepcionActivoFijo.Cantidad}");
+                    //}
                 }
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = listaRecepcionActivoFijoDetalleTransfer };
             }
@@ -515,7 +535,7 @@ namespace bd.swrm.web.Controllers.API
                         rafd.IdEstado = estadoAlta.IdEstado;
                         rafd.RecepcionActivoFijo.Cantidad--;
                         await db.SaveChangesAsync();
-                        await GestionarComponentesRecepcionActivoFijoDetalle(item.RecepcionActivoFijoDetalle);
+                        await GestionarComponentesRecepcionActivoFijoDetalle(item.RecepcionActivoFijoDetalle, Estados.Alta);
                     }
                     Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
                     transaction.Commit();
@@ -556,6 +576,13 @@ namespace bd.swrm.web.Controllers.API
                         var rafd = await db.RecepcionActivoFijoDetalle.Include(c => c.RecepcionActivoFijo).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == item.IdRecepcionActivoFijoDetalle);
                         rafd.IdEstado = estadoBaja.IdEstado;
                         await db.SaveChangesAsync();
+
+                        var listadoComponentes = await db.ComponenteActivoFijo.Include(c=> c.RecepcionActivoFijoDetalleComponente).Where(c => c.IdRecepcionActivoFijoDetalleOrigen == item.IdRecepcionActivoFijoDetalle).ToListAsync();
+                        foreach (var comp in listadoComponentes)
+                        {
+                            comp.RecepcionActivoFijoDetalleComponente.IdEstado = estadoBaja.IdEstado;
+                            await db.SaveChangesAsync();
+                        }
                     }
                     transaction.Commit();
                 }
@@ -1305,6 +1332,7 @@ namespace bd.swrm.web.Controllers.API
         }
 
         #region IQueryable<T> Datos Comunes
+        //Where de Sucursal
         private IQueryable<ActivoFijo> ObtenerDatosActivoFijo()
         {
             return db.ActivoFijo
@@ -1488,15 +1516,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     Nombre = ubicacionActivoFijo.Bodega.Nombre
                 } : null,
-                Empleado = ubicacionActivoFijo.Empleado != null ? new Empleado
-                {
-                    Persona = ubicacionActivoFijo.Empleado.Persona != null ? new Persona
-                    {
-                        IdPersona = ubicacionActivoFijo.Empleado.Persona.IdPersona,
-                        Nombres = ubicacionActivoFijo.Empleado.Persona.Nombres,
-                        Apellidos = ubicacionActivoFijo.Empleado.Persona.Apellidos
-                    } : null
-                } : null
+                Empleado = ObtenerEmpleadoFinal(ubicacionActivoFijo?.Empleado)
             };
         }
         private List<ComponenteActivoFijo> ObtenerListadoComponenteActivoFijo(List<ComponenteActivoFijo> listaComponenteActivoFijo)
@@ -1564,6 +1584,24 @@ namespace bd.swrm.web.Controllers.API
                 InventarioActivoFijoDetalle = inventarioActivoFijo.InventarioActivoFijoDetalle
             } : null;
         }
+        private MovilizacionActivoFijo ObtenerMovilizacionActivoFijoFinal(MovilizacionActivoFijo movilizacionActivoFijo)
+        {
+            return movilizacionActivoFijo != null ? new MovilizacionActivoFijo
+            {
+                IdMovilizacionActivoFijo = movilizacionActivoFijo.IdMovilizacionActivoFijo,
+                IdEmpleadoResponsable = movilizacionActivoFijo.IdEmpleadoResponsable,
+                IdEmpleadoSolicita = movilizacionActivoFijo.IdEmpleadoSolicita,
+                IdEmpleadoAutorizado = movilizacionActivoFijo.IdEmpleadoAutorizado,
+                FechaSalida = movilizacionActivoFijo.FechaSalida,
+                FechaRetorno = movilizacionActivoFijo.FechaRetorno,
+                IdMotivoTraslado = movilizacionActivoFijo.IdMotivoTraslado,
+                MotivoTraslado = new MotivoTraslado { Descripcion = movilizacionActivoFijo.MotivoTraslado.Descripcion },
+                EmpleadoResponsable = ObtenerEmpleadoFinal(movilizacionActivoFijo.EmpleadoResponsable),
+                EmpleadoSolicita = ObtenerEmpleadoFinal(movilizacionActivoFijo.EmpleadoSolicita),
+                EmpleadoAutorizado = ObtenerEmpleadoFinal(movilizacionActivoFijo.EmpleadoAutorizado),
+                MovilizacionActivoFijoDetalle = movilizacionActivoFijo.MovilizacionActivoFijoDetalle
+            } : null;
+        }
         private CodigoActivoFijo ObtenerCodigoActivoFijoFinal(CodigoActivoFijo codigoActivoFijo)
         {
             return codigoActivoFijo != null ? new CodigoActivoFijo
@@ -1578,7 +1616,12 @@ namespace bd.swrm.web.Controllers.API
             {
                 IdEmpleado = empleado.IdEmpleado,
                 IdPersona = empleado.IdPersona,
-                Persona = empleado.Persona != null ? new Persona { Nombres = empleado.Persona.Nombres, Apellidos = empleado.Persona.Apellidos } : null
+                Persona = empleado.Persona != null ? new Persona
+                {
+                    IdPersona = empleado.Persona.IdPersona,
+                    Nombres = empleado.Persona.Nombres,
+                    Apellidos = empleado.Persona.Apellidos
+                } : null
             } : null;
         }
         #endregion
@@ -1645,7 +1688,7 @@ namespace bd.swrm.web.Controllers.API
                 return new List<ActivoFijo>();
             }
         }
-        private async Task GestionarComponentesRecepcionActivoFijoDetalle(RecepcionActivoFijoDetalle item)
+        private async Task GestionarComponentesRecepcionActivoFijoDetalle(RecepcionActivoFijoDetalle item, string nuevoEstado = null)
         {
             var listaIdsComponentesBD = await db.ComponenteActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalleOrigen == item.IdRecepcionActivoFijoDetalle).Select(c => c.IdRecepcionActivoFijoDetalleComponente).ToListAsync();
             var listaExcept = listaIdsComponentesBD.Except(item.ComponentesActivoFijoOrigen.Select(c => c.IdRecepcionActivoFijoDetalleComponente).ToList());
@@ -1656,9 +1699,25 @@ namespace bd.swrm.web.Controllers.API
                     comp.IdRecepcionActivoFijoDetalleOrigen = item.IdRecepcionActivoFijoDetalle;
                     db.ComponenteActivoFijo.Add(comp);
                 }
+                if (!String.IsNullOrEmpty(nuevoEstado))
+                {
+                    if (nuevoEstado == Estados.Alta)
+                    {
+                        var rafd = await db.RecepcionActivoFijoDetalle.Include(c => c.RecepcionActivoFijo).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == comp.IdRecepcionActivoFijoDetalleComponente);
+                        var estadoDB = await db.Estado.FirstOrDefaultAsync(c => c.Nombre == Estados.Alta);
+                        rafd.IdEstado = estadoDB.IdEstado;
+                        rafd.RecepcionActivoFijo.Cantidad--;
+                    }
+                }
             }
             foreach (var idcomp in listaExcept)
+            {
                 db.ComponenteActivoFijo.Remove(await db.ComponenteActivoFijo.FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalleOrigen == item.IdRecepcionActivoFijoDetalle && c.IdRecepcionActivoFijoDetalleComponente == idcomp));
+                var rafd = await db.RecepcionActivoFijoDetalle.Include(c => c.RecepcionActivoFijo).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == idcomp);
+                var estadoDB = await db.Estado.FirstOrDefaultAsync(c => c.Nombre == Estados.Recepcionado);
+                rafd.IdEstado = estadoDB.IdEstado;
+                rafd.RecepcionActivoFijo.Cantidad++;
+            }
             await db.SaveChangesAsync();
         }
         private async Task<List<TransferenciaActivoFijo>> ListarTransferenciasActivoFijo(TransferenciaEstadoTransfer transferenciaEstadoTransfer, Expression<Func<TransferenciaActivoFijo, bool>> predicado = null)
@@ -1743,6 +1802,26 @@ namespace bd.swrm.web.Controllers.API
                 return new List<InventarioActivoFijo>();
             }
         }
+        private async Task<List<MovilizacionActivoFijo>> ListarMovilizacionesActivosFijos(Expression<Func<MovilizacionActivoFijo, bool>> predicado = null)
+        {
+            try
+            {
+                var lista = new List<MovilizacionActivoFijo>();
+                var idsMovilizaciones = await (predicado != null ? db.MovilizacionActivoFijo.Where(predicado).Select(c => c.IdMovilizacionActivoFijo).ToListAsync() : db.MovilizacionActivoFijo.Select(c => c.IdMovilizacionActivoFijo).ToListAsync());
+                foreach (var item in idsMovilizaciones)
+                {
+                    var response = await ObtenerMovilizacionActivoFijo(item);
+                    if (response.IsSuccess)
+                        lista.Add(response.Resultado as MovilizacionActivoFijo);
+                }
+                return lista;
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<MovilizacionActivoFijo>();
+            }
+        }
         #endregion
 
         #region Obtener Response Comunes
@@ -1799,6 +1878,7 @@ namespace bd.swrm.web.Controllers.API
                     var recepcionActivoFijoDetalle = await ObtenerDetalleActivoFijo(item.IdRecepcionActivoFijoDetalle, incluirActivoFijo: true, incluirComponentes: true);
                     if (recepcionActivoFijoDetalle != null)
                     {
+                        var tipoUtilizacionAlta = await db.TipoUtilizacionAlta.FirstOrDefaultAsync(c => c.IdTipoUtilizacionAlta == item.IdTipoUtilizacionAlta);
                         altaActivoFijo.AltaActivoFijoDetalle.Add(new AltaActivoFijoDetalle
                         {
                             IdRecepcionActivoFijoDetalle = item.IdRecepcionActivoFijoDetalle,
@@ -1806,7 +1886,7 @@ namespace bd.swrm.web.Controllers.API
                             IdTipoUtilizacionAlta = item.IdTipoUtilizacionAlta,
                             RecepcionActivoFijoDetalle = recepcionActivoFijoDetalle,
                             IdUbicacionActivoFijo = item.IdUbicacionActivoFijo,
-                            TipoUtilizacionAlta = await db.TipoUtilizacionAlta.FirstOrDefaultAsync(c => c.IdTipoUtilizacionAlta == item.IdTipoUtilizacionAlta),
+                            TipoUtilizacionAlta = new TipoUtilizacionAlta { Nombre = tipoUtilizacionAlta.Nombre },
                             UbicacionActivoFijo = ObtenerUbicacionActivoFijoActual(await db.UbicacionActivoFijo.Include(c => c.LibroActivoFijo).ThenInclude(c => c.Sucursal).Include(c => c.Bodega).Include(c => c.Empleado).ThenInclude(c => c.Persona).FirstOrDefaultAsync(c => c.IdUbicacionActivoFijo == item.IdUbicacionActivoFijo))
                         });
                     }
@@ -1914,6 +1994,41 @@ namespace bd.swrm.web.Controllers.API
                     }
                 }
                 return new Response { IsSuccess = inventarioActivoFijo != null, Message = inventarioActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = inventarioActivoFijo };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+        private async Task<Response> ObtenerMovilizacionActivoFijo(int id, Expression<Func<MovilizacionActivoFijo, bool>> predicado = null)
+        {
+            try
+            {
+                var movilizacionAFBD = db.MovilizacionActivoFijo
+                    .Include(c => c.EmpleadoResponsable).ThenInclude(c => c.Persona)
+                    .Include(c => c.EmpleadoSolicita).ThenInclude(c => c.Persona)
+                    .Include(c => c.EmpleadoAutorizado).ThenInclude(c => c.Persona)
+                    .Include(c => c.MotivoTraslado);
+
+                var movilizacionActivoFijo = ObtenerMovilizacionActivoFijoFinal(predicado != null ? await movilizacionAFBD.Where(predicado).SingleOrDefaultAsync(c => c.IdMovilizacionActivoFijo == id) : await movilizacionAFBD.SingleOrDefaultAsync(c => c.IdMovilizacionActivoFijo == id));
+                var listadoIdsMovilizacionActivoFijoDetalle = await db.MovilizacionActivoFijoDetalle.Include(c => c.RecepcionActivoFijoDetalle).ThenInclude(c => c.Estado).Where(c => c.IdMovilizacionActivoFijo == movilizacionActivoFijo.IdMovilizacionActivoFijo && c.RecepcionActivoFijoDetalle.Estado.Nombre == Estados.Alta).ToListAsync();
+                movilizacionActivoFijo.MovilizacionActivoFijoDetalle = new List<MovilizacionActivoFijoDetalle>();
+                foreach (var item in listadoIdsMovilizacionActivoFijoDetalle)
+                {
+                    var recepcionActivoFijoDetalle = await ObtenerDetalleActivoFijo(item.IdRecepcionActivoFijoDetalle, incluirActivoFijo: true, incluirComponentes: true, incluirAltasActivoFijo: true);
+                    if (recepcionActivoFijoDetalle != null)
+                    {
+                        movilizacionActivoFijo.MovilizacionActivoFijoDetalle.Add(new MovilizacionActivoFijoDetalle
+                        {
+                            IdRecepcionActivoFijoDetalle = item.IdRecepcionActivoFijoDetalle,
+                            IdMovilizacionActivoFijo = movilizacionActivoFijo.IdMovilizacionActivoFijo,
+                            RecepcionActivoFijoDetalle = recepcionActivoFijoDetalle,
+                            Observaciones = item.Observaciones
+                        });
+                    }
+                }
+                return new Response { IsSuccess = movilizacionActivoFijo != null, Message = movilizacionActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = movilizacionActivoFijo };
             }
             catch (Exception ex)
             {
