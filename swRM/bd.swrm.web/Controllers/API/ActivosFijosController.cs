@@ -343,6 +343,42 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpPost]
+        [Route("DetallesActivoFijoSeleccionadoPorMovilizacion")]
+        public async Task<List<RecepcionActivoFijoDetalleSeleccionado>> PostDetallesActivoFijoSeleccionadoPorMovilizacion([FromBody] List<IdRecepcionActivoFijoDetalleSeleccionado> listadoRecepcionActivoFijoDetalleSeleccionado)
+        {
+            try
+            {
+                var lista = new List<RecepcionActivoFijoDetalleSeleccionado>();
+                var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true, incluirAltasActivoFijo: true).Where(c => (c.Estado.Nombre == Estados.Alta)).ToListAsync();
+                var listaIdsRAFDSeleccionados = listadoRecepcionActivoFijoDetalleSeleccionado.Select(c => c.idRecepcionActivoFijoDetalle);
+                foreach (var item in listaRecepcionActivoFijoDetalle)
+                {
+                    var rafd = ObtenerRecepcionActivoFijoDetalle(item, incluirComponentes: true, incluirActivoFijo: true);
+                    var listaRecepcionActivoFijoComponentes = new List<string>();
+                    if (rafd.ComponentesActivoFijoOrigen.Count > 0)
+                    {
+                        foreach (var comp in rafd.ComponentesActivoFijoOrigen)
+                        {
+                            var rafComp = await db.RecepcionActivoFijoDetalle.Include(c=> c.ActivoFijo).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == comp.IdRecepcionActivoFijoDetalleComponente);
+                            listaRecepcionActivoFijoComponentes.Add(rafComp.ActivoFijo.Nombre);
+                        }
+                    }
+                    lista.Add(new RecepcionActivoFijoDetalleSeleccionado
+                    {
+                        RecepcionActivoFijoDetalle = rafd,
+                        Seleccionado = listaIdsRAFDSeleccionados.Contains(item.IdRecepcionActivoFijoDetalle),
+                        Componentes = String.Join(", ", listaRecepcionActivoFijoComponentes)
+                    });
+                }
+                return lista;
+            }
+            catch (Exception)
+            {
+                return new List<RecepcionActivoFijoDetalleSeleccionado>();
+            }
+        }
+
+        [HttpPost]
         [Route("ListarActivosFijosPorAgrupacionPorEstado")]
         public async Task<List<ActivoFijo>> GetActivosFijosPorAgrupacionPorEstado([FromBody] string estado)
         {

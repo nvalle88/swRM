@@ -1,6 +1,7 @@
 ﻿using bd.swrm.entidades.Negocio;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace bd.swrm.entidades.ObjectTransfer
@@ -15,6 +16,12 @@ namespace bd.swrm.entidades.ObjectTransfer
     {
         public RecepcionActivoFijoDetalle RecepcionActivoFijoDetalle { get; set; }
         public bool Seleccionado { get; set; }
+
+        [Display(Name = "Observaciones:")]
+        public string Observaciones { get; set; }
+
+        [Display(Name = "Componentes:")]
+        public string Componentes { get; set; }
     }
 
     public class IdRecepcionActivoFijoDetalleSeleccionadoIdsComponentesExcluir
