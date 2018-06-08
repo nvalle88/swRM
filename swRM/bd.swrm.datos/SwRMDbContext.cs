@@ -920,6 +920,12 @@ namespace bd.swrm.datos
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_MovilizacionActivoFijo_Empleado");
 
+                entity.HasOne(d => d.EmpleadoAutorizado)
+                    .WithMany(p => p.MovilizacionesActivoFijoEmpleadoAutorizado)
+                    .HasForeignKey(d => d.IdEmpleadoAutorizado)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_MovilizacionActivoFijo_Empleado2");
+
                 entity.HasOne(d => d.MotivoTraslado)
                     .WithMany(p => p.MovilizacionActivoFijo)
                     .HasForeignKey(d => d.IdMotivoTraslado)
