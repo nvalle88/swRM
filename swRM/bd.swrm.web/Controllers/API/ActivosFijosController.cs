@@ -390,9 +390,16 @@ namespace bd.swrm.web.Controllers.API
 
         [HttpPost]
         [Route("ListarActivosFijosPorAgrupacionPorEstado")]
-        public async Task<List<ActivoFijo>> GetActivosFijosPorAgrupacionPorEstado([FromBody] string estado)
+        public async Task<List<ActivoFijo>> PostActivosFijosPorAgrupacionPorEstado([FromBody] string estado)
         {
             return await ListarActivosFijosPorAgrupacionSucursalNombre(predicadoRecepcionActivoFijoDetalle: c => c.Estado.Nombre == estado);
+        }
+
+        [HttpPost]
+        [Route("ListarActivosFijosPorAgrupacionDepreciacion")]
+        public async Task<List<ActivoFijo>> PostActivosFijosPorAgrupacionPorEstadoDepreciacion()
+        {
+            return await ListarActivosFijosPorAgrupacionSucursalNombre(predicadoRecepcionActivoFijoDetalle: c => c.Estado.Nombre == Estados.Alta && c.ActivoFijo.Depreciacion);
         }
 
         [HttpPost]
@@ -2036,7 +2043,7 @@ namespace bd.swrm.web.Controllers.API
             {
                 var altaActivoFijoBD = db.AltaActivoFijo.Include(x => x.FacturaActivoFijo).Include(c => c.MotivoAlta);
                 var altaActivoFijo = ObtenerAltaActivoFijoActual(predicado != null ? await altaActivoFijoBD.Where(predicado).SingleOrDefaultAsync(c => c.IdAltaActivoFijo == id) : await altaActivoFijoBD.SingleOrDefaultAsync(c => c.IdAltaActivoFijo == id));
-                var listadoIdsRecepcionActivoFijoDetalleAltaActivoFijo = await db.AltaActivoFijoDetalle.Include(c => c.RecepcionActivoFijoDetalle).ThenInclude(c => c.Estado).Where(c => c.IdAltaActivoFijo == altaActivoFijo.IdAltaActivoFijo && c.RecepcionActivoFijoDetalle.Estado.Nombre == Estados.Alta).ToListAsync();
+                var listadoIdsRecepcionActivoFijoDetalleAltaActivoFijo = await db.AltaActivoFijoDetalle.Include(c => c.RecepcionActivoFijoDetalle).ThenInclude(c => c.Estado).Where(c => c.IdAltaActivoFijo == altaActivoFijo.IdAltaActivoFijo).ToListAsync();
                 altaActivoFijo.AltaActivoFijoDetalle = new List<AltaActivoFijoDetalle>();
                 foreach (var item in listadoIdsRecepcionActivoFijoDetalleAltaActivoFijo)
                 {

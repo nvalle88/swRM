@@ -17,7 +17,7 @@
         [Required(ErrorMessage = "Debe introducir la {0}")]
         [Display(Name = "Fecha de Alta:")]
         [DataType(DataType.DateTime)]
-        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy hh:mm}", ApplyFormatInEditMode = true)]
+        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy hh:mm tt}", ApplyFormatInEditMode = true)]
         public DateTime FechaAlta { get; set; }
 
         [Display(Name = "Motivo de alta:")]

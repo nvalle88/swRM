@@ -72,6 +72,7 @@ namespace bd.swrm.datos
         public virtual DbSet<AltaActivoFijoDetalle> AltaActivoFijoDetalle { get; set; }
         public virtual DbSet<BajaActivoFijoDetalle> BajaActivoFijoDetalle { get; set; }
         public virtual DbSet<RecepcionArticulos> RecepcionArticulos { get; set; }
+        public virtual DbSet<RevalorizacionActivoFijo> RevalorizacionActivoFijo { get; set; }
         public virtual DbSet<Sexo> Sexo { get; set; }
         public virtual DbSet<SolicitudProveeduria> SolicitudProveeduria { get; set; }
         public virtual DbSet<SolicitudProveeduriaDetalle> SolicitudProveeduriaDetalle { get; set; }
@@ -1350,6 +1351,20 @@ namespace bd.swrm.datos
                     .WithMany(p => p.RecepcionArticulos)
                     .HasForeignKey(d => d.IdProveedor)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<RevalorizacionActivoFijo>(entity =>
+            {
+                entity.HasKey(e => e.IdRevalorizacionActivoFijo)
+                    .HasName("PK_RevalorizacionActivoFijo");
+
+                entity.Property(e => e.ValorCompra).HasColumnType("decimal");
+
+                entity.HasOne(d => d.RecepcionActivoFijoDetalle)
+                    .WithMany(p => p.RevalorizacionActivoFijo)
+                    .HasForeignKey(d => d.IdRecepcionActivoFijoDetalle)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_RevalorizacionActivoFijo_RecepcionActivoFijoDetalle");
             });
 
             modelBuilder.Entity<Sexo>(entity =>
