@@ -17,13 +17,13 @@ namespace bd.swrm.entidades.Negocio
         [Required(ErrorMessage = "Debe introducir la {0}")]
         [Display(Name = "Fecha de corte de inventario:")]
         [DataType(DataType.DateTime)]
-        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy hh:mm tt}", ApplyFormatInEditMode = true)]
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy hh:mm tt}", ApplyFormatInEditMode = true)]
         public DateTime FechaCorteInventario { get; set; }
 
         [Required(ErrorMessage = "Debe introducir la {0}")]
         [Display(Name = "Fecha de informe:")]
         [DataType(DataType.DateTime)]
-        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy hh:mm tt}", ApplyFormatInEditMode = true)]
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy hh:mm tt}", ApplyFormatInEditMode = true)]
         public DateTime FechaInforme { get; set; }
 
         [Display(Name = "Número de informe:")]
