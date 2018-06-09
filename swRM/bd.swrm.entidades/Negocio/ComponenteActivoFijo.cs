@@ -24,7 +24,7 @@ namespace bd.swrm.entidades.Negocio
         [Required(ErrorMessage = "Debe introducir la {0}")]
         [Display(Name = "Fecha de adición:")]
         [DataType(DataType.DateTime)]
-        [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy hh:mm tt}", ApplyFormatInEditMode = true)]
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy hh:mm tt}", ApplyFormatInEditMode = true)]
         public DateTime FechaAdicion { get; set; }
     }
 }
