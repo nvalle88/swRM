@@ -5,12 +5,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using bd.swrm.datos;
-using System.Threading;
 using System;
 using bd.swrm.servicios.Interfaces;
 using bd.swrm.servicios.Servicios;
 using bd.swrm.entidades.Constantes;
-using System.Threading.Tasks;
+using bd.swrm.servicios.Middlewares;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace bd.swrm.web
 {
@@ -36,6 +37,8 @@ namespace bd.swrm.web
             services.AddDbContext<SwRMDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("SwRMConnection")));
             services.AddSingleton<IUploadFileService, UploadFileService>();
             services.AddTransient<IEmailSender, AuthMessageSender>();
+            services.AddSingleton<IClaimsTransfer, ClaimsTransferService>();
+            services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
 
             // Constantes de correo
@@ -51,6 +54,7 @@ namespace bd.swrm.web
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            app.UseMiddleware<ClaimsMiddleware>();
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
@@ -59,15 +63,11 @@ namespace bd.swrm.web
                 app.UseDeveloperExceptionPage();
                 app.UseBrowserLink();
 
-                using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>()
-                .CreateScope())
+                using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
                 {
-                    //serviceScope.ServiceProvider.GetService<LogDbContext>()
-                    //         .Database.Migrate();
-
+                    //serviceScope.ServiceProvider.GetService<LogDbContext>().Database.Migrate();
                     //serviceScope.ServiceProvider.GetService<SwCompartidoDbContext>().EnsureSeedData();
                 }
-
             }
             else
             {
