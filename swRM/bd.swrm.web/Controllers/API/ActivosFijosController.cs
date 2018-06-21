@@ -16,6 +16,8 @@ using bd.swrm.entidades.Utils;
 using bd.swrm.servicios.Interfaces;
 using bd.swrm.entidades.ObjectTransfer;
 using System.Linq.Expressions;
+using Microsoft.AspNetCore.Mvc.Filters;
+using bd.swrm.servicios.Servicios;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -26,12 +28,14 @@ namespace bd.swrm.web.Controllers.API
         private readonly IUploadFileService uploadFileService;
         private readonly SwRMDbContext db;
         private readonly IEmailSender emailSender;
+        private readonly IClaimsTransfer claimsTransfer;
 
-        public ActivosFijosController(SwRMDbContext db, IUploadFileService uploadFileService, IEmailSender emailSender)
+        public ActivosFijosController(SwRMDbContext db, IUploadFileService uploadFileService, IEmailSender emailSender, IClaimsTransfer claimsTransfer, IHttpContextAccessor httpContextAccessor)
         {
             this.uploadFileService = uploadFileService;
             this.db = db;
             this.emailSender = emailSender;
+            this.claimsTransfer = claimsTransfer;
         }
 
         [HttpGet]
@@ -1520,6 +1524,8 @@ namespace bd.swrm.web.Controllers.API
         }
         private IQueryable<RecepcionActivoFijoDetalle> ObtenerListadoDetallesActivosFijos(int? idActivoFijo = null, bool? incluirActivoFijo = null, bool? incluirAltasActivoFijo = null, bool? incluirBajasActivoFijo = null)
         {
+            var claimsTransferencia = claimsTransfer.ObtenerClaimsTransferHttpContext();
+
             var recepcionActivoFijoDetalle = db.RecepcionActivoFijoDetalle
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Proveedor)
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.MotivoRecepcion)
@@ -2210,5 +2216,10 @@ namespace bd.swrm.web.Controllers.API
             }
         }
         #endregion
+
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            base.OnActionExecuting(context);
+        }
     }
 }
