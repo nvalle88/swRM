@@ -20,11 +20,11 @@ namespace bd.swrm.servicios.Middlewares
         public async Task Invoke(HttpContext httpContext)
         {
             var claimsTransfer = new ClaimsTransfer();
-            var valorIdSucursal = ObtenerHeader(httpContext, "IdSucursal");
+            var valorIdSucursal = ObtenerHeader(httpContext, ClaimsTransferNombres.IdSucursal);
             if (!String.IsNullOrEmpty(valorIdSucursal))
                 claimsTransfer.IdSucursal = int.Parse(valorIdSucursal);
 
-            claimsTransfer.NombreSucursal = ObtenerHeader(httpContext, "NombreSucursal");
+            claimsTransfer.NombreSucursal = ObtenerHeader(httpContext, ClaimsTransferNombres.NombreSucursal);
             
             httpContext.Items.Add("ClaimsTransfer", claimsTransfer);
             await nextDelegate.Invoke(httpContext);
