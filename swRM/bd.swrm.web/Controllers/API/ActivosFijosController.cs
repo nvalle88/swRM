@@ -241,7 +241,6 @@ namespace bd.swrm.web.Controllers.API
 
         [HttpPost]
         [Route("ListarComponentesDisponiblesActivoFijo")]
-        //Where de Sucursal
         public async Task<List<RecepcionActivoFijoDetalleSeleccionado>> PostComponentesActivosFijos([FromBody] IdRecepcionActivoFijoDetalleSeleccionadoIdsComponentesExcluir idRecepcionActivoFijoDetalleSeleccionadoIdsComponentesExcluir)
         {
             var lista = new List<RecepcionActivoFijoDetalleSeleccionado>();
@@ -252,14 +251,16 @@ namespace bd.swrm.web.Controllers.API
                     .Except(idRecepcionActivoFijoDetalleSeleccionadoIdsComponentesExcluir.ListaIdRecepcionActivoFijoDetalleSeleccionado
                     .Select(c => c.idRecepcionActivoFijoDetalle))
                     .ToListAsync();
+
                 var listaIdsRAFDSeleccionados = idRecepcionActivoFijoDetalleSeleccionadoIdsComponentesExcluir.ListaIdRecepcionActivoFijoDetalleSeleccionado.Select(c => c.idRecepcionActivoFijoDetalle);
-                
+
                 var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true)
-                    .Where(c=> (c.Estado.Nombre == Estados.Recepcionado || c.Estado.Nombre == Estados.Alta)
-                    && c.RecepcionActivoFijo.MotivoRecepcion.Descripcion == "Adición"
-                    && c.Estado.Nombre != Estados.ValidacionTecnica
+                .Where(c=> (c.Estado.Nombre == Estados.Recepcionado || c.Estado.Nombre == Estados.Alta)
+                && c.RecepcionActivoFijo.MotivoRecepcion.Descripcion == "Adición"
+                && c.Estado.Nombre != Estados.ValidacionTecnica
                 && (!idRecepcionActivoFijoDetalleSeleccionadoIdsComponentesExcluir.IdsComponentesExcluir.Contains(c.IdRecepcionActivoFijoDetalle)
                 && !listaIdsExcluirTablaComponenteActivoFijo.Contains(c.IdRecepcionActivoFijoDetalle))).ToListAsync();
+
                 foreach (var item in listaRecepcionActivoFijoDetalle)
                 {
                     lista.Add(new RecepcionActivoFijoDetalleSeleccionado
@@ -1508,7 +1509,6 @@ namespace bd.swrm.web.Controllers.API
         }
 
         #region IQueryable<T> Datos Comunes
-        //Where de Sucursal
         private IQueryable<ActivoFijo> ObtenerDatosActivoFijo()
         {
             return db.ActivoFijo
@@ -1524,8 +1524,6 @@ namespace bd.swrm.web.Controllers.API
         }
         private IQueryable<RecepcionActivoFijoDetalle> ObtenerListadoDetallesActivosFijos(int? idActivoFijo = null, bool? incluirActivoFijo = null, bool? incluirAltasActivoFijo = null, bool? incluirBajasActivoFijo = null)
         {
-            var claimsTransferencia = claimsTransfer.ObtenerClaimsTransferHttpContext();
-
             var recepcionActivoFijoDetalle = db.RecepcionActivoFijoDetalle
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Proveedor)
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.MotivoRecepcion)
@@ -1542,6 +1540,7 @@ namespace bd.swrm.web.Controllers.API
                     .ThenBy(c => c.RecepcionActivoFijo.FondoFinanciamiento)
                     .ThenBy(c => c.Estado.Nombre);
 
+            var claimsTransferencia = claimsTransfer.ObtenerClaimsTransferHttpContext();
             foreach (var item in recepcionActivoFijoDetalle)
             {
                 item.UbicacionActivoFijoActual = ObtenerUbicacionActivoFijoActual(db.UbicacionActivoFijo
@@ -1590,6 +1589,10 @@ namespace bd.swrm.web.Controllers.API
                 }
             }
             recepcionActivoFijoDetalle = recepcionActivoFijoDetalle.OrderBy(c => c.UbicacionActivoFijoActual.IdBodega).ThenBy(c => c.UbicacionActivoFijoActual.IdEmpleado);
+            
+            if (claimsTransferencia != null && claimsTransferencia.IdSucursal != null && claimsTransferencia.IdSucursal > 0)
+                return idActivoFijo != null ? recepcionActivoFijoDetalle.Where(c => c.IdActivoFijo == idActivoFijo && c.SucursalActual.IdSucursal == claimsTransferencia.IdSucursal) : recepcionActivoFijoDetalle.Where(c => c.SucursalActual.IdSucursal == claimsTransferencia.IdSucursal);
+
             return idActivoFijo != null ? recepcionActivoFijoDetalle.Where(c => c.IdActivoFijo == idActivoFijo) : recepcionActivoFijoDetalle;
         }
         #endregion

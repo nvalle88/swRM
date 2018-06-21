@@ -25,7 +25,7 @@ namespace bd.swrm.servicios.Servicios
             }
             catch (Exception)
             {
-                return new ClaimsTransfer();
+                return null;
             }
         }
     }
