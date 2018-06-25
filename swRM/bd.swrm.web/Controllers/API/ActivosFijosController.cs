@@ -255,7 +255,7 @@ namespace bd.swrm.web.Controllers.API
 
                 var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true)
                 .Where(c=> (c.Estado.Nombre == Estados.Recepcionado || c.Estado.Nombre == Estados.Alta)
-                && c.RecepcionActivoFijo.MotivoRecepcion.Descripcion == "Adición"
+                && c.RecepcionActivoFijo.MotivoAlta.Descripcion == "Adición"
                 && c.Estado.Nombre != Estados.ValidacionTecnica
                 && (!idRecepcionActivoFijoDetalleSeleccionadoIdsComponentesExcluir.IdsComponentesExcluir.Contains(c.IdRecepcionActivoFijoDetalle)
                 && !listaIdsExcluirTablaComponenteActivoFijo.Contains(c.IdRecepcionActivoFijoDetalle))).ToListAsync();
@@ -283,7 +283,7 @@ namespace bd.swrm.web.Controllers.API
             try
             {
                 var lista = new List<RecepcionActivoFijoDetalleSeleccionado>();
-                var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true).Where(c => (c.Estado.Nombre == Estados.Recepcionado || (c.Estado.Nombre == Estados.Alta && idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja.ListaIdRecepcionActivoFijoDetalleSeleccionadoInicialesAltaBaja.Select(x=> x.idRecepcionActivoFijoDetalle).Contains(c.IdRecepcionActivoFijoDetalle))) && c.RecepcionActivoFijo.MotivoRecepcion.Descripcion != "Adición").ToListAsync();
+                var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true).Where(c => (c.Estado.Nombre == Estados.Recepcionado || (c.Estado.Nombre == Estados.Alta && idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja.ListaIdRecepcionActivoFijoDetalleSeleccionadoInicialesAltaBaja.Select(x=> x.idRecepcionActivoFijoDetalle).Contains(c.IdRecepcionActivoFijoDetalle))) && c.RecepcionActivoFijo.MotivoAlta.Descripcion != "Adición").ToListAsync();
                 var listaIdsRAFDSeleccionados = idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja.ListaIdRecepcionActivoFijoDetalleSeleccionado.Select(c => c.idRecepcionActivoFijoDetalle);
                 foreach (var item in listaRecepcionActivoFijoDetalle)
                 {
@@ -470,7 +470,7 @@ namespace bd.swrm.web.Controllers.API
                     var recepcionActivoFijo = new RecepcionActivoFijo
                     {
                         IdProveedor = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.IdProveedor,
-                        IdMotivoRecepcion = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.IdMotivoRecepcion,
+                        IdMotivoAlta = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.IdMotivoAlta,
                         FechaRecepcion = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.FechaRecepcion,
                         Cantidad = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.Cantidad,
                         ValidacionTecnica = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.ValidacionTecnica,
@@ -1019,7 +1019,7 @@ namespace bd.swrm.web.Controllers.API
                         recepcionActivoFijoActualizar.ValidacionTecnica = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.ValidacionTecnica;
                         recepcionActivoFijoActualizar.IdFondoFinanciamiento = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.IdFondoFinanciamiento;
                         recepcionActivoFijoActualizar.OrdenCompra = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.OrdenCompra;
-                        recepcionActivoFijoActualizar.IdMotivoRecepcion = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.IdMotivoRecepcion;
+                        recepcionActivoFijoActualizar.IdMotivoAlta = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.IdMotivoAlta;
                         recepcionActivoFijoActualizar.IdProveedor = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.IdProveedor;
                         db.RecepcionActivoFijo.Update(recepcionActivoFijoActualizar);
                     }
@@ -1525,7 +1525,7 @@ namespace bd.swrm.web.Controllers.API
         {
             var recepcionActivoFijoDetalle = db.RecepcionActivoFijoDetalle
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Proveedor)
-                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.MotivoRecepcion)
+                    .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.MotivoAlta)
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.FondoFinanciamiento)
                     .Include(c => c.Estado)
                     .OrderBy(c => c.RecepcionActivoFijo.IdProveedor)
@@ -1535,7 +1535,7 @@ namespace bd.swrm.web.Controllers.API
                     .ThenBy(c => c.NumeroMotor)
                     .ThenBy(c => c.Placa)
                     .ThenBy(c => c.NumeroClaveCatastral)
-                    .ThenBy(c => c.RecepcionActivoFijo.MotivoRecepcion)
+                    .ThenBy(c => c.RecepcionActivoFijo.MotivoAlta)
                     .ThenBy(c => c.RecepcionActivoFijo.FondoFinanciamiento)
                     .ThenBy(c => c.Estado.Nombre);
 
@@ -1624,8 +1624,8 @@ namespace bd.swrm.web.Controllers.API
                     IdFondoFinanciamiento = rafdOld.RecepcionActivoFijo.IdFondoFinanciamiento,
                     FondoFinanciamiento = new FondoFinanciamiento { Nombre = rafdOld.RecepcionActivoFijo.FondoFinanciamiento.Nombre },
                     OrdenCompra = rafdOld.RecepcionActivoFijo.OrdenCompra,
-                    IdMotivoRecepcion = rafdOld.RecepcionActivoFijo.IdMotivoRecepcion,
-                    MotivoRecepcion = new MotivoRecepcion { Descripcion = rafdOld.RecepcionActivoFijo.MotivoRecepcion.Descripcion },
+                    IdMotivoAlta = rafdOld.RecepcionActivoFijo.IdMotivoAlta,
+                    MotivoAlta = new MotivoAlta { Descripcion = rafdOld.RecepcionActivoFijo.MotivoAlta.Descripcion },
                     IdProveedor = rafdOld.RecepcionActivoFijo.IdProveedor,
                     Proveedor = new Proveedor { Nombre = rafdOld.RecepcionActivoFijo.Proveedor.Nombre, Apellidos = rafdOld.RecepcionActivoFijo.Proveedor.Apellidos }
                 }

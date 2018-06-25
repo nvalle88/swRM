@@ -53,7 +53,6 @@ namespace bd.swrm.datos
         public virtual DbSet<MotivoAsiento> MotivoAsiento { get; set; }
         public virtual DbSet<MotivoAlta> MotivoAlta { get; set; }
         public virtual DbSet<MotivoBaja> MotivoBaja { get; set; }
-        public virtual DbSet<MotivoRecepcion> MotivoRecepcion { get; set; }
         public virtual DbSet<MotivoTransferencia> MotivoTransferencia { get; set; }
         public virtual DbSet<MotivoTraslado> MotivoTraslado { get; set; }
         public virtual DbSet<MovilizacionActivoFijo> MovilizacionActivoFijo { get; set; }
@@ -872,16 +871,6 @@ namespace bd.swrm.datos
                     .HasMaxLength(200);
             });
 
-            modelBuilder.Entity<MotivoRecepcion>(entity =>
-            {
-                entity.HasKey(e => e.IdMotivoRecepcion)
-                    .HasName("PK_MotivoRecepcion");
-
-                entity.Property(e => e.Descripcion)
-                    .IsRequired()
-                    .HasMaxLength(200);
-            });
-
             modelBuilder.Entity<MotivoTransferencia>(entity =>
             {
                 entity.HasKey(e => e.IdMotivoTransferencia)
@@ -1196,9 +1185,6 @@ namespace bd.swrm.datos
                 entity.HasKey(e => e.IdRecepcionActivoFijo)
                     .HasName("PK_RecepcionActivoFijo");
 
-                entity.HasIndex(e => e.IdMotivoRecepcion)
-                    .HasName("IX_RecepcionActivoFijo_IdMotivoRecepcion");
-
                 entity.HasIndex(e => e.IdProveedor)
                     .HasName("IX_RecepcionActivoFijo_IdProveedor");
 
@@ -1213,10 +1199,12 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdFondoFinanciamiento)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_RecepcionActivoFijo_FondoFinanciamiento");
-
-                entity.HasOne(d => d.MotivoRecepcion)
+                
+                entity.HasOne(d => d.MotivoAlta)
                     .WithMany(p => p.RecepcionActivoFijo)
-                    .HasForeignKey(d => d.IdMotivoRecepcion);
+                    .HasForeignKey(d => d.IdMotivoAlta)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_RecepcionActivoFijo_MotivoAlta");
 
                 entity.HasOne(d => d.Proveedor)
                     .WithMany(p => p.RecepcionActivoFijo)
