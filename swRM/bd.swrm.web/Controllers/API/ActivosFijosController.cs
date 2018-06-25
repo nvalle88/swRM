@@ -17,7 +17,6 @@ using bd.swrm.servicios.Interfaces;
 using bd.swrm.entidades.ObjectTransfer;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc.Filters;
-using bd.swrm.servicios.Servicios;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -2100,6 +2099,9 @@ namespace bd.swrm.web.Controllers.API
                             RecepcionActivoFijoDetalle = recepcionActivoFijoDetalle
                         });
                     }
+
+                    if (bajaActivoFijo.BajaActivoFijoDetalle.Count == 0)
+                        listadoIdsRecepcionActivoFijoDetalleBajaActivoFijo.Remove(item);
                 }
                 return new Response { IsSuccess = bajaActivoFijo != null, Message = bajaActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = bajaActivoFijo };
             }
