@@ -9,6 +9,7 @@ namespace bd.swrm.entidades.Negocio
         public MotivoAlta()
         {
             AltaActivoFijo = new HashSet<AltaActivoFijo>();
+            RecepcionActivoFijo = new HashSet<RecepcionActivoFijo>();
         }
 
         [Key]
@@ -20,5 +21,6 @@ namespace bd.swrm.entidades.Negocio
         public string Descripcion { get; set; }
 
         public virtual ICollection<AltaActivoFijo> AltaActivoFijo { get; set; }
+        public virtual ICollection<RecepcionActivoFijo> RecepcionActivoFijo { get; set; }
     }
 }
