@@ -250,6 +250,12 @@ namespace bd.swrm.datos
                     .IsRequired()
                     .HasMaxLength(200);
 
+                entity.HasOne(d => d.EmpleadoResponsable)
+                    .WithMany(p => p.Bodega)
+                    .HasForeignKey(d => d.IdEmpleadoResponsable)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_Bodega_Empleado");
+
                 entity.HasOne(d => d.Sucursal)
                     .WithMany(p => p.Bodegas)
                     .HasForeignKey(d => d.IdSucursal)

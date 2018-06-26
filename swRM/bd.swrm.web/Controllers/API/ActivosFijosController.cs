@@ -516,21 +516,21 @@ namespace bd.swrm.web.Controllers.API
                         await db.SaveChangesAsync();
                     }
                     transaction.Commit();
-                    //var response = await ObtenerActivoFijo(activoFijo.IdActivoFijo);
-                    //if (response.IsSuccess)
-                    //{
-                    //    var activoFijoBD = (ActivoFijo)response.Resultado;
-                    //    await emailSender.SendEmailAsync("carlos.avila8909@gmail.com", "Nueva recepción de Activos Fijos.",
-                    //    $@"Se han recepcionado nuevos Activos Fijos en el sistema de Recursos Materiales con los siguientes datos: \n \n
-                    //        Tipo de activo fijo: {activoFijoBD.SubClaseActivoFijo.ClaseActivoFijo.TipoActivoFijo.Nombre}, \n \n
-                    //        Clase de activo fijo: {activoFijoBD.SubClaseActivoFijo.ClaseActivoFijo.Nombre}, \n \n
-                    //        Subclase de activo fijo: {activoFijoBD.SubClaseActivoFijo.Nombre}, \n \n
-                    //        Sucursal: {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().SucursalActual.Nombre}, \n \n
-                    //        Proveedor: {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().RecepcionActivoFijo.Proveedor.Nombre} {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().RecepcionActivoFijo.Proveedor.Apellidos}, \n \n
-                    //        Fecha de recepción: {recepcionActivoFijo.FechaRecepcion.ToString("dd-MM-yyyy hh:mm tt")}, \n \n
-                    //        Activo fijo: {activoFijoBD.Nombre}, \n \n
-                    //        Cantidad: {recepcionActivoFijo.Cantidad}");
-                    //}
+                    var response = await ObtenerActivoFijo(activoFijo.IdActivoFijo);
+                    if (response.IsSuccess)
+                    {
+                        var activoFijoBD = (ActivoFijo)response.Resultado;
+                        await emailSender.SendEmailAsync("carlos.avila8909@gmail.com", "Nueva recepción de Activos Fijos.",
+                        $@"Se han recepcionado nuevos Activos Fijos en el sistema de Recursos Materiales con los siguientes datos: \n \n
+                            Tipo de activo fijo: {activoFijoBD.SubClaseActivoFijo.ClaseActivoFijo.TipoActivoFijo.Nombre}, \n \n
+                            Clase de activo fijo: {activoFijoBD.SubClaseActivoFijo.ClaseActivoFijo.Nombre}, \n \n
+                            Subclase de activo fijo: {activoFijoBD.SubClaseActivoFijo.Nombre}, \n \n
+                            Sucursal: {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().SucursalActual.Nombre}, \n \n
+                            Proveedor: {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().RecepcionActivoFijo.Proveedor.Nombre} {activoFijoBD.RecepcionActivoFijoDetalle.FirstOrDefault().RecepcionActivoFijo.Proveedor.Apellidos}, \n \n
+                            Fecha de recepción: {recepcionActivoFijo.FechaRecepcion.ToString("dd-MM-yyyy hh:mm tt")}, \n \n
+                            Activo fijo: {activoFijoBD.Nombre}, \n \n
+                            Cantidad: {recepcionActivoFijo.Cantidad}");
+                    }
                 }
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = listaRecepcionActivoFijoDetalleTransfer };
             }
