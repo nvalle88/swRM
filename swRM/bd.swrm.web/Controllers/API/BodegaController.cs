@@ -33,7 +33,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.Bodega.OrderBy(x => x.Nombre).Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais).ToListAsync();
+                return await db.Bodega.Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais).Include(c => c.EmpleadoResponsable).ThenInclude(c => c.Persona).OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,7 +48,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.Bodega.Where(c => c.IdSucursal == idSucursal).OrderBy(x => x.Nombre).Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais).ToListAsync();
+                return await db.Bodega.Where(c => c.IdSucursal == idSucursal).Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais).Include(c=> c.EmpleadoResponsable).ThenInclude(c=> c.Persona).OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -65,7 +65,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var bodega = await db.Bodega.Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais).SingleOrDefaultAsync(m => m.IdBodega == id);
+                var bodega = await db.Bodega.Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais).Include(c => c.EmpleadoResponsable).ThenInclude(c => c.Persona).SingleOrDefaultAsync(m => m.IdBodega == id);
                 return new Response { IsSuccess = bodega != null, Message = bodega != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = bodega };
             }
             catch (Exception ex)
@@ -93,6 +93,7 @@ namespace bd.swrm.web.Controllers.API
                         {
                             bodegaActualizar.Nombre = bodega.Nombre;
                             bodegaActualizar.IdSucursal = bodega.IdSucursal;
+                            bodegaActualizar.IdEmpleadoResponsable = bodega.IdEmpleadoResponsable;
                             db.Bodega.Update(bodegaActualizar);
                             await db.SaveChangesAsync();
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
@@ -124,7 +125,6 @@ namespace bd.swrm.web.Controllers.API
 
                 if (!await db.Bodega.AnyAsync(c => c.Nombre.ToUpper().Trim() == bodega.Nombre.ToUpper().Trim()))
                 {
-                    db.Entry(bodega.Sucursal).State = EntityState.Unchanged;
                     db.Bodega.Add(bodega);
                     await db.SaveChangesAsync();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
