@@ -8,6 +8,7 @@ namespace bd.swrm.entidades.Negocio
     {
         public Empleado()
         {
+            Bodega = new HashSet<Bodega>();
             TransferenciasActivoFijoEmpleadoResponsableEnvio = new HashSet<TransferenciaActivoFijo>();
             TransferenciasActivoFijoEmpleadoResponsableRecibo = new HashSet<TransferenciaActivoFijo>();
             UbicacionActivoFijo = new HashSet<UbicacionActivoFijo>();
@@ -78,6 +79,7 @@ namespace bd.swrm.entidades.Negocio
         public int? IdDependencia { get; set; }
         public virtual Dependencia Dependencia { get; set; }
 
+        public virtual ICollection<Bodega> Bodega { get; set; }
         public virtual ICollection<TransferenciaActivoFijo> TransferenciasActivoFijoEmpleadoResponsableEnvio { get; set; }
         public virtual ICollection<TransferenciaActivoFijo> TransferenciasActivoFijoEmpleadoResponsableRecibo { get; set; }
         public virtual ICollection<UbicacionActivoFijo> UbicacionActivoFijo { get; set; }
