@@ -8,9 +8,9 @@ namespace bd.swrm.entidades.Negocio
     {
         public Proveedor()
         {
-            Factura = new HashSet<Factura>();
+            OrdenCompra = new HashSet<OrdenCompra>();
             RecepcionActivoFijo = new HashSet<RecepcionActivoFijo>();
-            RecepcionArticulos = new HashSet<RecepcionArticulos>();
+            SalidaArticulos = new HashSet<SalidaArticulos>();
         }
 
         [Key]
@@ -77,10 +77,8 @@ namespace bd.swrm.entidades.Negocio
 
         //Propiedades Virtuales Referencias a otras clases
 
-        public virtual ICollection<Factura> Factura { get; set; }
-
+        public virtual ICollection<OrdenCompra> OrdenCompra { get; set; }
         public virtual ICollection<RecepcionActivoFijo> RecepcionActivoFijo { get; set; }
-
-        public virtual ICollection<RecepcionArticulos> RecepcionArticulos { get; set; }
+        public virtual ICollection<SalidaArticulos> SalidaArticulos { get; set; }
     }
 }

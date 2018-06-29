@@ -10,6 +10,7 @@ namespace bd.swrm.entidades.Negocio
         {
             AltaActivoFijo = new HashSet<AltaActivoFijo>();
             DocumentoActivoFijo = new HashSet<DocumentoActivoFijo>();
+            OrdenCompra = new HashSet<OrdenCompra>();
         }
 
         [Key]
@@ -29,5 +30,6 @@ namespace bd.swrm.entidades.Negocio
 
         public virtual ICollection<AltaActivoFijo> AltaActivoFijo { get; set; }
         public virtual ICollection<DocumentoActivoFijo> DocumentoActivoFijo { get; set; }
+        public virtual ICollection<OrdenCompra> OrdenCompra { get; set; }
     }
 }

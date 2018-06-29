@@ -14,9 +14,10 @@ namespace bd.swrm.datos
         public virtual DbSet<ActivoFijo> ActivoFijo { get; set; }
         public virtual DbSet<Articulo> Articulo { get; set; }
         public virtual DbSet<AltaActivoFijo> AltaActivoFijo { get; set; }
-        public virtual DbSet<AltaProveeduria> AltaProveeduria { get; set; }
+        public virtual DbSet<AjusteInventarioArticulos> AjusteInventarioArticulos { get; set; }
+        public virtual DbSet<AltaActivoFijoDetalle> AltaActivoFijoDetalle { get; set; }
         public virtual DbSet<BajaActivoFijo> BajaActivoFijo { get; set; }
-        public virtual DbSet<BajaProveeduria> BajaProveeduria { get; set; }
+        public virtual DbSet<BajaActivoFijoDetalle> BajaActivoFijoDetalle { get; set; }
         public virtual DbSet<Bodega> Bodega { get; set; }
         public virtual DbSet<CatalogoCuenta> CatalogoCuenta { get; set; }
         public virtual DbSet<CategoriaActivoFijo> CategoriaActivoFijo { get; set; }
@@ -29,35 +30,36 @@ namespace bd.swrm.datos
         public virtual DbSet<ConfiguracionContabilidad> ConfiguracionContabilidad { get; set; }
         public virtual DbSet<Dependencia> Dependencia { get; set; }
         public virtual DbSet<DepreciacionActivoFijo> DepreciacionActivoFijo { get; set; }
-        public virtual DbSet<DetalleFactura> DetalleFactura { get; set; }
         public virtual DbSet<DocumentoActivoFijo> DocumentoActivoFijo { get; set; }
         public virtual DbSet<Empleado> Empleado { get; set; }
         public virtual DbSet<Estado> Estado { get; set; }
         public virtual DbSet<EstadoCivil> EstadoCivil { get; set; }
         public virtual DbSet<Etnia> Etnia { get; set; }
-        public virtual DbSet<ExistenciaArticuloProveeduria> ExistenciaArticuloProveeduria { get; set; }
-        public virtual DbSet<Factura> Factura { get; set; }
         public virtual DbSet<FacturaActivoFijo> FacturaActivoFijo { get; set; }
-        public virtual DbSet<FacturasPorAltaProveeduria> FacturasPorAltaProveeduria { get; set; }
         public virtual DbSet<FondoFinanciamiento> FondoFinanciamiento { get; set; }
         public virtual DbSet<Genero> Genero { get; set; }
         public virtual DbSet<InventarioActivoFijo> InventarioActivoFijo { get; set; }
         public virtual DbSet<InventarioActivoFijoDetalle> InventarioActivoFijoDetalle { get; set; }
+        public virtual DbSet<InventarioArticulos> InventarioArticulos { get; set; }
         public virtual DbSet<LibroActivoFijo> LibroActivoFijo { get; set; }
         public virtual DbSet<LineaServicio> LineaServicio { get; set; }
         public virtual DbSet<MaestroArticuloSucursal> MaestroArticuloSucursal { get; set; }
-        public virtual DbSet<MaestroDetalleArticulo> MaestroDetalleArticulo { get; set; }
         public virtual DbSet<MantenimientoActivoFijo> MantenimientoActivoFijo { get; set; }
         public virtual DbSet<Marca> Marca { get; set; }
         public virtual DbSet<Modelo> Modelo { get; set; }
         public virtual DbSet<MotivoAsiento> MotivoAsiento { get; set; }
         public virtual DbSet<MotivoAlta> MotivoAlta { get; set; }
         public virtual DbSet<MotivoBaja> MotivoBaja { get; set; }
+        public virtual DbSet<MotivoRecepcionArticulos> MotivoRecepcionArticulos { get; set; }
+        public virtual DbSet<MotivoSalidaArticulos> MotivoSalidaArticulos { get; set; }
         public virtual DbSet<MotivoTransferencia> MotivoTransferencia { get; set; }
         public virtual DbSet<MotivoTraslado> MotivoTraslado { get; set; }
         public virtual DbSet<MovilizacionActivoFijo> MovilizacionActivoFijo { get; set; }
         public virtual DbSet<MovilizacionActivoFijoDetalle> MovilizacionActivoFijoDetalle { get; set; }
         public virtual DbSet<Nacionalidad> Nacionalidad { get; set; }
+        public virtual DbSet<OrdenCompra> OrdenCompra { get; set; }
+        public virtual DbSet<OrdenCompraDetalles> OrdenCompraDetalles { get; set; }
+        public virtual DbSet<OrdenCompraRecepcionArticulos> OrdenCompraRecepcionArticulos { get; set; }
         public virtual DbSet<Pais> Pais { get; set; }
         public virtual DbSet<Parroquia> Parroquia { get; set; }
         public virtual DbSet<Persona> Persona { get; set; }
@@ -68,13 +70,12 @@ namespace bd.swrm.datos
         public virtual DbSet<Ramo> Ramo { get; set; }
         public virtual DbSet<RecepcionActivoFijo> RecepcionActivoFijo { get; set; }
         public virtual DbSet<RecepcionActivoFijoDetalle> RecepcionActivoFijoDetalle { get; set; }
-        public virtual DbSet<AltaActivoFijoDetalle> AltaActivoFijoDetalle { get; set; }
-        public virtual DbSet<BajaActivoFijoDetalle> BajaActivoFijoDetalle { get; set; }
         public virtual DbSet<RecepcionArticulos> RecepcionArticulos { get; set; }
+        public virtual DbSet<RequerimientoArticulos> RequerimientoArticulos { get; set; }
+        public virtual DbSet<RequerimientosArticulosDetalles> RequerimientosArticulosDetalles { get; set; }
         public virtual DbSet<RevalorizacionActivoFijo> RevalorizacionActivoFijo { get; set; }
+        public virtual DbSet<SalidaArticulos> SalidaArticulos { get; set; }
         public virtual DbSet<Sexo> Sexo { get; set; }
-        public virtual DbSet<SolicitudProveeduria> SolicitudProveeduria { get; set; }
-        public virtual DbSet<SolicitudProveeduriaDetalle> SolicitudProveeduriaDetalle { get; set; }
         public virtual DbSet<SubClaseActivoFijo> SubClaseActivoFijo { get; set; }
         public virtual DbSet<SubClaseArticulo> SubClaseArticulo { get; set; }
         public virtual DbSet<Subramo> Subramo { get; set; }
@@ -84,7 +85,6 @@ namespace bd.swrm.datos
         public virtual DbSet<TipoIdentificacion> TipoIdentificacion { get; set; }
         public virtual DbSet<TipoSangre> TipoSangre { get; set; }
         public virtual DbSet<TipoUtilizacionAlta> TipoUtilizacionAlta { get; set; }
-        public virtual DbSet<TranferenciaArticulo> TranferenciaArticulo { get; set; }
         public virtual DbSet<TransferenciaActivoFijo> TransferenciaActivoFijo { get; set; }
         public virtual DbSet<TransferenciaActivoFijoDetalle> TransferenciaActivoFijoDetalle { get; set; }
         public virtual DbSet<UbicacionActivoFijo> UbicacionActivoFijo { get; set; }
@@ -153,33 +153,18 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdUnidadMedida);
             });
 
-            modelBuilder.Entity<AltaProveeduria>(entity =>
+            modelBuilder.Entity<AjusteInventarioArticulos>(entity =>
             {
-                entity.HasKey(e => e.IdAlta)
-                    .HasName("PK_AltaProveeduria_1");
+                entity.HasKey(e => e.IdAjusteInventario)
+                    .HasName("PK_AjusteInventarioArticulos");
 
-                entity.Property(e => e.IdAlta).HasColumnName("idAlta");
+                entity.Property(e => e.Motivo).HasMaxLength(500);
 
-                entity.Property(e => e.Acreditacion).HasColumnName("acreditacion");
-
-                entity.Property(e => e.FechaAlta)
-                    .HasColumnName("fechaAlta")
-                    .HasColumnType("datetime");
-
-                entity.Property(e => e.IdArticulo).HasColumnName("idArticulo");
-
-                entity.Property(e => e.IdProveedor).HasColumnName("idProveedor");
-
-                entity.HasOne(d => d.IdArticuloNavigation)
-                    .WithMany(p => p.AltaProveeduria)
-                    .HasForeignKey(d => d.IdArticulo)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(d => d.IdRecepcionArticulosNavigation)
-                    .WithMany(p => p.AltaProveeduria)
-                    .HasForeignKey(d => d.IdRecepcionArticulos)
+                entity.HasOne(d => d.EmpleadoAutoriza)
+                    .WithMany(p => p.AjusteInventarioArticulos)
+                    .HasForeignKey(d => d.IdEmpleadoAutoriza)
                     .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_AltaProveeduria_RecepcionArticulos");
+                    .HasConstraintName("FK_AjusteInventarioArticulos_Empleado");
             });
 
             modelBuilder.Entity<AltaActivoFijo>(entity =>
@@ -217,28 +202,6 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdMotivoBaja)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_ActivosFijosBaja_ActivoFijoMotivoBaja");
-            });
-
-            modelBuilder.Entity<BajaProveeduria>(entity =>
-            {
-                entity.HasKey(e => e.IdBaja)
-                    .HasName("PK_BajaProveeduria");
-
-                entity.Property(e => e.IdBaja).HasColumnName("idBaja");
-
-                entity.Property(e => e.FechaBaja)
-                    .HasColumnName("fechaBaja")
-                    .HasColumnType("datetime");
-
-                entity.Property(e => e.IdArticulo).HasColumnName("idArticulo");
-
-                entity.Property(e => e.IdProveedor).HasColumnName("idProveedor");
-
-                entity.HasOne(d => d.IdArticuloNavigation)
-                    .WithMany(p => p.BajaProveeduria)
-                    .HasForeignKey(d => d.IdArticulo)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_BajaProveeduria_Articulo");
             });
 
             modelBuilder.Entity<Bodega>(entity =>
@@ -474,30 +437,6 @@ namespace bd.swrm.datos
                     .HasConstraintName("FK_DepreciacionActivoFijo_RecepcionActivoFijoDetalle");
             });
 
-            modelBuilder.Entity<DetalleFactura>(entity =>
-            {
-                entity.HasKey(e => e.IdDetalleFactura)
-                    .HasName("PK_DetalleFactura");
-
-                entity.HasIndex(e => e.IdArticulo)
-                    .HasName("IX_DetalleFactura_IdArticulo");
-
-                entity.HasIndex(e => e.IdFactura)
-                    .HasName("IX_DetalleFactura_IdFactura");
-
-                entity.Property(e => e.Precio).HasColumnType("decimal");
-
-                entity.HasOne(d => d.Articulo)
-                    .WithMany(p => p.DetalleFactura)
-                    .HasForeignKey(d => d.IdArticulo)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(d => d.Factura)
-                    .WithMany(p => p.DetalleFactura)
-                    .HasForeignKey(d => d.IdFactura)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
-
             modelBuilder.Entity<DocumentoActivoFijo>(entity =>
             {
                 entity.HasKey(e => e.IdDocumentoActivoFijo)
@@ -597,48 +536,6 @@ namespace bd.swrm.datos
                     .HasMaxLength(20);
             });
 
-            modelBuilder.Entity<ExistenciaArticuloProveeduria>(entity =>
-            {
-                entity.HasKey(e => e.IdArticulo)
-                    .HasName("PK_ExistenciaArticuloProveeduria");
-
-                entity.Property(e => e.IdArticulo).ValueGeneratedNever();
-
-                entity.Property(e => e.Existencia).HasColumnName("existencia");
-
-                entity.HasOne(d => d.Articulo)
-                    .WithOne(p => p.ExistenciaArticuloProveeduria)
-                    .HasForeignKey<ExistenciaArticuloProveeduria>(d => d.IdArticulo)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_ExistenciaArticuloProveeduria_Articulo");
-            });
-
-            modelBuilder.Entity<Factura>(entity =>
-            {
-                entity.HasKey(e => e.IdFactura)
-                    .HasName("PK_Factura");
-
-                entity.HasIndex(e => e.IdMaestroArticuloSucursal)
-                    .HasName("IX_Factura_IdMaestroArticuloSucursal");
-
-                entity.HasIndex(e => e.IdProveedor)
-                    .HasName("IX_Factura_IdProveedor");
-
-                entity.Property(e => e.Numero)
-                    .IsRequired()
-                    .HasMaxLength(30);
-
-                entity.HasOne(d => d.MaestroArticuloSucursal)
-                    .WithMany(p => p.Factura)
-                    .HasForeignKey(d => d.IdMaestroArticuloSucursal)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(d => d.Proveedor)
-                    .WithMany(p => p.Factura)
-                    .HasForeignKey(d => d.IdProveedor)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
-
             modelBuilder.Entity<FacturaActivoFijo>(entity =>
             {
                 entity.HasKey(e => e.IdFacturaActivoFijo)
@@ -647,23 +544,6 @@ namespace bd.swrm.datos
                 entity.Property(e => e.NumeroFactura)
                     .IsRequired()
                     .HasMaxLength(100);
-            });
-
-            modelBuilder.Entity<FacturasPorAltaProveeduria>(entity =>
-            {
-                entity.HasKey(e => e.IdFacturasPorAlta)
-                    .HasName("PK_FacturasPorAltaProveeduria");
-
-                entity.Property(e => e.IdFacturasPorAlta).HasColumnName("idFacturasPorAlta");
-
-                entity.Property(e => e.IdAlta).HasColumnName("idAlta");
-
-                entity.Property(e => e.NumeroFactura).HasMaxLength(200);
-
-                entity.HasOne(d => d.IdAltaNavigation)
-                    .WithMany(p => p.FacturasPorAltaProveeduria)
-                    .HasForeignKey(d => d.IdAlta)
-                    .HasConstraintName("FK_FacturasPorAltaProveeduria_AltaProveeduria");
             });
 
             modelBuilder.Entity<FondoFinanciamiento>(entity =>
@@ -720,6 +600,24 @@ namespace bd.swrm.datos
                     .HasConstraintName("FK_InventarioActivoFijoDetalle_RecepcionActivoFijoDetalle");
             });
 
+            modelBuilder.Entity<InventarioArticulos>(entity =>
+            {
+                entity.HasKey(e => e.IdInventarioArticulos)
+                    .HasName("PK_InventarioArticulos");
+
+                entity.HasOne(d => d.Bodega)
+                    .WithMany(p => p.InventarioArticulos)
+                    .HasForeignKey(d => d.IdBodega)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_InventarioArticulos_Bodega");
+
+                entity.HasOne(d => d.MaestroArticuloSucursal)
+                    .WithMany(p => p.InventarioArticulos)
+                    .HasForeignKey(d => d.IdMaestroArticuloSucursal)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_InventarioArticulos_MaestroArticuloSucursal");
+            });
+
             modelBuilder.Entity<LibroActivoFijo>(entity =>
             {
                 entity.HasKey(e => e.IdLibroActivoFijo)
@@ -751,31 +649,21 @@ namespace bd.swrm.datos
                 entity.HasIndex(e => e.IdSucursal)
                     .HasName("IX_MaestroArticuloSucursal_IdSucursal");
 
+                entity.Property(e => e.CodigoArticulo)
+                    .IsRequired()
+                    .HasMaxLength(30);
+
+                entity.Property(e => e.ValorActual).HasColumnType("decimal");
+
+                entity.HasOne(d => d.Articulo)
+                    .WithMany(p => p.MaestroArticuloSucursal)
+                    .HasForeignKey(d => d.IdArticulo)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_MaestroArticuloSucursal_Articulo");
+
                 entity.HasOne(d => d.Sucursal)
                     .WithMany(p => p.MaestroArticuloSucursal)
                     .HasForeignKey(d => d.IdSucursal)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            modelBuilder.Entity<MaestroDetalleArticulo>(entity =>
-            {
-                entity.HasKey(e => e.IdMaestroDetalleArticulo)
-                    .HasName("PK_MaestroDetalleArticulo");
-
-                entity.HasIndex(e => e.IdArticulo)
-                    .HasName("IX_MaestroDetalleArticulo_IdArticulo");
-
-                entity.HasIndex(e => e.IdMaestroArticuloSucursal)
-                    .HasName("IX_MaestroDetalleArticulo_IdMaestroArticuloSucursal");
-
-                entity.HasOne(d => d.Articulo)
-                    .WithMany(p => p.MaestroDetalleArticulo)
-                    .HasForeignKey(d => d.IdArticulo)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(d => d.MaestroArticuloSucursal)
-                    .WithMany(p => p.MaestroDetalleArticulo)
-                    .HasForeignKey(d => d.IdMaestroArticuloSucursal)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -877,6 +765,26 @@ namespace bd.swrm.datos
                     .HasMaxLength(200);
             });
 
+            modelBuilder.Entity<MotivoRecepcionArticulos>(entity =>
+            {
+                entity.HasKey(e => e.IdMotivoRecepcionArticulos)
+                    .HasName("PK_MotivoRecepcionArticulos");
+
+                entity.Property(e => e.Descripcion)
+                    .IsRequired()
+                    .HasMaxLength(200);
+            });
+
+            modelBuilder.Entity<MotivoSalidaArticulos>(entity =>
+            {
+                entity.HasKey(e => e.IdMotivoSalidaArticulos)
+                    .HasName("PK_MotivoSalidaArticulos");
+
+                entity.Property(e => e.Descripcion)
+                    .IsRequired()
+                    .HasMaxLength(200);
+            });
+
             modelBuilder.Entity<MotivoTransferencia>(entity =>
             {
                 entity.HasKey(e => e.IdMotivoTransferencia)
@@ -957,6 +865,78 @@ namespace bd.swrm.datos
                 entity.Property(e => e.Nombre)
                     .IsRequired()
                     .HasMaxLength(20);
+            });
+
+            modelBuilder.Entity<OrdenCompra>(entity =>
+            {
+                entity.HasKey(e => e.IdOrdenCompra)
+                    .HasName("PK_OrdenCompra");
+
+                entity.Property(e => e.Codigo)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.HasOne(d => d.EmpleadoResponsable)
+                    .WithMany(p => p.OrdenCompra)
+                    .HasForeignKey(d => d.IdEmpleadoResponsable)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_OrdenCompra_Empleado");
+
+                entity.HasOne(d => d.Estado)
+                    .WithMany(p => p.OrdenCompra)
+                    .HasForeignKey(d => d.IdEstado)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_OrdenCompra_Estado");
+
+                entity.HasOne(d => d.Factura)
+                    .WithMany(p => p.OrdenCompra)
+                    .HasForeignKey(d => d.IdFacturaActivoFijo)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_OrdenCompra_FacturaActivoFijo");
+
+                entity.HasOne(d => d.Proveedor)
+                    .WithMany(p => p.OrdenCompra)
+                    .HasForeignKey(d => d.IdProveedor)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_OrdenCompra_Proveedor");
+            });
+
+            modelBuilder.Entity<OrdenCompraDetalles>(entity =>
+            {
+                entity.HasKey(e => new { e.IdOrdenCompra, e.IdMaestroArticuloSucursal })
+                    .HasName("PK_OrdenCompraDetalles");
+
+                entity.Property(e => e.ValorUnitario).HasColumnType("decimal");
+
+                entity.HasOne(d => d.MaestroArticuloSucursal)
+                    .WithMany(p => p.OrdenCompraDetalles)
+                    .HasForeignKey(d => d.IdMaestroArticuloSucursal)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_OrdenCompraDetalles_MaestroArticuloSucursal");
+
+                entity.HasOne(d => d.OrdenCompra)
+                    .WithMany(p => p.OrdenCompraDetalles)
+                    .HasForeignKey(d => d.IdOrdenCompra)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_OrdenCompraDetalles_OrdenCompra");
+            });
+
+            modelBuilder.Entity<OrdenCompraRecepcionArticulos>(entity =>
+            {
+                entity.HasKey(e => new { e.IdOrdenCompra, e.IdRecepcionArticulos })
+                    .HasName("PK_OrdenCompraRecepcionArticulos");
+
+                entity.HasOne(d => d.OrdenCompra)
+                    .WithMany(p => p.OrdenCompraRecepcionArticulos)
+                    .HasForeignKey(d => d.IdOrdenCompra)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_OrdenCompraRecepcionArticulos_OrdenCompra");
+
+                entity.HasOne(d => d.RecepcionArticulos)
+                    .WithMany(p => p.OrdenCompraRecepcionArticulos)
+                    .HasForeignKey(d => d.IdRecepcionArticulos)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_OrdenCompraRecepcionArticulos_RecepcionArticulos");
             });
 
             modelBuilder.Entity<Pais>(entity =>
@@ -1319,32 +1299,60 @@ namespace bd.swrm.datos
                 entity.HasKey(e => e.IdRecepcionArticulos)
                     .HasName("PK_RecepcionArticulos");
 
-                entity.HasIndex(e => e.IdArticulo)
-                    .HasName("IX_RecepcionArticulos_IdArticulo");
+                entity.HasOne(d => d.Bodega)
+                    .WithMany(p => p.RecepcionArticulos)
+                    .HasForeignKey(d => d.IdBodega)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_RecepcionArticulos_Bodega");
 
-                entity.HasIndex(e => e.IdEmpleado)
-                    .HasName("IX_RecepcionArticulos_IdEmpleado");
+                entity.HasOne(d => d.EmpleadoDevolucion)
+                    .WithMany(p => p.RecepcionArticulos)
+                    .HasForeignKey(d => d.IdEmpleadoDevolucion)
+                    .HasConstraintName("FK_RecepcionArticulos_Empleado");
 
-                entity.HasIndex(e => e.IdMaestroArticuloSucursal)
-                    .HasName("IX_RecepcionArticulos_IdMaestroArticuloSucursal");
+                entity.HasOne(d => d.MotivoRecepcionArticulos)
+                    .WithMany(p => p.RecepcionArticulos)
+                    .HasForeignKey(d => d.IdMotivoRecepcionArticulos)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_RecepcionArticulos_MotivoRecepcionArticulos");
+            });
 
-                entity.HasIndex(e => e.IdProveedor)
-                    .HasName("IX_RecepcionArticulos_IdProveedor");
+            modelBuilder.Entity<RequerimientoArticulos>(entity =>
+            {
+                entity.HasKey(e => e.IdRequerimientoArticulos)
+                    .HasName("PK_RequerimientoArticulos");
+
+                entity.Property(e => e.Observaciones).HasMaxLength(500);
+
+                entity.HasOne(d => d.Estado)
+                    .WithMany(p => p.RequerimientoArticulos)
+                    .HasForeignKey(d => d.IdEstado)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_RequerimientoArticulos_Estado");
+
+                entity.HasOne(d => d.FuncionarioSolicitante)
+                    .WithMany(p => p.RequerimientoArticulos)
+                    .HasForeignKey(d => d.IdFuncionarioSolicitante)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_RequerimientoArticulos_Empleado");
+            });
+
+            modelBuilder.Entity<RequerimientosArticulosDetalles>(entity =>
+            {
+                entity.HasKey(e => new { e.IdRequerimientosArticulos, e.IdArticulo })
+                    .HasName("PK_RequerimientosArticulosDetalles");
 
                 entity.HasOne(d => d.Articulo)
-                    .WithMany(p => p.RecepcionArticulos)
+                    .WithMany(p => p.RequerimientosArticulosDetalles)
                     .HasForeignKey(d => d.IdArticulo)
-                    .OnDelete(DeleteBehavior.Restrict);
-               
-                entity.HasOne(d => d.MaestroArticuloSucursal)
-                    .WithMany(p => p.RecepcionArticulos)
-                    .HasForeignKey(d => d.IdMaestroArticuloSucursal)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_RequerimientosArticulosDetalles_Articulo");
 
-                entity.HasOne(d => d.Proveedor)
-                    .WithMany(p => p.RecepcionArticulos)
-                    .HasForeignKey(d => d.IdProveedor)
-                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(d => d.RequerimientoArticulos)
+                    .WithMany(p => p.RequerimientosArticulosDetalles)
+                    .HasForeignKey(d => d.IdRequerimientosArticulos)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_RequerimientosArticulosDetalles_RequerimientoArticulos");
             });
 
             modelBuilder.Entity<RevalorizacionActivoFijo>(entity =>
@@ -1361,6 +1369,41 @@ namespace bd.swrm.datos
                     .HasConstraintName("FK_RevalorizacionActivoFijo_RecepcionActivoFijoDetalle");
             });
 
+            modelBuilder.Entity<SalidaArticulos>(entity =>
+            {
+                entity.HasKey(e => e.IdSalidaArticulos)
+                    .HasName("PK_SalidaArticulos");
+
+                entity.Property(e => e.DescripcionMotivo).HasMaxLength(500);
+
+                entity.HasOne(d => d.EmpleadoDespacho)
+                    .WithMany(p => p.SalidaArticulosEmpleadosDespacho)
+                    .HasForeignKey(d => d.IdEmpleadoDespacho)
+                    .HasConstraintName("FK_SalidaArticulos_Empleado1");
+
+                entity.HasOne(d => d.EmpleadoRealizaBaja)
+                    .WithMany(p => p.SalidaArticulosEmpleadosRealizanBaja)
+                    .HasForeignKey(d => d.IdEmpleadoRealizaBaja)
+                    .HasConstraintName("FK_SalidaArticulos_Empleado");
+
+                entity.HasOne(d => d.MotivoSalidaArticulos)
+                    .WithMany(p => p.SalidaArticulos)
+                    .HasForeignKey(d => d.IdMotivoSalidaArticulos)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_SalidaArticulos_MotivoSalidaArticulos");
+
+                entity.HasOne(d => d.ProveedorDevolucion)
+                    .WithMany(p => p.SalidaArticulos)
+                    .HasForeignKey(d => d.IdProveedorDevolucion)
+                    .HasConstraintName("FK_SalidaArticulos_Proveedor");
+
+                entity.HasOne(d => d.RequerimientoArticulos)
+                    .WithMany(p => p.SalidaArticulos)
+                    .HasForeignKey(d => d.IdRequerimientoArticulos)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_SalidaArticulos_RequerimientoArticulos");
+            });
+
             modelBuilder.Entity<Sexo>(entity =>
             {
                 entity.HasKey(e => e.IdSexo)
@@ -1369,45 +1412,6 @@ namespace bd.swrm.datos
                 entity.Property(e => e.Nombre)
                     .IsRequired()
                     .HasMaxLength(20);
-            });
-
-            modelBuilder.Entity<SolicitudProveeduria>(entity =>
-            {
-                entity.HasKey(e => e.IdSolicitudProveeduria)
-                    .HasName("PK_SolicitudProveeduria");
-
-                entity.HasIndex(e => e.IdEmpleado)
-                    .HasName("IX_SolicitudProveeduria_IdEmpleado");
-            });
-
-            modelBuilder.Entity<SolicitudProveeduriaDetalle>(entity =>
-            {
-                entity.HasKey(e => e.IdSolicitudProveeduriaDetalle)
-                    .HasName("PK_SolicitudProveeduriaDetalle");
-
-                entity.HasIndex(e => e.IdArticulo)
-                    .HasName("IX_SolicitudProveeduriaDetalle_IdArticulo");
-
-                entity.HasIndex(e => e.IdMaestroArticuloSucursal)
-                    .HasName("IX_SolicitudProveeduriaDetalle_IdMaestroArticuloSucursal");
-
-                entity.HasIndex(e => e.IdSolicitudProveeduria)
-                    .HasName("IX_SolicitudProveeduriaDetalle_IdSolicitudProveeduria");
-
-                entity.HasOne(d => d.Articulo)
-                    .WithMany(p => p.SolicitudProveeduriaDetalle)
-                    .HasForeignKey(d => d.IdArticulo)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(d => d.MaestroArticuloSucursal)
-                    .WithMany(p => p.SolicitudProveeduriaDetalle)
-                    .HasForeignKey(d => d.IdMaestroArticuloSucursal)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(d => d.SolicitudProveeduria)
-                    .WithMany(p => p.SolicitudProveeduriaDetalle)
-                    .HasForeignKey(d => d.IdSolicitudProveeduria)
-                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<SubClaseActivoFijo>(entity =>
@@ -1528,43 +1532,6 @@ namespace bd.swrm.datos
                 entity.Property(e => e.Nombre)
                     .IsRequired()
                     .HasMaxLength(200);
-            });
-
-            modelBuilder.Entity<TranferenciaArticulo>(entity =>
-            {
-                entity.HasKey(e => e.IdTranferenciaArticulo)
-                    .HasName("PK_TranferenciaArticulo");
-
-                entity.HasIndex(e => e.IdEmpleadoEnvia)
-                    .HasName("IX_TranferenciaArticulo_EmpleadoIdIdEmpleadoEnvia");
-
-                entity.HasIndex(e => e.IdEmpleadoRecibe)
-                    .HasName("IX_TranferenciaArticulo_EmpleadoId");
-
-
-                entity.HasIndex(e => e.IdArticulo)
-                    .HasName("IX_TranferenciaArticulo_IdArticulo");
-
-                entity.HasIndex(e => e.IdMaestroArticuloEnvia)
-                    .HasName("IX_TranferenciaArticulo_MaestroArticuloSucursalIdMaestroArticuloEnvia");
-
-                entity.HasIndex(e => e.IdMaestroArticuloRecibe)
-                   .HasName("IX_TranferenciaArticulo_MaestroArticuloSucursalIdMaestroArticuloRecibe");
-
-                entity.Property(e => e.Fecha).HasMaxLength(10);
-
-                entity.HasOne(d => d.Articulo)
-                    .WithMany(p => p.TranferenciaArticulo)
-                    .HasForeignKey(d => d.IdArticulo)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(d => d.MaestroArticuloSucursalRecibe)
-                    .WithMany(p => p.TranferenciaArticulo)
-                    .HasForeignKey(d => d.IdMaestroArticuloRecibe);
-
-                entity.HasOne(d => d.MaestroArticuloSucursalEnvia)
-                  .WithMany(p => p.TranferenciaArticulo1)
-                  .HasForeignKey(d => d.IdMaestroArticuloEnvia);
             });
 
             modelBuilder.Entity<TransferenciaActivoFijo>(entity =>
