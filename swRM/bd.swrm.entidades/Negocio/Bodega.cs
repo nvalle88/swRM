@@ -8,6 +8,8 @@ namespace bd.swrm.entidades.Negocio
     {
         public Bodega()
         {
+            InventarioArticulos = new HashSet<InventarioArticulos>();
+            RecepcionArticulos = new HashSet<RecepcionArticulos>();
             UbicacionActivoFijo = new HashSet<UbicacionActivoFijo>();
         }
 
@@ -32,5 +34,7 @@ namespace bd.swrm.entidades.Negocio
         public virtual Empleado EmpleadoResponsable { get; set; }
 
         public virtual ICollection<UbicacionActivoFijo> UbicacionActivoFijo { get; set; }
+        public virtual ICollection<InventarioArticulos> InventarioArticulos { get; set; }
+        public virtual ICollection<RecepcionArticulos> RecepcionArticulos { get; set; }
     }
 }

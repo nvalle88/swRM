@@ -5,6 +5,12 @@ namespace bd.swrm.entidades.Negocio
 
     public partial class Articulo
     {
+        public Articulo()
+        {
+            MaestroArticuloSucursal = new HashSet<MaestroArticuloSucursal>();
+            RequerimientosArticulosDetalles = new HashSet<RequerimientosArticulosDetalles>();
+        }
+
         [Key]
         public int IdArticulo { get; set; }
 
@@ -31,20 +37,8 @@ namespace bd.swrm.entidades.Negocio
         public int? IdModelo { get; set; }
         public virtual Modelo Modelo { get; set; }
 
-        public virtual ICollection<AltaProveeduria> AltaProveeduria { get; set; }
+        public virtual ICollection<MaestroArticuloSucursal> MaestroArticuloSucursal { get; set; }
 
-        public virtual ICollection<BajaProveeduria> BajaProveeduria { get; set; }
-
-        public virtual ICollection<MaestroDetalleArticulo> MaestroDetalleArticulo { get; set; }
-
-        public virtual ICollection<RecepcionArticulos> RecepcionArticulos { get; set; }
-
-        public virtual ICollection<SolicitudProveeduriaDetalle> SolicitudProveeduriaDetalle { get; set; }
-
-        public virtual ICollection<DetalleFactura> DetalleFactura { get; set; }
-
-        public virtual ICollection<TranferenciaArticulo> TranferenciaArticulo { get; set; }
-        
-        public virtual ExistenciaArticuloProveeduria ExistenciaArticuloProveeduria { get; set; }
+        public virtual ICollection<RequerimientosArticulosDetalles> RequerimientosArticulosDetalles { get; set; }
     }
 }

@@ -8,10 +8,11 @@
     {
         public Estado()
         {
-            RecepcionActivoFijoDetalle = new HashSet<RecepcionActivoFijoDetalle>();
-            SolicitudProveeduriaDetalle = new HashSet<SolicitudProveeduriaDetalle>();
-            TransferenciaActivoFijo = new HashSet<TransferenciaActivoFijo>();
             InventarioActivoFijo = new HashSet<InventarioActivoFijo>();
+            OrdenCompra = new HashSet<OrdenCompra>();
+            RecepcionActivoFijoDetalle = new HashSet<RecepcionActivoFijoDetalle>();
+            RequerimientoArticulos = new HashSet<RequerimientoArticulos>();
+            TransferenciaActivoFijo = new HashSet<TransferenciaActivoFijo>();
         }
 
         [Key]
@@ -23,12 +24,10 @@
         public string Nombre { get; set; }
 
         //Propiedades Virtuales Referencias a otras clases
-        public virtual ICollection<RecepcionActivoFijoDetalle> RecepcionActivoFijoDetalle { get; set; }
-
-        public virtual ICollection<SolicitudProveeduriaDetalle> SolicitudProveeduriaDetalle { get; set; }
-
-        public virtual ICollection<TransferenciaActivoFijo> TransferenciaActivoFijo { get; set; }
-
         public virtual ICollection<InventarioActivoFijo> InventarioActivoFijo { get; set; }
+        public virtual ICollection<OrdenCompra> OrdenCompra { get; set; }
+        public virtual ICollection<RecepcionActivoFijoDetalle> RecepcionActivoFijoDetalle { get; set; }
+        public virtual ICollection<RequerimientoArticulos> RequerimientoArticulos { get; set; }
+        public virtual ICollection<TransferenciaActivoFijo> TransferenciaActivoFijo { get; set; }
     }
 }

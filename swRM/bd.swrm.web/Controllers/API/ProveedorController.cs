@@ -34,7 +34,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.Proveedor.Include(c=> c.LineaServicio).Include(x => x.Factura).OrderBy(x => x.Nombre).ThenBy(c=> c.Apellidos).ToListAsync();
+                return await db.Proveedor.Include(c=> c.LineaServicio).OrderBy(x => x.Nombre).ThenBy(c=> c.Apellidos).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -49,7 +49,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.Proveedor.Include(c => c.LineaServicio).Include(x => x.Factura).Where(c=> c.LineaServicio.Nombre == proveedorTransfer.LineaServicio && c.Activo == proveedorTransfer.Activo).OrderBy(x => x.Nombre).ThenBy(c => c.Apellidos).ToListAsync();
+                return await db.Proveedor.Include(c => c.LineaServicio).Where(c=> c.LineaServicio.Nombre == proveedorTransfer.LineaServicio && c.Activo == proveedorTransfer.Activo).OrderBy(x => x.Nombre).ThenBy(c => c.Apellidos).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -66,7 +66,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var proveedor = await db.Proveedor.Include(c => c.LineaServicio).Include(x => x.Factura).SingleOrDefaultAsync(m => m.IdProveedor == id);
+                var proveedor = await db.Proveedor.Include(c => c.LineaServicio).SingleOrDefaultAsync(m => m.IdProveedor == id);
                 return new Response { IsSuccess = proveedor != null, Message = proveedor != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = proveedor };
             }
             catch (Exception ex)
