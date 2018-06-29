@@ -15,5 +15,6 @@ namespace bd.swrm.entidades.Negocio
 
         //Propiedades Virtuales Referencias a otras clases
         public virtual ICollection<RecepcionActivoFijo> RecepcionActivoFijo { get; set; }
+
     }
 }
