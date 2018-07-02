@@ -155,12 +155,5 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        public Response Existe(MantenimientoActivoFijo mantenimientoActivoFijo)
-        {
-            var bdd = mantenimientoActivoFijo.FechaMantenimiento;
-            var loglevelrespuesta = db.MantenimientoActivoFijo.Where(p => p.FechaMantenimiento == bdd && p.IdEmpleado == mantenimientoActivoFijo.IdEmpleado && p.IdRecepcionActivoFijoDetalle == mantenimientoActivoFijo.IdRecepcionActivoFijoDetalle).FirstOrDefault();
-            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
-        }
     }
 }

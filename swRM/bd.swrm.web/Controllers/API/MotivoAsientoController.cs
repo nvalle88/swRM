@@ -142,18 +142,5 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        private bool MotivoAsientoExists(string nombre)
-        {
-            return db.MotivoAsiento.Any(e => e.Descripcion == nombre);
-        }
-
-        public Response Existe(MotivoAsiento motivoAsiento)
-        {
-            var bdd = motivoAsiento.Descripcion.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.MotivoAsiento.Where(p => p.Descripcion.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
-            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
-        }
-
     }
 }

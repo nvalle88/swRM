@@ -158,12 +158,5 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        public Response Existe(ClaseActivoFijo claseActivoFijo)
-        {
-            var bdd = claseActivoFijo.Nombre.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.ClaseActivoFijo.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd && p.IdCategoriaActivoFijo == claseActivoFijo.IdCategoriaActivoFijo && p.IdTipoActivoFijo == claseActivoFijo.IdTipoActivoFijo).FirstOrDefault();
-            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
-        }
     }
 }

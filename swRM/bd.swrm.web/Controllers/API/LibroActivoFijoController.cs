@@ -153,11 +153,5 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        public Response Existe(LibroActivoFijo libroActivoFijo)
-        {
-            var loglevelrespuesta = db.LibroActivoFijo.Where(p => p.IdSucursal == libroActivoFijo.IdSucursal).FirstOrDefault();
-            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
-        }
     }
 }

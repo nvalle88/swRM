@@ -143,13 +143,5 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        public Response Existe(ComponenteActivoFijo componenteActivoFijo)
-        {
-            var bdd = componenteActivoFijo.IdRecepcionActivoFijoDetalleOrigen;
-            var _bdd = componenteActivoFijo.IdRecepcionActivoFijoDetalleComponente;
-            var loglevelrespuesta = db.ComponenteActivoFijo.Where(p => p.IdRecepcionActivoFijoDetalleOrigen == bdd && p.IdRecepcionActivoFijoDetalleComponente == _bdd).FirstOrDefault();
-            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
-        }
     }
 }
