@@ -119,7 +119,6 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                ModelState.Remove("Sucursal.Nombre");
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
@@ -159,13 +158,6 @@ namespace bd.swrm.web.Controllers.API
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
-        }
-
-        public Response Existe(Bodega bodega)
-        {
-            var bdd = bodega.Nombre.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.Bodega.Where(p => p.Nombre.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
-            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }
 }

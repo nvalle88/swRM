@@ -143,12 +143,5 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        public Response Existe(CatalogoCuenta catalogoCuenta)
-        {
-            var bdd = catalogoCuenta.Codigo.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.CatalogoCuenta.Where(p => p.Codigo.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
-            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
-        }
     }
 }

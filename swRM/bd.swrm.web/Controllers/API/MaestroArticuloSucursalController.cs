@@ -33,7 +33,12 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.MaestroArticuloSucursal.OrderBy(c=> c.Minimo).ThenBy(c=> c.Maximo).Include(c => c.Sucursal).ThenInclude(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais).ToListAsync();
+                return await db.MaestroArticuloSucursal
+                    .Include(c => c.Sucursal).ThenInclude(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais)
+                    .Include(c=> c.Articulo)
+                    .OrderBy(c=> c.IdSucursal)
+                    .OrderBy(c=> c.Articulo)
+                    .OrderBy(c => c.Minimo).ThenBy(c => c.Maximo).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,7 +53,12 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.MaestroArticuloSucursal.Where(c=> c.IdSucursal == idSucursal).OrderBy(c => c.Minimo).ThenBy(c => c.Maximo).Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais).ToListAsync();
+                return await db.MaestroArticuloSucursal.Where(c=> c.IdSucursal == idSucursal)
+                    .Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais)
+                    .Include(c=> c.Articulo)
+                    .OrderBy(c => c.IdSucursal)
+                    .OrderBy(c => c.Articulo)
+                    .OrderBy(c => c.Minimo).ThenBy(c => c.Maximo).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -65,7 +75,10 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var maestroArticuloSucursal = await db.MaestroArticuloSucursal.Include(c=> c.Sucursal).ThenInclude(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais).SingleOrDefaultAsync(m => m.IdMaestroArticuloSucursal == id);
+                var maestroArticuloSucursal = await db.MaestroArticuloSucursal
+                    .Include(c=> c.Sucursal).ThenInclude(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais)
+                    .Include(c=> c.Articulo)
+                    .SingleOrDefaultAsync(m => m.IdMaestroArticuloSucursal == id);
                 return new Response { IsSuccess = maestroArticuloSucursal != null, Message = maestroArticuloSucursal != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = maestroArticuloSucursal };
             }
             catch (Exception ex)
@@ -74,32 +87,71 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        
+
+        [HttpPost]
+        [Route("ObtenerGrupoArticulo")]
+        public async Task<Response> PostGrupoArticulo([FromBody] int idArticulo)
+        {
+            try
+            {
+                var articulo = await db.Articulo.Include(c=> c.SubClaseArticulo).ThenInclude(c=> c.ClaseArticulo).FirstOrDefaultAsync(c => c.IdArticulo == idArticulo);
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = PutCeros(articulo.SubClaseArticulo.ClaseArticulo.IdClaseArticulo.ToString(), 3) };
+            }
+            catch (Exception)
+            {
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+
+        private string PutCeros(string texto, int cantidadCeros)
+        {
+            int lengthTexto = texto.Length;
+            while (lengthTexto < cantidadCeros)
+            {
+                texto = "0" + texto;
+                lengthTexto++;
+            }
+            return texto;
+        }
+
         [HttpPut("{id}")]
         public async Task<Response> PutMaestroArticuloSucursal([FromRoute] int id, [FromBody] MaestroArticuloSucursal maestroArticuloSucursal)
         {
             try
             {
-                ModelState.Remove("Sucursal.Nombre");
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var maestroArticuloSucursalActualizar = await db.MaestroArticuloSucursal.Where(x => x.IdMaestroArticuloSucursal == id).FirstOrDefaultAsync();
-                if (maestroArticuloSucursalActualizar != null)
+                if (!await db.MaestroArticuloSucursal.Where(p => (p.IdSucursal == maestroArticuloSucursal.IdSucursal && p.IdArticulo == maestroArticuloSucursal.IdArticulo) || p.CodigoArticulo == maestroArticuloSucursal.CodigoArticulo).AnyAsync(c => c.IdMaestroArticuloSucursal != maestroArticuloSucursal.IdMaestroArticuloSucursal))
                 {
-                    try
+                    var maestroArticuloSucursalActualizar = await db.MaestroArticuloSucursal.Where(x => x.IdMaestroArticuloSucursal == id).FirstOrDefaultAsync();
+                    if (maestroArticuloSucursalActualizar != null)
                     {
-                        maestroArticuloSucursalActualizar.Minimo = maestroArticuloSucursal.Minimo;
-                        maestroArticuloSucursalActualizar.Maximo = maestroArticuloSucursal.Maximo;
-                        maestroArticuloSucursalActualizar.IdSucursal = maestroArticuloSucursal.IdSucursal;
-                        db.MaestroArticuloSucursal.Update(maestroArticuloSucursalActualizar);
-                        await db.SaveChangesAsync();
-                        return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
-                    }
-                    catch (Exception ex)
-                    {
-                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                        return new Response { IsSuccess = false, Message = Mensaje.Error };
+                        try
+                        {
+                            maestroArticuloSucursalActualizar.Minimo = maestroArticuloSucursal.Minimo;
+                            maestroArticuloSucursalActualizar.Maximo = maestroArticuloSucursal.Maximo;
+                            maestroArticuloSucursalActualizar.IdSucursal = maestroArticuloSucursal.IdSucursal;
+                            maestroArticuloSucursalActualizar.IdArticulo = maestroArticuloSucursal.IdArticulo;
+                            maestroArticuloSucursalActualizar.CodigoArticulo = $"{PutCeros(maestroArticuloSucursal.GrupoArticulo, 3)}.{PutCeros(maestroArticuloSucursal.CodigoArticulo, 5)}";
+
+                            if (!maestroArticuloSucursalActualizar.Habilitado && maestroArticuloSucursal.Habilitado)
+                                maestroArticuloSucursalActualizar.FechaSinExistencia = DateTime.Now;
+
+                            if (maestroArticuloSucursalActualizar.Habilitado && !maestroArticuloSucursal.Habilitado)
+                                maestroArticuloSucursalActualizar.FechaSinExistencia = null;
+
+                            maestroArticuloSucursalActualizar.Habilitado = maestroArticuloSucursal.Habilitado;
+
+                            db.MaestroArticuloSucursal.Update(maestroArticuloSucursalActualizar);
+                            await db.SaveChangesAsync();
+                            return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                        }
+                        catch (Exception ex)
+                        {
+                            await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                            return new Response { IsSuccess = false, Message = Mensaje.Error };
+                        }
                     }
                 }
                 return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
@@ -109,20 +161,59 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
             }
         }
-        
+
+        [HttpPut("EditarFechaExistenciaHabilitado/{id}")]
+        public async Task<Response> PutFechaSinExistenciaHabilitado([FromRoute] int id, [FromBody] MaestroArticuloSucursal maestroArticuloSucursal)
+        {
+            try
+            {
+                var maestroArticuloSucursalActualizar = await db.MaestroArticuloSucursal.Where(x => x.IdMaestroArticuloSucursal == id).FirstOrDefaultAsync();
+                if (maestroArticuloSucursalActualizar != null)
+                {
+                    maestroArticuloSucursalActualizar.Habilitado = maestroArticuloSucursal.Habilitado;
+                    maestroArticuloSucursalActualizar.FechaSinExistencia = maestroArticuloSucursal.FechaSinExistencia;
+                }
+                return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
+            }
+            catch (Exception)
+            {
+                return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
+            }
+        }
+
+        [HttpPut("EditarValorActual/{id}")]
+        public async Task<Response> PutValorActual([FromRoute] int id, [FromBody] MaestroArticuloSucursal maestroArticuloSucursal)
+        {
+            try
+            {
+                var maestroArticuloSucursalActualizar = await db.MaestroArticuloSucursal.Where(x => x.IdMaestroArticuloSucursal == id).FirstOrDefaultAsync();
+                if (maestroArticuloSucursalActualizar != null)
+                    maestroArticuloSucursalActualizar.ValorActual = maestroArticuloSucursal.ValorActual;
+
+                return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
+            }
+            catch (Exception)
+            {
+                return new Response { IsSuccess = false, Message = Mensaje.Excepcion };
+            }
+        }
+
         [HttpPost]
         [Route("InsertarMaestroArticuloSucursal")]
         public async Task<Response> PostMaestroArticuloSucursal([FromBody] MaestroArticuloSucursal maestroArticuloSucursal)
         {
             try
             {
-                ModelState.Remove("Sucursal.Nombre");
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.MaestroArticuloSucursal.AnyAsync(p => p.Minimo == maestroArticuloSucursal.Minimo && p.Maximo == maestroArticuloSucursal.Maximo && p.IdSucursal == maestroArticuloSucursal.IdSucursal))
+                if (!await db.MaestroArticuloSucursal.AnyAsync(p => (p.IdSucursal == maestroArticuloSucursal.IdSucursal && p.IdArticulo == maestroArticuloSucursal.IdArticulo) || p.CodigoArticulo == maestroArticuloSucursal.CodigoArticulo))
                 {
-                    db.Entry(maestroArticuloSucursal.Sucursal).State = EntityState.Unchanged;
+                    maestroArticuloSucursal.CodigoArticulo = $"{PutCeros(maestroArticuloSucursal.GrupoArticulo, 3)}.{PutCeros(maestroArticuloSucursal.CodigoArticulo, 5)}";
+
+                    if (maestroArticuloSucursal.Habilitado)
+                        maestroArticuloSucursal.FechaSinExistencia = DateTime.Now;
+
                     db.MaestroArticuloSucursal.Add(maestroArticuloSucursal);
                     await db.SaveChangesAsync();
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
@@ -157,12 +248,6 @@ namespace bd.swrm.web.Controllers.API
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
-        }
-
-        public Response Existe(MaestroArticuloSucursal maestroArticuloSucursal)
-        {
-            var loglevelrespuesta = db.MaestroArticuloSucursal.Where(p => p.Minimo == maestroArticuloSucursal.Minimo && p.Maximo == maestroArticuloSucursal.Maximo && p.IdSucursal == maestroArticuloSucursal.IdSucursal).FirstOrDefault();
-            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
         }
     }
 }

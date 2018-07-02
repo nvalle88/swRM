@@ -2221,10 +2221,5 @@ namespace bd.swrm.web.Controllers.API
             }
         }
         #endregion
-
-        public override void OnActionExecuting(ActionExecutingContext context)
-        {
-            base.OnActionExecuting(context);
-        }
     }
 }

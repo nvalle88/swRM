@@ -141,12 +141,5 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        public Response Existe(MotivoTraslado motivoTraslado)
-        {
-            var bdd = motivoTraslado.Descripcion.ToUpper().TrimEnd().TrimStart();
-            var loglevelrespuesta = db.MotivoTraslado.Where(p => p.Descripcion.ToUpper().TrimStart().TrimEnd() == bdd).FirstOrDefault();
-            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
-        }
     }
 }

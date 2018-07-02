@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace bd.swrm.entidades.Negocio
 {
@@ -39,13 +40,14 @@ namespace bd.swrm.entidades.Negocio
 
         [Required(ErrorMessage = "Debe introducir el {0}")]
         [Display(Name = "Código de artículo:")]
-        [StringLength(30, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string CodigoArticulo { get; set; }
+
+        [NotMapped]
+        public string GrupoArticulo { get; set; }
 
         [Display(Name = "Habilitado:")]
         public bool Habilitado { get; set; }
-
-        [Required(ErrorMessage = "Debe introducir la {0}")]
+        
         [Display(Name = "Fecha sin existencia:")]
         [DataType(DataType.DateTime)]
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]

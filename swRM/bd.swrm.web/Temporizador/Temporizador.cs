@@ -41,9 +41,12 @@ namespace bd.swrm.web.Temporizador
         #region Depreciación de Activos Fijos
         public static void InicializarTemporizadorDepreciacion()
         {
-            InicializarTemporizador(timerDepreciacion, async () => { await DepreciacionActivosFijosAlta(); }, new TimeSpan(0, 0, 5), new TimeSpan(24, 0, 0));
+            InicializarTemporizador(timerDepreciacion, async () =>
+            {
+                await DepreciacionActivosFijosAlta();
+                await ExistenciaMaestroArticuloSucursal();
+            }, new TimeSpan(0, 0, 5), new TimeSpan(24, 0, 0));
         }
-
         private static async Task<DepreciacionActivoFijo> InsertarDepreciacionActivoFijo(decimal valorCompra, decimal depreciacionAcumulada, decimal valorResidual, DateTime ultimaFechaDepreciacionAlta, int idRecepcionActivoFijoDetalle)
         {
             var nuevaDepreciacionActivoFijo = new DepreciacionActivoFijo
@@ -62,7 +65,6 @@ namespace bd.swrm.web.Temporizador
             await db.SaveChangesAsync();
             return nuevaDepreciacionActivoFijo;
         }
-
         private static async Task CalculoRecursivoDepreciacion(DepreciacionActivoFijo ultimaDepreciacion, decimal indiceDepreciacionMensual)
         {
             if (ultimaDepreciacion != null)
@@ -77,7 +79,6 @@ namespace bd.swrm.web.Temporizador
                 }
             }
         }
-
         public static async Task DepreciacionActivosFijosAlta()
         {
             try
@@ -123,7 +124,6 @@ namespace bd.swrm.web.Temporizador
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
             }
         }
-
         private static async Task<decimal> ObtenerValorCompraRevalorizacion(int idRecepcionActivoFijoDetalle)
         {
             try
@@ -134,6 +134,38 @@ namespace bd.swrm.web.Temporizador
             catch (Exception)
             {
                 return 0;
+            }
+        }
+        #endregion
+
+        #region Maestro de artículo de sucursal
+        private static async Task ExistenciaMaestroArticuloSucursal()
+        {
+            try
+            {
+                var maestrosArticulosSucursal = await db.MaestroArticuloSucursal.Where(c => c.Habilitado).ToListAsync();
+                foreach (var item in maestrosArticulosSucursal)
+                {
+                    if (item.FechaSinExistencia != null)
+                    {
+                        if (item.FechaSinExistencia.Value.AddMonths(6) < DateTime.Now)
+                        {
+                            var inventarioArticulo = await db.InventarioArticulos.FirstOrDefaultAsync(c => c.IdMaestroArticuloSucursal == item.IdMaestroArticuloSucursal);
+                            if (inventarioArticulo == null || (inventarioArticulo != null && inventarioArticulo.Cantidad == 0))
+                            {
+                                item.Habilitado = false;
+                                item.FechaSinExistencia = null;
+                            }
+                        }
+                    }
+                    else
+                        item.FechaSinExistencia = DateTime.Now;
+                }
+                await db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
             }
         }
         #endregion
