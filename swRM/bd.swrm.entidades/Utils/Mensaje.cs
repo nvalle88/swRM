@@ -25,6 +25,10 @@ namespace bd.swrm.entidades.Utils
         public static string Baja { get { return "Baja"; } }
         public static string Creada { get { return "Creado"; } }
         public static string Aceptada { get { return "Aceptado"; } }
+        public static string EnTramite { get { return "En trámite"; } }
+        public static string Procesada { get { return "Procesada"; } }
+        public static string Solicitado { get { return "Solicitado"; } }
+        public static string Despachado { get { return "Despachado"; } }
     }
 
     public static class MotivosTransferencia
@@ -36,9 +40,10 @@ namespace bd.swrm.entidades.Utils
         public static string TransferenciaBodegas { get { return "Transferencia entre Bodegas"; } }
     }
 
-    public static class ClaimsTransferNombres
+    public static class ADMI_Grupos
     {
-        public static string IdSucursal { get { return "IdSucursal"; } }
-        public static string NombreSucursal { get { return "NombreSucursal"; } }
+        public static string AdminNacionalProveeduria { get { return "Admin Nacional de Proveeduría"; } }
+        public static string AdminZonalProveeduria { get { return "Admin Zonal de Proveeduría"; } }
+        public static string FuncionarioSolicitante { get { return "Funcionario solicitante"; } }
     }
 }

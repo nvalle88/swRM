@@ -20,12 +20,30 @@ namespace bd.swrm.servicios.Middlewares
         public async Task Invoke(HttpContext httpContext)
         {
             var claimsTransfer = new ClaimsTransfer();
-            var valorIdSucursal = ObtenerHeader(httpContext, ClaimsTransferNombres.IdSucursal);
+            var valorIdSucursal = ObtenerHeader(httpContext, "IdSucursal");
             if (!String.IsNullOrEmpty(valorIdSucursal))
                 claimsTransfer.IdSucursal = int.Parse(valorIdSucursal);
 
-            claimsTransfer.NombreSucursal = ObtenerHeader(httpContext, ClaimsTransferNombres.NombreSucursal);
-            
+            var valorIdDependencia = ObtenerHeader(httpContext, "IdDependencia");
+            if (!String.IsNullOrEmpty(valorIdDependencia))
+                claimsTransfer.IdDependencia = int.Parse(valorIdDependencia);
+
+            var valorIdEmpleado = ObtenerHeader(httpContext, "IdEmpleado");
+            if (!String.IsNullOrEmpty(valorIdEmpleado))
+                claimsTransfer.IdEmpleado = int.Parse(valorIdEmpleado);
+
+            var valorIsAdminNacionalProveeduria = ObtenerHeader(httpContext, "IsAdminNacionalProveeduria");
+            if (!String.IsNullOrEmpty(valorIsAdminNacionalProveeduria))
+                claimsTransfer.IsAdminNacionalProveeduria = bool.Parse(valorIsAdminNacionalProveeduria);
+
+            var valorIsAdminZonalProveeduria = ObtenerHeader(httpContext, "IsAdminZonalProveeduria");
+            if (!String.IsNullOrEmpty(valorIsAdminZonalProveeduria))
+                claimsTransfer.IsAdminZonalProveeduria = bool.Parse(valorIsAdminZonalProveeduria);
+
+            var valorIsFuncionarioSolicitante = ObtenerHeader(httpContext, "IsFuncionarioSolicitante");
+            if (!String.IsNullOrEmpty(valorIsFuncionarioSolicitante))
+                claimsTransfer.IsFuncionarioSolicitante = bool.Parse(valorIsFuncionarioSolicitante);
+
             httpContext.Items.Add("ClaimsTransfer", claimsTransfer);
             await nextDelegate.Invoke(httpContext);
         }

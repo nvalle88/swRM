@@ -7,7 +7,9 @@ namespace bd.swrm.entidades.Negocio
     {
         public Articulo()
         {
+            InventarioArticulos = new HashSet<InventarioArticulos>();
             MaestroArticuloSucursal = new HashSet<MaestroArticuloSucursal>();
+            OrdenCompraDetalles = new HashSet<OrdenCompraDetalles>();
             RequerimientosArticulosDetalles = new HashSet<RequerimientosArticulosDetalles>();
         }
 
@@ -37,8 +39,9 @@ namespace bd.swrm.entidades.Negocio
         public int? IdModelo { get; set; }
         public virtual Modelo Modelo { get; set; }
 
+        public virtual ICollection<InventarioArticulos> InventarioArticulos { get; set; }
         public virtual ICollection<MaestroArticuloSucursal> MaestroArticuloSucursal { get; set; }
-
+        public virtual ICollection<OrdenCompraDetalles> OrdenCompraDetalles { get; set; }
         public virtual ICollection<RequerimientosArticulosDetalles> RequerimientosArticulosDetalles { get; set; }
     }
 }

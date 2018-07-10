@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace bd.swrm.entidades.Negocio
 {
@@ -8,13 +9,13 @@ namespace bd.swrm.entidades.Negocio
     {
         [Key]
         public int IdInventarioArticulos { get; set; }
-
-        [Display(Name = "Maestro de artículo de sucursal:")]
+        
+        [Display(Name = "Artículo:")]
         [Required(ErrorMessage = "Debe seleccionar el {0} ")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
-        public int IdMaestroArticuloSucursal { get; set; }
-        public virtual MaestroArticuloSucursal MaestroArticuloSucursal { get; set; }
-
+        public int IdArticulo { get; set; }
+        public virtual Articulo Articulo { get; set; }
+        
         [Display(Name = "Bodega:")]
         [Required(ErrorMessage = "Debe seleccionar la {0} ")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar la {0} ")]

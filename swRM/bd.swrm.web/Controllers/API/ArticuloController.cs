@@ -33,7 +33,11 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.Articulo.Include(c=> c.SubClaseArticulo).ThenInclude(c=> c.ClaseArticulo).ThenInclude(c=> c.TipoArticulo).Include(c=> c.UnidadMedida).Include(c=> c.Modelo).OrderBy(x => x.Nombre).ToListAsync();
+                return await db.Articulo
+                    .Include(c=> c.SubClaseArticulo).ThenInclude(c=> c.ClaseArticulo).ThenInclude(c=> c.TipoArticulo)
+                    .Include(c=> c.UnidadMedida)
+                    .Include(c=> c.Modelo).ThenInclude(c=> c.Marca)
+                    .OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,7 +52,11 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.Articulo.Where(c=> c.IdSubClaseArticulo == idSubClaseArticulo).Include(c => c.SubClaseArticulo).ThenInclude(c => c.ClaseArticulo).ThenInclude(c => c.TipoArticulo).Include(c => c.UnidadMedida).Include(c => c.Modelo).OrderBy(x => x.Nombre).ToListAsync();
+                return await db.Articulo.Where(c=> c.IdSubClaseArticulo == idSubClaseArticulo)
+                    .Include(c => c.SubClaseArticulo).ThenInclude(c => c.ClaseArticulo).ThenInclude(c => c.TipoArticulo)
+                    .Include(c => c.UnidadMedida)
+                    .Include(c => c.Modelo).ThenInclude(c => c.Marca)
+                    .OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -65,7 +73,11 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var articulo = await db.Articulo.Include(c=> c.SubClaseArticulo).ThenInclude(c=> c.ClaseArticulo).ThenInclude(c=> c.TipoArticulo).Include(c=> c.Modelo).ThenInclude(c=> c.Marca).SingleOrDefaultAsync(m => m.IdArticulo == id);
+                var articulo = await db.Articulo
+                    .Include(c=> c.SubClaseArticulo).ThenInclude(c=> c.ClaseArticulo).ThenInclude(c=> c.TipoArticulo)
+                    .Include(c=> c.Modelo).ThenInclude(c=> c.Marca)
+                    .Include(c=> c.UnidadMedida)
+                    .SingleOrDefaultAsync(m => m.IdArticulo == id);
                 return new Response { IsSuccess = articulo != null, Message = articulo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = articulo };
             }
             catch (Exception ex)

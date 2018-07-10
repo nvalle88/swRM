@@ -15,7 +15,7 @@ namespace bd.swrm.entidades.Negocio
         public int IdRecepcionArticulos { get; set; }
 
         [Required(ErrorMessage = "Debe introducir la {0}")]
-        [Display(Name = "Fecha sin existencia:")]
+        [Display(Name = "Fecha de recepción:")]
         [DataType(DataType.DateTime)]
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy hh:mm tt}", ApplyFormatInEditMode = true)]
         public DateTime FechaRecepcion { get; set; }
