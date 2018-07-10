@@ -7,12 +7,6 @@ namespace bd.swrm.entidades.Negocio
 {
     public partial class MaestroArticuloSucursal
     {
-        public MaestroArticuloSucursal()
-        {
-            InventarioArticulos = new HashSet<InventarioArticulos>();
-            OrdenCompraDetalles = new HashSet<OrdenCompraDetalles>();
-        }
-
         [Key]
         public int IdMaestroArticuloSucursal { get; set; }
 
@@ -57,8 +51,5 @@ namespace bd.swrm.entidades.Negocio
         [Display(Name = "Valor de artículo:")]
         [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal ValorActual { get; set; }
-
-        public virtual ICollection<InventarioArticulos> InventarioArticulos { get; set; }
-        public virtual ICollection<OrdenCompraDetalles> OrdenCompraDetalles { get; set; }
     }
 }
