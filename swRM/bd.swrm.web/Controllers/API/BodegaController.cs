@@ -75,15 +75,25 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
+        [HttpPost]
+        [Route("ListadoDependenciasPorBodega")]
+        public async Task<List<Dependencia>> PostListadoDependenciasPorBodega([FromBody] int idBodega)
+        {
+            try
+            {
+                return await db.Dependencia.Include(c=> c.Sucursal).Where(c => c.IdBodega == idBodega).ToListAsync();
+            }
+            catch (Exception)
+            {
+                return new List<Dependencia>();
+            }
+        }
+
         [HttpPut("{id}")]
         public async Task<Response> PutBodega([FromRoute] int id, [FromBody] Bodega bodega)
         {
             try
             {
-                ModelState.Remove("Sucursal.Nombre");
-                if (!ModelState.IsValid)
-                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
-
                 if (!await db.Bodega.Where(c => c.Nombre.ToUpper().Trim() == bodega.Nombre.ToUpper().Trim()).AnyAsync(c => c.IdBodega != bodega.IdBodega))
                 {
                     var bodegaActualizar = await db.Bodega.Where(x => x.IdBodega == id).FirstOrDefaultAsync();
@@ -91,11 +101,41 @@ namespace bd.swrm.web.Controllers.API
                     {
                         try
                         {
-                            bodegaActualizar.Nombre = bodega.Nombre;
-                            bodegaActualizar.IdSucursal = bodega.IdSucursal;
-                            bodegaActualizar.IdEmpleadoResponsable = bodega.IdEmpleadoResponsable;
-                            db.Bodega.Update(bodegaActualizar);
-                            await db.SaveChangesAsync();
+                            using (var transaction = db.Database.BeginTransaction())
+                            {
+                                bodegaActualizar.Nombre = bodega.Nombre;
+                                bodegaActualizar.IdSucursal = bodega.IdSucursal;
+                                bodegaActualizar.IdEmpleadoResponsable = bodega.IdEmpleadoResponsable;
+                                db.Bodega.Update(bodegaActualizar);
+                                await db.SaveChangesAsync();
+
+                                var idsListadoDependenciasPorBodega = (await PostListadoDependenciasPorBodega(bodega.IdBodega)).Select(c=> c.IdDependencia);
+                                var idsDependenciaBodega = bodega.Dependencia.Select(c => c.IdDependencia).ToList();
+
+                                foreach (var item in idsListadoDependenciasPorBodega)
+                                {
+                                    if (!idsDependenciaBodega.Contains(item))
+                                    {
+                                        var dependencia = await db.Dependencia.FirstOrDefaultAsync(c => c.IdDependencia == item);
+                                        if (dependencia != null)
+                                        {
+                                            dependencia.IdBodega = null;
+                                            await db.SaveChangesAsync();
+                                        }
+                                    }
+                                }
+
+                                foreach (var item in idsDependenciaBodega)
+                                {
+                                    var dependencia = await db.Dependencia.FirstOrDefaultAsync(c => c.IdDependencia == item);
+                                    if (dependencia != null)
+                                    {
+                                        dependencia.IdBodega = bodega.IdBodega;
+                                        await db.SaveChangesAsync();
+                                    }
+                                }
+                                transaction.Commit();
+                            }
                             return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                         }
                         catch (Exception ex)
@@ -119,13 +159,28 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                if (!ModelState.IsValid)
-                    return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
-
                 if (!await db.Bodega.AnyAsync(c => c.Nombre.ToUpper().Trim() == bodega.Nombre.ToUpper().Trim()))
                 {
-                    db.Bodega.Add(bodega);
-                    await db.SaveChangesAsync();
+                    using (var transaction = db.Database.BeginTransaction())
+                    {
+                        var nuevaBodega = new Bodega();
+                        nuevaBodega.IdSucursal = bodega.IdSucursal;
+                        nuevaBodega.IdEmpleadoResponsable = bodega.IdEmpleadoResponsable;
+                        nuevaBodega.Nombre = bodega.Nombre;
+                        db.Bodega.Add(nuevaBodega);
+                        await db.SaveChangesAsync();
+
+                        foreach (var item in bodega.Dependencia)
+                        {
+                            var dependencia = await db.Dependencia.FirstOrDefaultAsync(c => c.IdDependencia == item.IdDependencia);
+                            if (dependencia != null)
+                            {
+                                dependencia.IdBodega = nuevaBodega.IdBodega;
+                                await db.SaveChangesAsync();
+                            }
+                        }
+                        transaction.Commit();
+                    }
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
                 return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };

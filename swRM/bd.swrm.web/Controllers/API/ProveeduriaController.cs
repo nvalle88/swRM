@@ -41,7 +41,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                var ordenCompra = await db.OrdenCompra.Include(c => c.Proveedor).Include(c => c.Factura).Include(c => c.Estado).Include(c=> c.EmpleadoResponsable).ThenInclude(c=> c.Persona).FirstOrDefaultAsync(c => c.IdOrdenCompra == id);
+                var ordenCompra = await db.OrdenCompra.Include(c => c.Proveedor).Include(c => c.Factura).Include(c => c.Estado).Include(c=> c.EmpleadoResponsable).ThenInclude(c=> c.Persona).Include(c=> c.EmpleadoResponsable).ThenInclude(c=> c.Dependencia).ThenInclude(c=> c.Sucursal).FirstOrDefaultAsync(c => c.IdOrdenCompra == id);
                 ordenCompra.OrdenCompraDetalles = await db.OrdenCompraDetalles.Include(c=> c.Articulo).ThenInclude(c=> c.UnidadMedida).Where(c => c.IdOrdenCompra == ordenCompra.IdOrdenCompra).ToListAsync();
                 return new Response { IsSuccess = ordenCompra != null, Message = ordenCompra != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = ordenCompra };
             }
@@ -267,6 +267,79 @@ namespace bd.swrm.web.Controllers.API
                     return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
                 }
                 return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+
+        [HttpPost]
+        [Route("ExisteBodegaParaDependencia")]
+        public async Task<Response> PostExisteBodegaParaDependencia([FromBody] int idDependencia)
+        {
+            try
+            {
+                var dependencia = await db.Dependencia.Include(c=> c.Bodega).FirstOrDefaultAsync(c => c.IdDependencia == idDependencia);
+                return new Response { IsSuccess = dependencia.Bodega != null, Message = dependencia.Bodega != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+
+        [HttpPost]
+        [Route("DespacharRequerimientoArticulos")]
+        public async Task<Response> PostDespacharRequerimientoArticulos([FromBody] SalidaArticulos salidaArticulos)
+        {
+            try
+            {
+                var nuevaSalidaArticulos = new SalidaArticulos();
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    nuevaSalidaArticulos.IdSalidaArticulos = salidaArticulos.IdSalidaArticulos;
+                    nuevaSalidaArticulos.IdMotivoSalidaArticulos = salidaArticulos.IdMotivoSalidaArticulos;
+                    nuevaSalidaArticulos.DescripcionMotivo = salidaArticulos.DescripcionMotivo;
+                    nuevaSalidaArticulos.IdEmpleadoRealizaBaja = salidaArticulos.IdEmpleadoRealizaBaja;
+                    nuevaSalidaArticulos.IdProveedorDevolucion = salidaArticulos.IdProveedorDevolucion;
+                    nuevaSalidaArticulos.IdEmpleadoDespacho = salidaArticulos.IdEmpleadoDespacho;
+                    nuevaSalidaArticulos.IdRequerimientoArticulos = salidaArticulos.IdRequerimientoArticulos;
+                    db.SalidaArticulos.Add(nuevaSalidaArticulos);
+                    await db.SaveChangesAsync();
+
+                    var response = await GetRequerimientoArticulos(salidaArticulos.IdRequerimientoArticulos);
+                    if (response.IsSuccess)
+                    {
+                        var requerimientoArticulos = response.Resultado as RequerimientoArticulos;
+                        var fechaSalida = DateTime.Now;
+                        foreach (var item in requerimientoArticulos.RequerimientosArticulosDetalles)
+                        {
+                            var inventarioArticulos = await db.InventarioArticulos.OrderByDescending(c=> c.Fecha).FirstOrDefaultAsync(c => c.IdArticulo == item.IdArticulo && c.IdBodega == requerimientoArticulos.FuncionarioSolicitante.Dependencia.IdBodega);
+                            if (inventarioArticulos != null)
+                            {
+                                int diferencia = inventarioArticulos.Cantidad < item.CantidadSolicitada ? (item.CantidadSolicitada - inventarioArticulos.Cantidad) : (inventarioArticulos.Cantidad - item.CantidadSolicitada);
+                                db.InventarioArticulos.Add(new InventarioArticulos
+                                {
+                                    IdArticulo = item.IdArticulo,
+                                    IdBodega = (int)requerimientoArticulos.FuncionarioSolicitante.Dependencia.IdBodega,
+                                    Cantidad = diferencia,
+                                    Fecha = fechaSalida
+                                });
+                                item.CantidadAprobada = inventarioArticulos.Cantidad < item.CantidadSolicitada ? inventarioArticulos.Cantidad : item.CantidadSolicitada;
+                                await db.SaveChangesAsync();
+                            }
+                        }
+                        var estadoDespachado = await db.Estado.FirstOrDefaultAsync(c => c.Nombre == Estados.Despachado);
+                        requerimientoArticulos.IdEstado = estadoDespachado.IdEstado;
+                        requerimientoArticulos.FechaAprobadoDenegado = fechaSalida;
+                        await db.SaveChangesAsync();
+                    }
+                    transaction.Commit();
+                }
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = nuevaSalidaArticulos };
             }
             catch (Exception ex)
             {
