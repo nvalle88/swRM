@@ -59,7 +59,6 @@ namespace bd.swrm.datos
         public virtual DbSet<Nacionalidad> Nacionalidad { get; set; }
         public virtual DbSet<OrdenCompra> OrdenCompra { get; set; }
         public virtual DbSet<OrdenCompraDetalles> OrdenCompraDetalles { get; set; }
-        public virtual DbSet<OrdenCompraRecepcionArticulos> OrdenCompraRecepcionArticulos { get; set; }
         public virtual DbSet<Pais> Pais { get; set; }
         public virtual DbSet<Parroquia> Parroquia { get; set; }
         public virtual DbSet<Persona> Persona { get; set; }
@@ -70,7 +69,6 @@ namespace bd.swrm.datos
         public virtual DbSet<Ramo> Ramo { get; set; }
         public virtual DbSet<RecepcionActivoFijo> RecepcionActivoFijo { get; set; }
         public virtual DbSet<RecepcionActivoFijoDetalle> RecepcionActivoFijoDetalle { get; set; }
-        public virtual DbSet<RecepcionArticulos> RecepcionArticulos { get; set; }
         public virtual DbSet<RequerimientoArticulos> RequerimientoArticulos { get; set; }
         public virtual DbSet<RequerimientosArticulosDetalles> RequerimientosArticulosDetalles { get; set; }
         public virtual DbSet<RevalorizacionActivoFijo> RevalorizacionActivoFijo { get; set; }
@@ -658,8 +656,6 @@ namespace bd.swrm.datos
                     .IsRequired()
                     .HasMaxLength(30);
 
-                entity.Property(e => e.ValorActual).HasColumnType("decimal");
-
                 entity.HasOne(d => d.Articulo)
                     .WithMany(p => p.MaestroArticuloSucursal)
                     .HasForeignKey(d => d.IdArticulo)
@@ -881,9 +877,21 @@ namespace bd.swrm.datos
                     .IsRequired()
                     .HasMaxLength(100);
 
+                entity.HasOne(d => d.Bodega)
+                    .WithMany(p => p.OrdenCompra)
+                    .HasForeignKey(d => d.IdBodega)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_OrdenCompra_Bodega");
+
+                entity.HasOne(d => d.EmpleadoDevolucion)
+                    .WithMany(p => p.OrdenCompraEmpleadosDevolucion)
+                    .HasForeignKey(d => d.IdEmpleadoDevolucion)
+                    .HasConstraintName("FK_OrdenCompra_Empleado1");
+
                 entity.HasOne(d => d.EmpleadoResponsable)
                     .WithMany(p => p.OrdenCompraEmpleadosResponsables)
                     .HasForeignKey(d => d.IdEmpleadoResponsable)
+                    .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_OrdenCompra_Empleado");
 
                 entity.HasOne(d => d.Estado)
@@ -898,49 +906,36 @@ namespace bd.swrm.datos
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_OrdenCompra_FacturaActivoFijo");
 
+                entity.HasOne(d => d.MotivoRecepcionArticulos)
+                    .WithMany(p => p.OrdenCompra)
+                    .HasForeignKey(d => d.IdMotivoRecepcionArticulos)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_OrdenCompra_MotivoRecepcionArticulos");
+
                 entity.HasOne(d => d.Proveedor)
                     .WithMany(p => p.OrdenCompra)
                     .HasForeignKey(d => d.IdProveedor)
-                    .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_OrdenCompra_Proveedor");
             });
 
             modelBuilder.Entity<OrdenCompraDetalles>(entity =>
             {
-                entity.HasKey(e => new { e.IdOrdenCompra, e.IdArticulo })
-                    .HasName("PK_OrdenCompraDetalles");
+                entity.HasKey(e => new { e.IdOrdenCompra, e.IdMaestroArticuloSucursal })
+                    .HasName("PK_OrdenCompraDetalles_1");
 
                 entity.Property(e => e.ValorUnitario).HasColumnType("decimal");
 
-                entity.HasOne(d => d.Articulo)
+                entity.HasOne(d => d.MaestroArticuloSucursal)
                     .WithMany(p => p.OrdenCompraDetalles)
-                    .HasForeignKey(d => d.IdArticulo)
+                    .HasForeignKey(d => d.IdMaestroArticuloSucursal)
                     .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_OrdenCompraDetalles_Articulo");
+                    .HasConstraintName("FK_OrdenCompraDetalles_MaestroArticuloSucursal");
 
                 entity.HasOne(d => d.OrdenCompra)
                     .WithMany(p => p.OrdenCompraDetalles)
                     .HasForeignKey(d => d.IdOrdenCompra)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_OrdenCompraDetalles_OrdenCompra");
-            });
-
-            modelBuilder.Entity<OrdenCompraRecepcionArticulos>(entity =>
-            {
-                entity.HasKey(e => new { e.IdOrdenCompra, e.IdRecepcionArticulos })
-                    .HasName("PK_OrdenCompraRecepcionArticulos");
-
-                entity.HasOne(d => d.OrdenCompra)
-                    .WithMany(p => p.OrdenCompraRecepcionArticulos)
-                    .HasForeignKey(d => d.IdOrdenCompra)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_OrdenCompraRecepcionArticulos_OrdenCompra");
-
-                entity.HasOne(d => d.RecepcionArticulos)
-                    .WithMany(p => p.OrdenCompraRecepcionArticulos)
-                    .HasForeignKey(d => d.IdRecepcionArticulos)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_OrdenCompraRecepcionArticulos_RecepcionArticulos");
             });
 
             modelBuilder.Entity<Pais>(entity =>
@@ -1298,29 +1293,6 @@ namespace bd.swrm.datos
                     .HasConstraintName("FK_RecepcionActivoFijoDetalleBajaActivoFijo_RecepcionActivoFijoDetalle");
             });
 
-            modelBuilder.Entity<RecepcionArticulos>(entity =>
-            {
-                entity.HasKey(e => e.IdRecepcionArticulos)
-                    .HasName("PK_RecepcionArticulos");
-
-                entity.HasOne(d => d.Bodega)
-                    .WithMany(p => p.RecepcionArticulos)
-                    .HasForeignKey(d => d.IdBodega)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_RecepcionArticulos_Bodega");
-
-                entity.HasOne(d => d.EmpleadoDevolucion)
-                    .WithMany(p => p.RecepcionArticulosEmpleadoDevolucion)
-                    .HasForeignKey(d => d.IdEmpleadoDevolucion)
-                    .HasConstraintName("FK_RecepcionArticulos_Empleado");
-
-                entity.HasOne(d => d.MotivoRecepcionArticulos)
-                    .WithMany(p => p.RecepcionArticulos)
-                    .HasForeignKey(d => d.IdMotivoRecepcionArticulos)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_RecepcionArticulos_MotivoRecepcionArticulos");
-            });
-
             modelBuilder.Entity<RequerimientoArticulos>(entity =>
             {
                 entity.HasKey(e => e.IdRequerimientoArticulos)
@@ -1343,14 +1315,14 @@ namespace bd.swrm.datos
 
             modelBuilder.Entity<RequerimientosArticulosDetalles>(entity =>
             {
-                entity.HasKey(e => new { e.IdRequerimientosArticulos, e.IdArticulo })
-                    .HasName("PK_RequerimientosArticulosDetalles");
+                entity.HasKey(e => new { e.IdRequerimientosArticulos, e.IdMaestroArticuloSucursal })
+                    .HasName("PK_RequerimientosArticulosDetalles_1");
 
-                entity.HasOne(d => d.Articulo)
+                entity.HasOne(d => d.MaestroArticuloSucursal)
                     .WithMany(p => p.RequerimientosArticulosDetalles)
-                    .HasForeignKey(d => d.IdArticulo)
+                    .HasForeignKey(d => d.IdMaestroArticuloSucursal)
                     .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_RequerimientosArticulosDetalles_Articulo");
+                    .HasConstraintName("FK_RequerimientosArticulosDetalles_MaestroArticuloSucursal");
 
                 entity.HasOne(d => d.RequerimientoArticulos)
                     .WithMany(p => p.RequerimientosArticulosDetalles)

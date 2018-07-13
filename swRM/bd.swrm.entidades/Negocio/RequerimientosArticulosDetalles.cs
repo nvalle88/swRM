@@ -16,12 +16,12 @@ namespace bd.swrm.entidades.Negocio
         public virtual RequerimientoArticulos RequerimientoArticulos { get; set; }
 
         [Key]
-        [Column(Order = 0)]
-        [Display(Name = "Artículo:")]
+        [Column(Order = 1)]
+        [Display(Name = "Maestro de artículo de sucursal:")]
         [Required(ErrorMessage = "Debe seleccionar el {0}")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0}")]
-        public int IdArticulo { get; set; }
-        public virtual Articulo Articulo { get; set; }
+        public int IdMaestroArticuloSucursal { get; set; }
+        public virtual MaestroArticuloSucursal MaestroArticuloSucursal { get; set; }
 
         [Required(ErrorMessage = "Debe introducir la {0}")]
         [Display(Name = "Cantidad solicitada:")]
@@ -30,5 +30,8 @@ namespace bd.swrm.entidades.Negocio
         [Required(ErrorMessage = "Debe introducir la {0}")]
         [Display(Name = "Cantidad aprobada:")]
         public int CantidadAprobada { get; set; }
+
+        [NotMapped]
+        public int CantidadBodega { get; set; }
     }
 }
