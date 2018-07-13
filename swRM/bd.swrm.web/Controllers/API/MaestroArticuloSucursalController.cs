@@ -13,6 +13,7 @@ using bd.log.guardar.ObjectTranfer;
 using bd.swrm.entidades.Enumeradores;
 using bd.log.guardar.Utiles;
 using bd.swrm.entidades.Utils;
+using bd.swrm.entidades.Comparadores;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -33,12 +34,15 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.MaestroArticuloSucursal
+                var listadoMaestroArticuloSucursal = await db.MaestroArticuloSucursal
                     .Include(c => c.Sucursal).ThenInclude(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais)
                     .Include(c=> c.Articulo)
                     .OrderBy(c=> c.IdSucursal)
                     .OrderBy(c=> c.Articulo)
                     .OrderBy(c => c.Minimo).ThenBy(c => c.Maximo).ToListAsync();
+
+                listadoMaestroArticuloSucursal.ForEach(async c => c.ValorActual = await ObtenerValorActual(c.IdMaestroArticuloSucursal));
+                return listadoMaestroArticuloSucursal;
             }
             catch (Exception ex)
             {
@@ -53,17 +57,33 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.MaestroArticuloSucursal.Where(c=> c.IdSucursal == idSucursal)
+                var listadoMaestroArticuloSucursal = await db.MaestroArticuloSucursal.Where(c=> c.IdSucursal == idSucursal)
                     .Include(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais)
                     .Include(c=> c.Articulo)
                     .OrderBy(c => c.IdSucursal)
                     .OrderBy(c => c.Articulo)
                     .OrderBy(c => c.Minimo).ThenBy(c => c.Maximo).ToListAsync();
+
+                listadoMaestroArticuloSucursal.ForEach(async c => c.ValorActual = await ObtenerValorActual(c.IdMaestroArticuloSucursal));
+                return listadoMaestroArticuloSucursal;
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new List<MaestroArticuloSucursal>();
+            }
+        }
+
+        private async Task<decimal> ObtenerValorActual(int idMaestroArticuloSucursal)
+        {
+            try
+            {
+                var listaValorUnitariosOrdenCompraDetalles = await db.OrdenCompraDetalles.Where(c => c.IdMaestroArticuloSucursal == idMaestroArticuloSucursal).ToListAsync();
+                return listaValorUnitariosOrdenCompraDetalles.Count > 0 ? listaValorUnitariosOrdenCompraDetalles.Average(c=> c.ValorUnitario) : 0;
+            }
+            catch (Exception)
+            {
+                return 0;
             }
         }
 
@@ -79,6 +99,10 @@ namespace bd.swrm.web.Controllers.API
                     .Include(c=> c.Sucursal).ThenInclude(c=> c.Ciudad).ThenInclude(c=> c.Provincia).ThenInclude(c=> c.Pais)
                     .Include(c=> c.Articulo)
                     .SingleOrDefaultAsync(m => m.IdMaestroArticuloSucursal == id);
+
+                if (maestroArticuloSucursal != null)
+                    maestroArticuloSucursal.ValorActual = await ObtenerValorActual(maestroArticuloSucursal.IdMaestroArticuloSucursal);
+
                 return new Response { IsSuccess = maestroArticuloSucursal != null, Message = maestroArticuloSucursal != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = maestroArticuloSucursal };
             }
             catch (Exception ex)

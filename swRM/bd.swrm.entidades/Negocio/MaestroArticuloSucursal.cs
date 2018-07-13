@@ -7,6 +7,12 @@ namespace bd.swrm.entidades.Negocio
 {
     public partial class MaestroArticuloSucursal
     {
+        public MaestroArticuloSucursal()
+        {
+            OrdenCompraDetalles = new HashSet<OrdenCompraDetalles>();
+            RequerimientosArticulosDetalles = new HashSet<RequerimientosArticulosDetalles>();
+        }
+
         [Key]
         public int IdMaestroArticuloSucursal { get; set; }
 
@@ -50,6 +56,10 @@ namespace bd.swrm.entidades.Negocio
         [Required(ErrorMessage = "Debe introducir el {0}")]
         [Display(Name = "Valor de artículo:")]
         [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
+        [NotMapped]
         public decimal ValorActual { get; set; }
+
+        public virtual ICollection<OrdenCompraDetalles> OrdenCompraDetalles { get; set; }
+        public virtual ICollection<RequerimientosArticulosDetalles> RequerimientosArticulosDetalles { get; set; }
     }
 }

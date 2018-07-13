@@ -41,8 +41,23 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                var ordenCompra = await db.OrdenCompra.Include(c => c.Proveedor).Include(c => c.Factura).Include(c => c.Estado).Include(c=> c.EmpleadoResponsable).ThenInclude(c=> c.Persona).Include(c=> c.EmpleadoResponsable).ThenInclude(c=> c.Dependencia).ThenInclude(c=> c.Sucursal).FirstOrDefaultAsync(c => c.IdOrdenCompra == id);
-                ordenCompra.OrdenCompraDetalles = await db.OrdenCompraDetalles.Include(c=> c.Articulo).ThenInclude(c=> c.UnidadMedida).Where(c => c.IdOrdenCompra == ordenCompra.IdOrdenCompra).ToListAsync();
+                var ordenCompra = await db.OrdenCompra
+                    .Include(c => c.Factura)
+                    .Include(c => c.Estado)
+                    .Include(c=> c.EmpleadoResponsable).ThenInclude(c=> c.Persona)
+                    .Include(c=> c.Bodega).ThenInclude(c=> c.Sucursal)
+                    .Include(c=> c.MotivoRecepcionArticulos)
+                    .FirstOrDefaultAsync(c => c.IdOrdenCompra == id);
+
+                if (ordenCompra.IdProveedor != null)
+                    ordenCompra.Proveedor = await db.Proveedor.FirstOrDefaultAsync(c => c.IdProveedor == ordenCompra.IdProveedor);
+
+                if (ordenCompra.IdEmpleadoDevolucion != null)
+                    ordenCompra.EmpleadoDevolucion = await db.Empleado.Include(c=> c.Persona)
+                        .Include(c=> c.Dependencia).ThenInclude(c=> c.Sucursal)
+                        .FirstOrDefaultAsync(c => c.IdEmpleado == ordenCompra.IdEmpleadoDevolucion);
+
+                ordenCompra.OrdenCompraDetalles = await db.OrdenCompraDetalles.Include(c=> c.MaestroArticuloSucursal).ThenInclude(c=> c.Articulo).ThenInclude(c=> c.UnidadMedida).Where(c => c.IdOrdenCompra == ordenCompra.IdOrdenCompra).ToListAsync();
                 return new Response { IsSuccess = ordenCompra != null, Message = ordenCompra != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = ordenCompra };
             }
             catch (Exception ex)
@@ -59,7 +74,17 @@ namespace bd.swrm.web.Controllers.API
             try
             {
                 var requerimientoArticulos = await db.RequerimientoArticulos.Include(c => c.Estado).Include(c => c.FuncionarioSolicitante).ThenInclude(c => c.Persona).Include(c => c.FuncionarioSolicitante).ThenInclude(c => c.Dependencia).ThenInclude(c => c.Sucursal).FirstOrDefaultAsync(c => c.IdRequerimientoArticulos == id);
-                requerimientoArticulos.RequerimientosArticulosDetalles = await db.RequerimientosArticulosDetalles.Include(c=> c.Articulo).Where(c => c.IdRequerimientosArticulos == requerimientoArticulos.IdRequerimientoArticulos).ToListAsync();
+                requerimientoArticulos.RequerimientosArticulosDetalles = await db.RequerimientosArticulosDetalles.Include(c=> c.MaestroArticuloSucursal).ThenInclude(c=> c.Articulo).Where(c => c.IdRequerimientosArticulos == requerimientoArticulos.IdRequerimientoArticulos).ToListAsync();
+                
+                foreach (var item in requerimientoArticulos.RequerimientosArticulosDetalles)
+                {
+                    var bodega = await PostBodegaPorDependencia((int)requerimientoArticulos.FuncionarioSolicitante.IdDependencia);
+                    if (bodega != null)
+                    {
+                        var inventarioArticulos = await db.InventarioArticulos.OrderByDescending(c => c.Fecha).FirstOrDefaultAsync(c => c.IdArticulo == item.MaestroArticuloSucursal.IdArticulo && c.IdBodega == bodega.IdBodega);
+                        item.CantidadBodega = inventarioArticulos.Cantidad;
+                    }
+                }
                 return new Response { IsSuccess = requerimientoArticulos != null, Message = requerimientoArticulos != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = requerimientoArticulos };
             }
             catch (Exception ex)
@@ -101,6 +126,21 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpPost]
+        [Route("BodegaPorDependencia")]
+        public async Task<Bodega> PostBodegaPorDependencia([FromBody] int idDependencia)
+        {
+            try
+            {
+                var dependencia = await db.Dependencia.Include(c=> c.Bodega).FirstOrDefaultAsync(c => c.IdDependencia == idDependencia);
+                return dependencia?.Bodega;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        [HttpPost]
         [Route("ListadoRequerimientoArticulosPorEstado")]
         public async Task<List<RequerimientoArticulos>> PostListadoRequerimientoArticulosPorEstado([FromBody] string estado)
         {
@@ -132,26 +172,42 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpPost]
-        [Route("DetallesArticulos")]
-        public async Task<List<ArticuloSeleccionado>> PostDetallesArticulos([FromBody] List<IdRecepcionActivoFijoDetalleSeleccionado> listadoRecepcionActivoFijoDetalleSeleccionado)
+        [Route("DetallesMaestroArticulo")]
+        public async Task<List<MaestroArticuloSucursalSeleccionado>> PostDetallesArticulos([FromBody] IdSucursalIdRecepcionActivoFijoDetalleSeleccionado idSucursalIdRecepcionActivoFijoDetalleSeleccionado)
         {
-            var lista = new List<ArticuloSeleccionado>();
+            var lista = new List<MaestroArticuloSucursalSeleccionado>();
             try
             {
-                var listaArticulos = await db.Articulo.Include(c => c.SubClaseArticulo).ThenInclude(c => c.ClaseArticulo).ThenInclude(c => c.TipoArticulo).Include(c => c.UnidadMedida).Include(c => c.Modelo).ThenInclude(c => c.Marca).OrderBy(x => x.Nombre).ToListAsync();
-                var listaIdsRAFDSeleccionados = listadoRecepcionActivoFijoDetalleSeleccionado.Select(c => c.idRecepcionActivoFijoDetalle);
+                var listaArticulos = await db.MaestroArticuloSucursal.Include(c=> c.Articulo).ThenInclude(c => c.SubClaseArticulo).ThenInclude(c => c.ClaseArticulo).ThenInclude(c => c.TipoArticulo).Include(c=> c.Articulo).ThenInclude(c => c.UnidadMedida).Include(c => c.Articulo).ThenInclude(c => c.Modelo).ThenInclude(c => c.Marca).Where(c=> c.IdSucursal == idSucursalIdRecepcionActivoFijoDetalleSeleccionado.IdSucursal && c.Habilitado).OrderBy(x => x.Articulo.Nombre).ToListAsync();
+                var listaIdsRAFDSeleccionados = idSucursalIdRecepcionActivoFijoDetalleSeleccionado.ListaIdRecepcionActivoFijoDetalleSeleccionado.Select(c => c.idRecepcionActivoFijoDetalle);
+                var claimTransfer = claimsTransfer.ObtenerClaimsTransferHttpContext();
+
                 foreach (var item in listaArticulos)
                 {
-                    lista.Add(new ArticuloSeleccionado
+                    int cantidadBodega = 0;
+                    if (claimTransfer.IsFuncionarioSolicitante)
                     {
-                        Articulo = item,
-                        Seleccionado = listaIdsRAFDSeleccionados.Contains(item.IdArticulo)
-                    });
+                        var bodega = await PostBodegaPorDependencia((int)claimTransfer.IdDependencia);
+                        if (bodega != null)
+                        {
+                            var inventarioArticulos = await db.InventarioArticulos.OrderByDescending(c => c.Fecha).FirstOrDefaultAsync(c => c.IdArticulo == item.IdArticulo && c.IdBodega == bodega.IdBodega);
+                            cantidadBodega = inventarioArticulos?.Cantidad ?? 0;
+                        }
+                    }
+                    if (!claimTransfer.IsFuncionarioSolicitante || cantidadBodega > 0)
+                    {
+                        lista.Add(new MaestroArticuloSucursalSeleccionado
+                        {
+                            MaestroArticuloSucursal = item,
+                            Seleccionado = listaIdsRAFDSeleccionados.Contains(item.IdArticulo),
+                            CantidadBodega = cantidadBodega
+                        });
+                    }
                 }
             }
             catch (Exception)
             {
-                return new List<ArticuloSeleccionado>();
+                return new List<MaestroArticuloSucursalSeleccionado>();
             }
             return lista;
         }
@@ -176,12 +232,15 @@ namespace bd.swrm.web.Controllers.API
                     var claimTransfer = claimsTransfer.ObtenerClaimsTransferHttpContext();
                     var estadoEnTramite = await db.Estado.FirstOrDefaultAsync(c => c.Nombre == Estados.EnTramite);
                     nuevaOrdenCompra.IdOrdenCompra = ordenCompra.IdOrdenCompra;
+                    nuevaOrdenCompra.IdMotivoRecepcionArticulos = ordenCompra.IdMotivoRecepcionArticulos;
+                    nuevaOrdenCompra.IdBodega = ordenCompra.IdBodega;
                     nuevaOrdenCompra.IdProveedor = ordenCompra.IdProveedor;
                     nuevaOrdenCompra.Codigo = ordenCompra.Codigo;
                     nuevaOrdenCompra.Fecha = ordenCompra.Fecha;
                     nuevaOrdenCompra.IdEstado = estadoEnTramite.IdEstado;
                     nuevaOrdenCompra.IdFacturaActivoFijo = factura.IdFacturaActivoFijo;
                     nuevaOrdenCompra.IdEmpleadoResponsable = (int)claimTransfer.IdEmpleado;
+                    nuevaOrdenCompra.IdEmpleadoDevolucion = ordenCompra.IdEmpleadoDevolucion;
                     db.OrdenCompra.Add(nuevaOrdenCompra);
                     await db.SaveChangesAsync();
 
@@ -190,7 +249,7 @@ namespace bd.swrm.web.Controllers.API
                         db.OrdenCompraDetalles.Add(new OrdenCompraDetalles
                         {
                             IdOrdenCompra = nuevaOrdenCompra.IdOrdenCompra,
-                            IdArticulo = item.IdArticulo,
+                            IdMaestroArticuloSucursal = item.IdMaestroArticuloSucursal,
                             ValorUnitario = item.ValorUnitario,
                             Cantidad = item.Cantidad
                         });
@@ -233,7 +292,7 @@ namespace bd.swrm.web.Controllers.API
                         db.RequerimientosArticulosDetalles.Add(new RequerimientosArticulosDetalles
                         {
                             IdRequerimientosArticulos = nuevoRequerimientoArticulos.IdRequerimientoArticulos,
-                            IdArticulo = item.IdArticulo,
+                            IdMaestroArticuloSucursal = item.IdMaestroArticuloSucursal,
                             CantidadSolicitada = item.CantidadSolicitada,
                             CantidadAprobada = 0
                         });
@@ -310,31 +369,38 @@ namespace bd.swrm.web.Controllers.API
                     db.SalidaArticulos.Add(nuevaSalidaArticulos);
                     await db.SaveChangesAsync();
 
-                    var response = await GetRequerimientoArticulos(salidaArticulos.IdRequerimientoArticulos);
-                    if (response.IsSuccess)
+                    var fechaSalida = DateTime.Now;
+                    foreach (var item in salidaArticulos.RequerimientoArticulos.RequerimientosArticulosDetalles)
                     {
-                        var requerimientoArticulos = response.Resultado as RequerimientoArticulos;
-                        var fechaSalida = DateTime.Now;
-                        foreach (var item in requerimientoArticulos.RequerimientosArticulosDetalles)
+                        var inventarioArticulos = await db.InventarioArticulos.OrderByDescending(c => c.Fecha).FirstOrDefaultAsync(c => c.IdArticulo == item.MaestroArticuloSucursal.IdArticulo && c.IdBodega == salidaArticulos.RequerimientoArticulos.FuncionarioSolicitante.Dependencia.IdBodega);
+                        if (inventarioArticulos != null)
                         {
-                            var inventarioArticulos = await db.InventarioArticulos.OrderByDescending(c=> c.Fecha).FirstOrDefaultAsync(c => c.IdArticulo == item.IdArticulo && c.IdBodega == requerimientoArticulos.FuncionarioSolicitante.Dependencia.IdBodega);
-                            if (inventarioArticulos != null)
+                            int diferencia = inventarioArticulos.Cantidad < item.CantidadSolicitada ? (item.CantidadSolicitada - inventarioArticulos.Cantidad) : (inventarioArticulos.Cantidad - item.CantidadSolicitada);
+                            db.InventarioArticulos.Add(new InventarioArticulos
                             {
-                                int diferencia = inventarioArticulos.Cantidad < item.CantidadSolicitada ? (item.CantidadSolicitada - inventarioArticulos.Cantidad) : (inventarioArticulos.Cantidad - item.CantidadSolicitada);
-                                db.InventarioArticulos.Add(new InventarioArticulos
-                                {
-                                    IdArticulo = item.IdArticulo,
-                                    IdBodega = (int)requerimientoArticulos.FuncionarioSolicitante.Dependencia.IdBodega,
-                                    Cantidad = diferencia,
-                                    Fecha = fechaSalida
-                                });
-                                item.CantidadAprobada = inventarioArticulos.Cantidad < item.CantidadSolicitada ? inventarioArticulos.Cantidad : item.CantidadSolicitada;
+                                IdArticulo = item.MaestroArticuloSucursal.IdArticulo,
+                                IdBodega = (int)salidaArticulos.RequerimientoArticulos.FuncionarioSolicitante.Dependencia.IdBodega,
+                                Cantidad = diferencia,
+                                Fecha = fechaSalida
+                            });
+                            await db.SaveChangesAsync();
+
+                            var requerimientoArticulosDetalles = await db.RequerimientosArticulosDetalles.FirstOrDefaultAsync(c => c.IdRequerimientosArticulos == salidaArticulos.IdRequerimientoArticulos && c.IdMaestroArticuloSucursal == item.IdMaestroArticuloSucursal);
+                            if (requerimientoArticulosDetalles != null)
+                            {
+                                requerimientoArticulosDetalles.CantidadAprobada = inventarioArticulos.Cantidad < item.CantidadSolicitada ? inventarioArticulos.Cantidad : item.CantidadSolicitada;
+                                db.RequerimientosArticulosDetalles.Update(requerimientoArticulosDetalles);
                                 await db.SaveChangesAsync();
                             }
                         }
+                    }
+                    var requerimientoArticulos = await db.RequerimientoArticulos.FirstOrDefaultAsync(c => c.IdRequerimientoArticulos == salidaArticulos.IdRequerimientoArticulos);
+                    if (requerimientoArticulos != null)
+                    {
                         var estadoDespachado = await db.Estado.FirstOrDefaultAsync(c => c.Nombre == Estados.Despachado);
                         requerimientoArticulos.IdEstado = estadoDespachado.IdEstado;
                         requerimientoArticulos.FechaAprobadoDenegado = fechaSalida;
+                        db.RequerimientoArticulos.Update(requerimientoArticulos);
                         await db.SaveChangesAsync();
                     }
                     transaction.Commit();
@@ -350,52 +416,39 @@ namespace bd.swrm.web.Controllers.API
 
         [HttpPost]
         [Route("ProcesarOrdenCompra")]
-        public async Task<Response> PostProcesarOrdenCompra([FromBody] RecepcionArticulos recepcionArticulos)
+        public async Task<Response> PostProcesarOrdenCompra([FromBody] int id)
         {
             try
             {
-                var nuevaRecepcionArticulos = new RecepcionArticulos();
                 using (var transaction = db.Database.BeginTransaction())
                 {
-                    var estadoProcesada = await db.Estado.FirstOrDefaultAsync(c => c.Nombre == Estados.Procesada);
-                    nuevaRecepcionArticulos.FechaRecepcion = recepcionArticulos.FechaRecepcion;
-                    nuevaRecepcionArticulos.IdBodega = recepcionArticulos.IdBodega;
-                    nuevaRecepcionArticulos.IdMotivoRecepcionArticulos = recepcionArticulos.IdMotivoRecepcionArticulos;
-                    nuevaRecepcionArticulos.IdEmpleadoDevolucion = recepcionArticulos.IdEmpleadoDevolucion;
-                    db.RecepcionArticulos.Add(nuevaRecepcionArticulos);
-                    await db.SaveChangesAsync();
-
-                    foreach (var item in recepcionArticulos.OrdenCompraRecepcionArticulos)
+                    var response = await GetOrdenCompra(id);
+                    if (response.IsSuccess)
                     {
-                        db.OrdenCompraRecepcionArticulos.Add(new OrdenCompraRecepcionArticulos {
-                            IdOrdenCompra = item.IdOrdenCompra,
-                            IdRecepcionArticulos = nuevaRecepcionArticulos.IdRecepcionArticulos
-                        });
-                        var response = await GetOrdenCompra(item.IdOrdenCompra);
-                        if (response.IsSuccess)
+                        var ordenCompraActualizar = response.Resultado as OrdenCompra;
+                        if (ordenCompraActualizar != null)
                         {
-                            var ordenCompraActualizar = response.Resultado as OrdenCompra;
-                            if (ordenCompraActualizar != null)
+                            var fechaOrdenCompra = new DateTime(ordenCompraActualizar.Fecha.Year, ordenCompraActualizar.Fecha.Month, ordenCompraActualizar.Fecha.Day, DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);
+                            var estadoProcesada = await db.Estado.FirstOrDefaultAsync(c => c.Nombre == Estados.Procesada);
+                            ordenCompraActualizar.IdEstado = estadoProcesada.IdEstado;
+
+                            foreach (var item in ordenCompraActualizar.OrdenCompraDetalles)
                             {
-                                ordenCompraActualizar.IdEstado = estadoProcesada.IdEstado;
-                                foreach (var item1 in ordenCompraActualizar.OrdenCompraDetalles)
+                                var inventarioArticulos = await db.InventarioArticulos.FirstOrDefaultAsync(c => c.IdArticulo == item.MaestroArticuloSucursal.IdArticulo && c.IdBodega == ordenCompraActualizar.IdBodega);
+                                db.InventarioArticulos.Add(new InventarioArticulos
                                 {
-                                    var inventarioArticulos = await db.InventarioArticulos.FirstOrDefaultAsync(c => c.IdArticulo == item1.IdArticulo && c.IdBodega == recepcionArticulos.IdBodega);
-                                    db.InventarioArticulos.Add(new InventarioArticulos
-                                    {
-                                        IdArticulo = item1.IdArticulo,
-                                        IdBodega = recepcionArticulos.IdBodega,
-                                        Cantidad = inventarioArticulos == null ? item1.Cantidad : (inventarioArticulos.Cantidad + item1.Cantidad),
-                                        Fecha = recepcionArticulos.FechaRecepcion
-                                    });
-                                }
+                                    IdArticulo = item.MaestroArticuloSucursal.IdArticulo,
+                                    IdBodega = ordenCompraActualizar.IdBodega,
+                                    Cantidad = inventarioArticulos == null ? item.Cantidad : (inventarioArticulos.Cantidad + item.Cantidad),
+                                    Fecha = fechaOrdenCompra
+                                });
                             }
+                            await db.SaveChangesAsync();
                         }
-                        await db.SaveChangesAsync();
                     }
                     transaction.Commit();
                 }
-                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = nuevaRecepcionArticulos };
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
             catch (Exception ex)
             {
@@ -411,37 +464,40 @@ namespace bd.swrm.web.Controllers.API
             {
                 using (var transaction = db.Database.BeginTransaction())
                 {
-                    var ordenCompraActualizar = await db.OrdenCompra.Include(c=> c.Proveedor).Include(c=> c.Estado).Include(c=> c.Factura).FirstOrDefaultAsync(c => c.IdOrdenCompra == id);
+                    var ordenCompraActualizar = await db.OrdenCompra.Include(c=> c.Factura).FirstOrDefaultAsync(c => c.IdOrdenCompra == id);
                     if (ordenCompraActualizar != null)
                     {
                         var estadoEnTramite = await db.Estado.FirstOrDefaultAsync(c => c.Nombre == Estados.EnTramite);
                         var claimTransfer = claimsTransfer.ObtenerClaimsTransferHttpContext();
 
                         ordenCompraActualizar.IdProveedor = ordenCompra.IdProveedor;
+                        ordenCompraActualizar.IdMotivoRecepcionArticulos = ordenCompra.IdMotivoRecepcionArticulos;
+                        ordenCompraActualizar.IdBodega = ordenCompra.IdBodega;
                         ordenCompraActualizar.Codigo = ordenCompra.Codigo;
                         ordenCompraActualizar.Fecha = ordenCompra.Fecha;
                         ordenCompraActualizar.IdEstado = estadoEnTramite.IdEstado;
                         ordenCompraActualizar.Factura.NumeroFactura = ordenCompra.Factura.NumeroFactura;
                         ordenCompraActualizar.Factura.FechaFactura = ordenCompra.Factura.FechaFactura;
                         ordenCompraActualizar.IdEmpleadoResponsable = (int)claimTransfer.IdEmpleado;
+                        ordenCompraActualizar.IdEmpleadoDevolucion = ordenCompra.IdEmpleadoDevolucion;
                         await db.SaveChangesAsync();
                     }
-                    var listaExcept = await db.OrdenCompraDetalles.Where(c => c.IdOrdenCompra == ordenCompra.IdOrdenCompra).Select(c => c.IdArticulo).Except(ordenCompra.OrdenCompraDetalles.Select(c => c.IdArticulo)).ToListAsync();
+                    var listaExcept = await db.OrdenCompraDetalles.Where(c => c.IdOrdenCompra == ordenCompra.IdOrdenCompra).Select(c => c.IdMaestroArticuloSucursal).Except(ordenCompra.OrdenCompraDetalles.Select(c => c.IdMaestroArticuloSucursal)).ToListAsync();
                     foreach (var item in listaExcept)
                     {
-                        var ordenCompraDetalles = await db.OrdenCompraDetalles.FirstOrDefaultAsync(c => c.IdArticulo == item && c.IdOrdenCompra == ordenCompra.IdOrdenCompra);
+                        var ordenCompraDetalles = await db.OrdenCompraDetalles.FirstOrDefaultAsync(c => c.IdMaestroArticuloSucursal == item && c.IdOrdenCompra == ordenCompra.IdOrdenCompra);
                         db.OrdenCompraDetalles.Remove(ordenCompraDetalles);
                         await db.SaveChangesAsync();
                     }
                     foreach (var item in ordenCompra.OrdenCompraDetalles)
                     {
-                        var ordenCompraDetalles = await db.OrdenCompraDetalles.FirstOrDefaultAsync(c => c.IdArticulo == item.IdArticulo && c.IdOrdenCompra == item.IdOrdenCompra);
+                        var ordenCompraDetalles = await db.OrdenCompraDetalles.FirstOrDefaultAsync(c => c.IdMaestroArticuloSucursal == item.IdMaestroArticuloSucursal && c.IdOrdenCompra == item.IdOrdenCompra);
                         if (ordenCompraDetalles == null)
                         {
                             db.OrdenCompraDetalles.Add(new OrdenCompraDetalles
                             {
                                 IdOrdenCompra = item.IdOrdenCompra,
-                                IdArticulo = item.IdArticulo,
+                                IdMaestroArticuloSucursal = item.IdMaestroArticuloSucursal,
                                 ValorUnitario = item.ValorUnitario,
                                 Cantidad = item.Cantidad
                             });
@@ -483,22 +539,22 @@ namespace bd.swrm.web.Controllers.API
                         requerimientoArticulosActualizar.IdEstado = estadoSolicitado.IdEstado;
                         await db.SaveChangesAsync();
                     }
-                    var listaExcept = await db.RequerimientosArticulosDetalles.Where(c => c.IdRequerimientosArticulos == requerimientoArticulos.IdRequerimientoArticulos).Select(c => c.IdArticulo).Except(requerimientoArticulos.RequerimientosArticulosDetalles.Select(c => c.IdArticulo)).ToListAsync();
+                    var listaExcept = await db.RequerimientosArticulosDetalles.Where(c => c.IdRequerimientosArticulos == requerimientoArticulos.IdRequerimientoArticulos).Select(c => c.IdMaestroArticuloSucursal).Except(requerimientoArticulos.RequerimientosArticulosDetalles.Select(c => c.IdMaestroArticuloSucursal)).ToListAsync();
                     foreach (var item in listaExcept)
                     {
-                        var requerimientoArticulosDetalles = await db.RequerimientosArticulosDetalles.FirstOrDefaultAsync(c => c.IdArticulo == item && c.IdRequerimientosArticulos == requerimientoArticulos.IdRequerimientoArticulos);
+                        var requerimientoArticulosDetalles = await db.RequerimientosArticulosDetalles.FirstOrDefaultAsync(c => c.IdMaestroArticuloSucursal == item && c.IdRequerimientosArticulos == requerimientoArticulos.IdRequerimientoArticulos);
                         db.RequerimientosArticulosDetalles.Remove(requerimientoArticulosDetalles);
                         await db.SaveChangesAsync();
                     }
                     foreach (var item in requerimientoArticulos.RequerimientosArticulosDetalles)
                     {
-                        var requerimientoArticulosDetalles = await db.RequerimientosArticulosDetalles.FirstOrDefaultAsync(c => c.IdArticulo == item.IdArticulo && c.IdRequerimientosArticulos == item.IdRequerimientosArticulos);
+                        var requerimientoArticulosDetalles = await db.RequerimientosArticulosDetalles.FirstOrDefaultAsync(c => c.IdMaestroArticuloSucursal == item.IdMaestroArticuloSucursal && c.IdRequerimientosArticulos == item.IdRequerimientosArticulos);
                         if (requerimientoArticulosDetalles == null)
                         {
                             db.RequerimientosArticulosDetalles.Add(new RequerimientosArticulosDetalles
                             {
                                 IdRequerimientosArticulos = item.IdRequerimientosArticulos,
-                                IdArticulo = item.IdArticulo,
+                                IdMaestroArticuloSucursal = item.IdMaestroArticuloSucursal,
                                 CantidadSolicitada = item.CantidadSolicitada,
                                 CantidadAprobada = 0
                             });
