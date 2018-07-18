@@ -7,7 +7,6 @@ namespace bd.swrm.entidades.Negocio
     {
         public Articulo()
         {
-            InventarioArticulos = new HashSet<InventarioArticulos>();
             MaestroArticuloSucursal = new HashSet<MaestroArticuloSucursal>();
         }
 
@@ -34,8 +33,7 @@ namespace bd.swrm.entidades.Negocio
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0}")]
         public int? IdModelo { get; set; }
         public virtual Modelo Modelo { get; set; }
-
-        public virtual ICollection<InventarioArticulos> InventarioArticulos { get; set; }
+        
         public virtual ICollection<MaestroArticuloSucursal> MaestroArticuloSucursal { get; set; }
     }
 }

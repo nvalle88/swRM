@@ -8,6 +8,7 @@ namespace bd.swrm.entidades.Negocio
     {
         public Bodega()
         {
+            AjusteInventarioArticulos = new HashSet<AjusteInventarioArticulos>();
             Dependencia = new HashSet<Dependencia>();
             InventarioArticulos = new HashSet<InventarioArticulos>();
             OrdenCompra = new HashSet<OrdenCompra>();
@@ -33,7 +34,8 @@ namespace bd.swrm.entidades.Negocio
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int IdEmpleadoResponsable { get; set; }
         public virtual Empleado EmpleadoResponsable { get; set; }
-        
+
+        public virtual ICollection<AjusteInventarioArticulos> AjusteInventarioArticulos { get; set; }
         public virtual ICollection<Dependencia> Dependencia { get; set; }
         public virtual ICollection<InventarioArticulos> InventarioArticulos { get; set; }
         public virtual ICollection<OrdenCompra> OrdenCompra { get; set; }

@@ -158,6 +158,12 @@ namespace bd.swrm.datos
 
                 entity.Property(e => e.Motivo).HasMaxLength(500);
 
+                entity.HasOne(d => d.Bodega)
+                    .WithMany(p => p.AjusteInventarioArticulos)
+                    .HasForeignKey(d => d.IdBodega)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_AjusteInventarioArticulos_Bodega");
+
                 entity.HasOne(d => d.EmpleadoAutoriza)
                     .WithMany(p => p.AjusteInventarioArticulos)
                     .HasForeignKey(d => d.IdEmpleadoAutoriza)
@@ -608,17 +614,17 @@ namespace bd.swrm.datos
                 entity.HasKey(e => e.IdInventarioArticulos)
                     .HasName("PK_InventarioArticulos_1");
 
-                entity.HasOne(d => d.Articulo)
-                    .WithMany(p => p.InventarioArticulos)
-                    .HasForeignKey(d => d.IdArticulo)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_InventarioArticulos_Articulo");
-
                 entity.HasOne(d => d.Bodega)
                     .WithMany(p => p.InventarioArticulos)
                     .HasForeignKey(d => d.IdBodega)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_InventarioArticulos_Bodega1");
+
+                entity.HasOne(d => d.MaestroArticuloSucursal)
+                    .WithMany(p => p.InventarioArticulos)
+                    .HasForeignKey(d => d.IdMaestroArticuloSucursal)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_InventarioArticulos_MaestroArticuloSucursal");
             });
 
             modelBuilder.Entity<LibroActivoFijo>(entity =>
