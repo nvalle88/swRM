@@ -9,6 +9,7 @@ namespace bd.swrm.entidades.Negocio
     {
         public MaestroArticuloSucursal()
         {
+            InventarioArticulos = new HashSet<InventarioArticulos>();
             OrdenCompraDetalles = new HashSet<OrdenCompraDetalles>();
             RequerimientosArticulosDetalles = new HashSet<RequerimientosArticulosDetalles>();
         }
@@ -59,6 +60,7 @@ namespace bd.swrm.entidades.Negocio
         [NotMapped]
         public decimal ValorActual { get; set; }
 
+        public virtual ICollection<InventarioArticulos> InventarioArticulos { get; set; }
         public virtual ICollection<OrdenCompraDetalles> OrdenCompraDetalles { get; set; }
         public virtual ICollection<RequerimientosArticulosDetalles> RequerimientosArticulosDetalles { get; set; }
     }

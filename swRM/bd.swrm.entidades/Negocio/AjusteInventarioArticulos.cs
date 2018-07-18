@@ -1,11 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace bd.swrm.entidades.Negocio
 {
     public partial class AjusteInventarioArticulos
     {
+        public AjusteInventarioArticulos()
+        {
+            InventarioArticulos = new HashSet<InventarioArticulos>();
+        }
+
         [Key]
         public int IdAjusteInventario { get; set; }
 
@@ -25,5 +31,14 @@ namespace bd.swrm.entidades.Negocio
         [DataType(DataType.DateTime)]
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
         public DateTime Fecha { get; set; }
+
+        [Display(Name = "Bodega:")]
+        [Required(ErrorMessage = "Debe seleccionar la {0} ")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar la {0} ")]
+        public int IdBodega { get; set; }
+        public virtual Bodega Bodega { get; set; }
+
+        [NotMapped]
+        public virtual ICollection<InventarioArticulos> InventarioArticulos { get; set; }
     }
 }

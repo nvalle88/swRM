@@ -150,7 +150,7 @@ namespace bd.swrm.web.Temporizador
                     {
                         if (item.FechaSinExistencia.Value.AddMonths(6) < DateTime.Now)
                         {
-                            var inventarioArticulo = await db.InventarioArticulos.Include(c=> c.Bodega).Where(c=> c.Bodega.IdSucursal == item.IdSucursal && c.IdArticulo == item.IdArticulo).ToListAsync();
+                            var inventarioArticulo = await db.InventarioArticulos.Include(c=> c.Bodega).Where(c=> c.Bodega.IdSucursal == item.IdSucursal && c.IdMaestroArticuloSucursal == item.IdMaestroArticuloSucursal).ToListAsync();
                             if (inventarioArticulo.Count == 0 || (inventarioArticulo.Sum(c=> c.Cantidad) == 0))
                             {
                                 item.Habilitado = false;
