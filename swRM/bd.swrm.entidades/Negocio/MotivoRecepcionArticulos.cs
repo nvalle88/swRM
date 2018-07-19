@@ -8,7 +8,7 @@ namespace bd.swrm.entidades.Negocio
     {
         public MotivoRecepcionArticulos()
         {
-            RecepcionArticulos = new HashSet<RecepcionArticulos>();
+            OrdenCompra = new HashSet<OrdenCompra>();
         }
 
         [Key]
@@ -19,6 +19,6 @@ namespace bd.swrm.entidades.Negocio
         [StringLength(200, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string Descripcion { get; set; }
 
-        public virtual ICollection<RecepcionArticulos> RecepcionArticulos { get; set; }
+        public virtual ICollection<OrdenCompra> OrdenCompra { get; set; }
     }
 }

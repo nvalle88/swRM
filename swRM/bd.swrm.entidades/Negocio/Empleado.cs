@@ -17,7 +17,7 @@ namespace bd.swrm.entidades.Negocio
             MovilizacionesActivoFijoEmpleadoAutorizado = new HashSet<MovilizacionActivoFijo>();
             MovilizacionesActivoFijoEmpleadoResponsable = new HashSet<MovilizacionActivoFijo>();
             MovilizacionesActivoFijoEmpleadoSolicita = new HashSet<MovilizacionActivoFijo>();
-            RecepcionArticulosEmpleadoDevolucion = new HashSet<RecepcionArticulos>();
+            OrdenCompraEmpleadosDevolucion = new HashSet<OrdenCompra>();
             OrdenCompraEmpleadosResponsables = new HashSet<OrdenCompra>();
             RequerimientoArticulos = new HashSet<RequerimientoArticulos>();
             SalidaArticulosEmpleadosDespacho = new HashSet<SalidaArticulos>();
@@ -94,8 +94,8 @@ namespace bd.swrm.entidades.Negocio
         public virtual ICollection<MovilizacionActivoFijo> MovilizacionesActivoFijoEmpleadoAutorizado { get; set; }
         public virtual ICollection<MovilizacionActivoFijo> MovilizacionesActivoFijoEmpleadoResponsable { get; set; }
         public virtual ICollection<MovilizacionActivoFijo> MovilizacionesActivoFijoEmpleadoSolicita { get; set; }
-        public virtual ICollection<RecepcionArticulos> RecepcionArticulosEmpleadoDevolucion { get; set; }
         public virtual ICollection<OrdenCompra> OrdenCompraEmpleadosResponsables { get; set; }
+        public virtual ICollection<OrdenCompra> OrdenCompraEmpleadosDevolucion { get; set; }
         public virtual ICollection<RequerimientoArticulos> RequerimientoArticulos { get; set; }
         public virtual ICollection<SalidaArticulos> SalidaArticulosEmpleadosDespacho { get; set; }
         public virtual ICollection<SalidaArticulos> SalidaArticulosEmpleadosRealizanBaja { get; set; }
