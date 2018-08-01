@@ -83,7 +83,8 @@ namespace bd.swrm.web.Controllers.API
                         IdRecepcionActivoFijoDetalle = documentoActivoFijoTransfer.IdRecepcionActivoFijoDetalle,
                         IdAltaActivoFijo = documentoActivoFijoTransfer.IdAltaActivoFijo,
                         IdFacturaActivoFijo = documentoActivoFijoTransfer.IdFacturaActivoFijo,
-                        IdProcesoJudicialActivoFijo = documentoActivoFijoTransfer.IdProcesoJudicialActivoFijo
+                        IdProcesoJudicialActivoFijo = documentoActivoFijoTransfer.IdProcesoJudicialActivoFijo,
+                        IdRecepcionActivoFijo = documentoActivoFijoTransfer.IdRecepcionActivoFijo
                     });
                     string extensionFile = uploadFileService.FileExtension(documentoActivoFijoTransfer.Nombre);
                     await uploadFileService.UploadFile(documentoActivoFijoTransfer.Fichero, Mensaje.CarpetaActivoFijoDocumento, $"{documentoActivoFijo.IdDocumentoActivoFijo}{extensionFile}");

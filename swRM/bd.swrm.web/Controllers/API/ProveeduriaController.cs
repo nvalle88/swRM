@@ -25,12 +25,14 @@ namespace bd.swrm.web.Controllers.API
         private readonly IUploadFileService uploadFileService;
         private readonly SwRMDbContext db;
         private readonly IClaimsTransfer claimsTransfer;
+        private readonly IClonacion clonacionService;
 
-        public ProveeduriaController(SwRMDbContext db, IUploadFileService uploadFileService, IClaimsTransfer claimsTransfer, IHttpContextAccessor httpContextAccessor)
+        public ProveeduriaController(SwRMDbContext db, IUploadFileService uploadFileService, IClaimsTransfer claimsTransfer, IHttpContextAccessor httpContextAccessor, IClonacion clonacionService)
         {
             this.uploadFileService = uploadFileService;
             this.db = db;
             this.claimsTransfer = claimsTransfer;
+            this.clonacionService = clonacionService;
         }
 
         [HttpGet]
@@ -39,7 +41,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                var ordenCompra = ObtenerOrdenCompraFinal(await ObtenerOrdenCompra(id));
+                var ordenCompra = clonacionService.ClonarOrdenCompra(await ObtenerOrdenCompra(id));
                 return new Response { IsSuccess = ordenCompra != null, Message = ordenCompra != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = ordenCompra };
             }
             catch (Exception ex)
@@ -796,206 +798,5 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-
-        #region Objetos de Clonación Comunes
-        private Empleado ObtenerEmpleadoFinal(Empleado empleado)
-        {
-            return empleado != null ? new Empleado
-            {
-                IdEmpleado = empleado.IdEmpleado,
-                IdPersona = empleado.IdPersona,
-                Persona = empleado.Persona != null ? new Persona
-                {
-                    IdPersona = empleado.Persona.IdPersona,
-                    Nombres = empleado.Persona.Nombres,
-                    Apellidos = empleado.Persona.Apellidos
-                } : null
-            } : null;
-        }
-        private Proveedor ObtenerProveedorFinal(Proveedor proveedor)
-        {
-            return proveedor != null ? new Proveedor
-            {
-                IdProveedor = proveedor.IdProveedor,
-                Nombre = proveedor.Nombre,
-                Apellidos = proveedor.Apellidos,
-                RazonSocial = proveedor.RazonSocial,
-                Direccion = proveedor.Direccion,
-                Identificacion = proveedor.Identificacion
-            } : null;
-        }
-        private MotivoRecepcionArticulos ObtenerMotivoRecepcionArticulosFinal(MotivoRecepcionArticulos motivoRecepcionArticulos)
-        {
-            return motivoRecepcionArticulos != null ? new MotivoRecepcionArticulos
-            {
-                IdMotivoRecepcionArticulos = motivoRecepcionArticulos.IdMotivoRecepcionArticulos,
-                Descripcion = motivoRecepcionArticulos.Descripcion
-            } : null;
-        }
-        private Estado ObtenerEstadoFinal(Estado estado)
-        {
-            return estado != null ? new Estado
-            {
-                IdEstado = estado.IdEstado,
-                Nombre = estado.Nombre
-            } : null;
-        }
-        private FacturaActivoFijo ObtenerFacturaActivoFijoFinal(FacturaActivoFijo facturaActivoFijo)
-        {
-            return facturaActivoFijo != null ? new FacturaActivoFijo
-            {
-                IdFacturaActivoFijo = facturaActivoFijo.IdFacturaActivoFijo,
-                FechaFactura = facturaActivoFijo.FechaFactura,
-                NumeroFactura = facturaActivoFijo.NumeroFactura
-            } : null;
-        }
-        private Bodega ObtenerBodegaFinal(Bodega bodega)
-        {
-            return bodega != null ? new Bodega
-            {
-                IdBodega = bodega.IdBodega,
-                Nombre = bodega.Nombre,
-                IdSucursal = bodega.IdSucursal,
-                Sucursal = ObtenerSucursalFinal(bodega?.Sucursal)
-            } : null;
-        }
-        private Sucursal ObtenerSucursalFinal(Sucursal sucursal)
-        {
-            return sucursal != null ? new Sucursal
-            {
-                IdSucursal = sucursal.IdSucursal,
-                Nombre = sucursal.Nombre
-            } : null;
-        }
-        private TipoArticulo ObtenerTipoArticuloFinal(TipoArticulo tipoArticulo)
-        {
-            return tipoArticulo != null ? new TipoArticulo
-            {
-                IdTipoArticulo = tipoArticulo.IdTipoArticulo,
-                Nombre = tipoArticulo.Nombre
-            } : null;
-        }
-        private ClaseArticulo ObtenerClaseArticuloFinal(ClaseArticulo claseArticulo)
-        {
-            return claseArticulo != null ? new ClaseArticulo
-            {
-                IdClaseArticulo = claseArticulo.IdClaseArticulo,
-                Nombre = claseArticulo.Nombre,
-                IdTipoArticulo = claseArticulo.IdTipoArticulo,
-                TipoArticulo = ObtenerTipoArticuloFinal(claseArticulo?.TipoArticulo)
-            } : null;
-        }
-        private SubClaseArticulo ObtenerSubClaseArticuloFinal(SubClaseArticulo subClaseArticulo)
-        {
-            return subClaseArticulo != null ? new SubClaseArticulo
-            {
-                IdSubClaseArticulo = subClaseArticulo.IdSubClaseArticulo,
-                Nombre = subClaseArticulo.Nombre,
-                IdClaseArticulo = subClaseArticulo.IdClaseArticulo,
-                ClaseArticulo = ObtenerClaseArticuloFinal(subClaseArticulo?.ClaseArticulo)
-            } : null;
-        }
-        private UnidadMedida ObtenerUnidadMedidaFinal(UnidadMedida unidadMedida)
-        {
-            return unidadMedida != null ? new UnidadMedida
-            {
-                IdUnidadMedida = unidadMedida.IdUnidadMedida,
-                Nombre = unidadMedida.Nombre
-            } : null;
-        }
-        private Marca ObtenerMarcaFinal(Marca marca)
-        {
-            return marca != null ? new Marca
-            {
-                IdMarca = marca.IdMarca,
-                Nombre = marca.Nombre
-            } : null;
-        }
-        private Modelo ObtenerModeloFinal(Modelo modelo)
-        {
-            return modelo != null ? new Modelo
-            {
-                IdModelo = modelo.IdModelo,
-                Nombre = modelo.Nombre,
-                IdMarca = modelo.IdMarca,
-                Marca = ObtenerMarcaFinal(modelo?.Marca)
-            } : null;
-        }
-        private Articulo ObtenerArticuloFinal(Articulo articulo)
-        {
-            return articulo != null ? new Articulo
-            {
-                IdArticulo = articulo.IdArticulo,
-                IdSubClaseArticulo = articulo.IdSubClaseArticulo,
-                IdUnidadMedida = articulo.IdUnidadMedida,
-                IdModelo = articulo.IdModelo,
-                Nombre = articulo.Nombre,
-                SubClaseArticulo = ObtenerSubClaseArticuloFinal(articulo?.SubClaseArticulo),
-                UnidadMedida = ObtenerUnidadMedidaFinal(articulo?.UnidadMedida),
-                Modelo = ObtenerModeloFinal(articulo?.Modelo)
-            } : null;
-        }
-        private MaestroArticuloSucursal ObtenerMaestroArticuloSucursalFinal(MaestroArticuloSucursal maestroArticuloSucursal)
-        {
-            return maestroArticuloSucursal != null ? new MaestroArticuloSucursal
-            {
-                IdMaestroArticuloSucursal = maestroArticuloSucursal.IdMaestroArticuloSucursal,
-                IdSucursal = maestroArticuloSucursal.IdSucursal,
-                IdArticulo = maestroArticuloSucursal.IdArticulo,
-                Minimo = maestroArticuloSucursal.Minimo,
-                Maximo = maestroArticuloSucursal.Maximo,
-                CodigoArticulo = maestroArticuloSucursal.CodigoArticulo,
-                Habilitado = maestroArticuloSucursal.Habilitado,
-                FechaSinExistencia = maestroArticuloSucursal.FechaSinExistencia,
-                Sucursal = ObtenerSucursalFinal(maestroArticuloSucursal?.Sucursal),
-                Articulo = ObtenerArticuloFinal(maestroArticuloSucursal?.Articulo)
-            } : null;
-        }
-        private OrdenCompra ObtenerOrdenCompraFinal(OrdenCompra ordenCompra)
-        {
-            var nuevaOrdenCompra = ordenCompra != null ? new OrdenCompra
-            {
-                IdOrdenCompra = ordenCompra.IdOrdenCompra,
-                IdMotivoRecepcionArticulos = ordenCompra.IdMotivoRecepcionArticulos,
-                Fecha = ordenCompra.Fecha,
-                IdEstado = ordenCompra.IdEstado,
-                IdFacturaActivoFijo = ordenCompra.IdFacturaActivoFijo,
-                IdEmpleadoResponsable = ordenCompra.IdEmpleadoResponsable,
-                IdEmpleadoDevolucion = ordenCompra.IdEmpleadoDevolucion,
-                Codigo = ordenCompra.Codigo,
-                IdBodega = ordenCompra.IdBodega,
-                IdProveedor = ordenCompra.IdProveedor,
-                MotivoRecepcionArticulos = ObtenerMotivoRecepcionArticulosFinal(ordenCompra?.MotivoRecepcionArticulos),
-                Estado = ObtenerEstadoFinal(ordenCompra?.Estado),
-                Factura = ObtenerFacturaActivoFijoFinal(ordenCompra?.Factura),
-                EmpleadoResponsable = ObtenerEmpleadoFinal(ordenCompra?.EmpleadoResponsable),
-                EmpleadoDevolucion = ObtenerEmpleadoFinal(ordenCompra?.EmpleadoDevolucion),
-                Bodega = ObtenerBodegaFinal(ordenCompra?.Bodega),
-                Proveedor = ObtenerProveedorFinal(ordenCompra?.Proveedor),
-                OrdenCompraDetalles = ordenCompra.OrdenCompraDetalles
-            } : null;
-
-            if (nuevaOrdenCompra != null)
-            {
-                foreach (var item in ordenCompra.OrdenCompraDetalles)
-                {
-                    item.OrdenCompra = null;
-                    item.MaestroArticuloSucursal = ObtenerMaestroArticuloSucursalFinal(item?.MaestroArticuloSucursal);
-                }
-            }
-            return nuevaOrdenCompra;
-        }
-        private OrdenCompraDetalles ObtenerOrdenCompraDetallesFinal(OrdenCompraDetalles ordenCompraDetalles)
-        {
-            return ordenCompraDetalles != null ? new OrdenCompraDetalles
-            {
-                IdOrdenCompra = ordenCompraDetalles.IdOrdenCompra,
-                IdMaestroArticuloSucursal = ordenCompraDetalles.IdMaestroArticuloSucursal,
-                Cantidad = ordenCompraDetalles.Cantidad,
-                ValorUnitario = ordenCompraDetalles.ValorUnitario,
-                MaestroArticuloSucursal = ObtenerMaestroArticuloSucursalFinal(ordenCompraDetalles?.MaestroArticuloSucursal)
-            } : null;
-        }
-        #endregion
     }
 }

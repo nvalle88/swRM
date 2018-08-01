@@ -48,7 +48,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.Modelo.Where(c=> c.IdMarca == idMarca).OrderBy(x => x.Nombre).Include(x => x.Marca).ToListAsync();
+                return await db.Modelo.Where(c=> c.IdMarca == idMarca).Include(x => x.Marca).OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -65,7 +65,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var _modelo = await db.Modelo.SingleOrDefaultAsync(m => m.IdModelo == id);
+                var _modelo = await db.Modelo.Include(c=> c.Marca).SingleOrDefaultAsync(m => m.IdModelo == id);
                 return new Response { IsSuccess = _modelo != null, Message = _modelo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = _modelo };
             }
             catch (Exception ex)

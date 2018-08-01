@@ -33,7 +33,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.ClaseActivoFijo.OrderBy(x => x.Nombre).Include(c=> c.TipoActivoFijo).Include(c => c.CategoriaActivoFijo).ToListAsync();
+                return await db.ClaseActivoFijo.Include(c=> c.TipoActivoFijo).Include(c => c.CategoriaActivoFijo).OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,7 +48,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.ClaseActivoFijo.Where(c=> c.IdTipoActivoFijo == idTipoActivoFijo).OrderBy(x => x.Nombre).Include(c => c.TipoActivoFijo).Include(c => c.CategoriaActivoFijo).ToListAsync();
+                return await db.ClaseActivoFijo.Where(c=> c.IdTipoActivoFijo == idTipoActivoFijo).Include(c => c.TipoActivoFijo).Include(c => c.CategoriaActivoFijo).OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -65,7 +65,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var claseActivoFijo = await db.ClaseActivoFijo.Include(c=> c.TipoActivoFijo).SingleOrDefaultAsync(m => m.IdClaseActivoFijo == id);
+                var claseActivoFijo = await db.ClaseActivoFijo.Include(c=> c.TipoActivoFijo).Include(c => c.CategoriaActivoFijo).SingleOrDefaultAsync(m => m.IdClaseActivoFijo == id);
                 return new Response { IsSuccess = claseActivoFijo != null, Message = claseActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = claseActivoFijo };
             }
             catch (Exception ex)

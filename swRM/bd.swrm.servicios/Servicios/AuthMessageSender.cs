@@ -22,7 +22,7 @@ namespace bd.swrm.servicios.Servicios
                 Mail mail = new Mail
                 {
                     Password = ConstantesCorreo.PasswordCorreo,
-                    Body = message,
+                    Body = ConstantesCorreo.MensajeCorreoSuperior + message,
                     EmailFrom = ConstantesCorreo.CorreoRM,
                     EmailTo = emailTo,
                     NameFrom = ConstantesCorreo.NameFrom,

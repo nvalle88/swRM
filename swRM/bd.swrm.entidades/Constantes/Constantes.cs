@@ -13,5 +13,6 @@ namespace bd.swrm.entidades.Constantes
         public static string PasswordCorreo;
         public static string NameFrom;
         public static string MensajeCorreoSuperior;
+        public static string CorreoEncargadoSeguro;
     }
 }
