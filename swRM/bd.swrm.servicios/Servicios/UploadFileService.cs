@@ -23,8 +23,13 @@ namespace bd.swrm.servicios.Servicios
             try
             {
                 var stream = new MemoryStream(file);
-                var targetDirectory = Path.Combine(_hostingEnvironment.WebRootPath, $"{folder}/{fileName}");
-                using (var fileStream = new FileStream(targetDirectory, FileMode.Create, FileAccess.Write))
+                var targetDirectory = Path.Combine(_hostingEnvironment.WebRootPath, folder);
+                var targetFile = Path.Combine(targetDirectory, fileName);
+
+                if (!Directory.Exists(targetDirectory))
+                    Directory.CreateDirectory(targetDirectory);
+
+                using (var fileStream = new FileStream(targetFile, FileMode.Create, FileAccess.Write))
                     await stream.CopyToAsync(fileStream);
                 return true;
             }

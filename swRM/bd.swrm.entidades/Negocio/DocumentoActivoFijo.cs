@@ -49,5 +49,10 @@ namespace bd.swrm.entidades.Negocio
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
         public int? IdProcesoJudicialActivoFijo { get; set; }
         public virtual ProcesoJudicialActivoFijo ProcesoJudicialActivoFijo { get; set; }
+
+        [Display(Name = "Recepción de Activo Fijo:")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar la {0} ")]
+        public int? IdRecepcionActivoFijo { get; set; }
+        public virtual RecepcionActivoFijo RecepcionActivoFijo { get; set; }
     }
 }

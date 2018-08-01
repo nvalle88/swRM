@@ -33,7 +33,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.SubClaseActivoFijo.OrderBy(x => x.Nombre).Include(c => c.ClaseActivoFijo).ThenInclude(c=> c.TipoActivoFijo).ToListAsync();
+                return await db.SubClaseActivoFijo.Include(c => c.ClaseActivoFijo).ThenInclude(c=> c.TipoActivoFijo).Include(c => c.ClaseActivoFijo).ThenInclude(c => c.CategoriaActivoFijo).OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,7 +48,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.SubClaseActivoFijo.Where(c=> c.IdClaseActivoFijo == idClaseActivoFijo).OrderBy(x => x.Nombre).Include(c => c.ClaseActivoFijo).ThenInclude(c => c.TipoActivoFijo).ToListAsync();
+                return await db.SubClaseActivoFijo.Where(c=> c.IdClaseActivoFijo == idClaseActivoFijo).Include(c => c.ClaseActivoFijo).ThenInclude(c => c.TipoActivoFijo).Include(c => c.ClaseActivoFijo).ThenInclude(c => c.CategoriaActivoFijo).OrderBy(x => x.Nombre).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -65,7 +65,7 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                var subClaseActivoFijo = await db.SubClaseActivoFijo.Include(c=> c.ClaseActivoFijo).ThenInclude(c=> c.TipoActivoFijo).SingleOrDefaultAsync(m => m.IdSubClaseActivoFijo == id);
+                var subClaseActivoFijo = await db.SubClaseActivoFijo.Include(c=> c.ClaseActivoFijo).ThenInclude(c=> c.TipoActivoFijo).Include(c => c.ClaseActivoFijo).ThenInclude(c => c.CategoriaActivoFijo).SingleOrDefaultAsync(m => m.IdSubClaseActivoFijo == id);
                 return new Response { IsSuccess = subClaseActivoFijo != null, Message = subClaseActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = subClaseActivoFijo };
             }
             catch (Exception ex)

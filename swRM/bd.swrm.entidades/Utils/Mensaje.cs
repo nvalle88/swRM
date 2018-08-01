@@ -18,26 +18,31 @@ namespace bd.swrm.entidades.Utils
 
     public static class Estados
     {
-        public static string Recepcionado { get { return "Recepcionado"; } }
-        public static string ValidacionTecnica { get { return "Validación Técnica"; } }
-        public static string Desaprobado { get { return "Desaprobado"; } }
-        public static string Alta { get { return "Alta"; } }
-        public static string Baja { get { return "Baja"; } }
-        public static string Creada { get { return "Creado"; } }
-        public static string Aceptada { get { return "Aceptado"; } }
-        public static string EnTramite { get { return "En trámite"; } }
-        public static string Procesada { get { return "Procesada"; } }
-        public static string Solicitado { get { return "Solicitado"; } }
-        public static string Despachado { get { return "Despachado"; } }
+        public static string Recepcionado { get { return "RECEPCIONADO"; } }
+        public static string ValidacionTecnica { get { return "VALIDACIÓN TÉCNICA"; } }
+        public static string Desaprobado { get { return "DESAPROBADO"; } }
+        public static string Alta { get { return "ALTA"; } }
+        public static string Baja { get { return "BAJA"; } }
+        public static string Creada { get { return "CREADO"; } }
+        public static string Aceptada { get { return "ACEPTADO"; } }
+        public static string EnTramite { get { return "EN TRÁMITE"; } }
+        public static string Procesada { get { return "PROCESADA"; } }
+        public static string Solicitado { get { return "SOLICITADO"; } }
+        public static string Despachado { get { return "DESPACHADO"; } }
     }
 
     public static class MotivosTransferencia
     {
-        public static string CambioCustodio { get { return "Cambio de Custodio"; } }
-        public static string CambioUbicacion { get { return "Cambio de Ubicación"; } }
-        public static string PrestamoUsoExterno { get { return "Préstamo de Uso Externo"; } }
-        public static string PrestamoUsoInterno { get { return "Préstamo de Uso Interno"; } }
-        public static string TransferenciaBodegas { get { return "Transferencia entre Bodegas"; } }
+        public static string CambioCustodio { get { return "CAMBIO DE CUSTODIO"; } }
+        public static string CambioUbicacion { get { return "CAMBIO DE UBICACIÓN"; } }
+        public static string PrestamoUsoExterno { get { return "PRÉSTAMO DE USO EXTERNO"; } }
+        public static string PrestamoUsoInterno { get { return "PRÉSTAMO DE USO INTERNO"; } }
+        public static string TransferenciaBodegas { get { return "TRANSFERENCIA ENTRE BODEGAS"; } }
+    }
+
+    public static class MotivosAlta
+    {
+        public static string Adicion { get { return "ADICIÓN"; } }
     }
 
     public static class ADMI_Grupos

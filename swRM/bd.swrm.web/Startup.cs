@@ -36,6 +36,7 @@ namespace bd.swrm.web
             services.AddMvc().AddJsonOptions(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
             services.AddDbContext<SwRMDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("SwRMConnection")));
             services.AddSingleton<IUploadFileService, UploadFileService>();
+            services.AddSingleton<IClonacion, ClonacionService>();
             services.AddTransient<IEmailSender, AuthMessageSender>();
             services.AddSingleton<IClaimsTransfer, ClaimsTransferService>();
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -49,6 +50,7 @@ namespace bd.swrm.web
             ConstantesCorreo.PasswordCorreo = Configuration.GetSection("PasswordCorreo").Value;
             ConstantesCorreo.NameFrom = Configuration.GetSection("NameFrom").Value;
             ConstantesCorreo.MensajeCorreoSuperior = Configuration.GetSection("MensajeCorreoSuperior").Value;
+            ConstantesCorreo.CorreoEncargadoSeguro = Configuration.GetSection("CorreoEncargadoSeguro").Value;
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
