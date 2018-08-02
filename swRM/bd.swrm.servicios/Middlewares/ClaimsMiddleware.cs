@@ -44,6 +44,14 @@ namespace bd.swrm.servicios.Middlewares
             if (!String.IsNullOrEmpty(valorIsFuncionarioSolicitante))
                 claimsTransfer.IsFuncionarioSolicitante = bool.Parse(valorIsFuncionarioSolicitante);
 
+            var valorIsAdminAF = ObtenerHeader(httpContext, "IsAdminAF");
+            if (!String.IsNullOrEmpty(valorIsAdminAF))
+                claimsTransfer.IsAdminAF = bool.Parse(valorIsAdminAF);
+
+            var valorIsEncargadoSeguros = ObtenerHeader(httpContext, "IsEncargadoSeguros");
+            if (!String.IsNullOrEmpty(valorIsEncargadoSeguros))
+                claimsTransfer.IsEncargadoSeguros = bool.Parse(valorIsEncargadoSeguros);
+
             httpContext.Items.Add("ClaimsTransfer", claimsTransfer);
             await nextDelegate.Invoke(httpContext);
         }

@@ -9,6 +9,7 @@ namespace bd.swrm.entidades.Negocio
         [Key]
         public int IdUnidadMedida { get; set; }
 
+        [Display(Name = "Unidad de medida:")]
         [Required(ErrorMessage = "Debe introducir el {0}")]
         [StringLength(200, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string Nombre { get; set; }

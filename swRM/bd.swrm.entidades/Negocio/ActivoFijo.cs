@@ -35,9 +35,9 @@ namespace bd.swrm.entidades.Negocio
 
         //Propiedades Virtuales Referencias a otras clases
 
-        [Display(Name = "Sub clase de activo fijo:")]
-        [Required(ErrorMessage = "Debe seleccionar el {0}")]
-        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0}")]
+        [Display(Name = "Subclase de activo fijo:")]
+        [Required(ErrorMessage = "Debe seleccionar la {0}")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar la {0}")]
         public int IdSubClaseActivoFijo { get; set; }
         public virtual SubClaseActivoFijo SubClaseActivoFijo { get; set; }
 
