@@ -10,7 +10,7 @@ namespace bd.swrm.entidades.Negocio
         public int IdMotivoAsiento { get; set; }
 
         [Required(ErrorMessage = "Debe introducir el {0}")]
-        [Display(Name = "Motivo del asiento:")]
+        [Display(Name = "Motivo de asiento:")]
         [StringLength(200, MinimumLength = 2, ErrorMessage = "El {0} no puede tener más de {1} y menos de {2}")]
         public string Descripcion { get; set; }
 

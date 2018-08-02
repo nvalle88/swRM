@@ -10,7 +10,7 @@ namespace bd.swrm.entidades.Negocio
         public int IdBajaActivoFijo { get; set; }
 
         [Required(ErrorMessage = "Debe introducir la {0}")]
-        [Display(Name = "Fecha de Baja:")]
+        [Display(Name = "Fecha de baja:")]
         [DataType(DataType.DateTime)]
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy hh:mm tt}", ApplyFormatInEditMode = true)]
         public DateTime FechaBaja { get; set; }
@@ -22,9 +22,9 @@ namespace bd.swrm.entidades.Negocio
 
         //Propiedades Virtuales Referencias a otras clases
 
-        [Display(Name = "Motivo de Baja:")]
+        [Display(Name = "Motivo de baja:")]
         [Required(ErrorMessage = "Debe seleccionar el {0}")]
-        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0}")]
         public int IdMotivoBaja { get; set; }
         public virtual MotivoBaja MotivoBaja { get; set; }
 

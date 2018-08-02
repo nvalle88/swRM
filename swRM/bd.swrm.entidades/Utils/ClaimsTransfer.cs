@@ -12,5 +12,7 @@ namespace bd.swrm.entidades.Utils
         public bool IsAdminNacionalProveeduria { get; set; }
         public bool IsAdminZonalProveeduria { get; set; }
         public bool IsFuncionarioSolicitante { get; set; }
+        public bool IsAdminAF { get; set; }
+        public bool IsEncargadoSeguros { get; set; }
     }
 }

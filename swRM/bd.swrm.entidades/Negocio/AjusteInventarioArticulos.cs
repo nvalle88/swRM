@@ -21,8 +21,8 @@ namespace bd.swrm.entidades.Negocio
         public string Motivo { get; set; }
 
         [Display(Name = "Empleado que autoriza:")]
-        [Required(ErrorMessage = "Debe seleccionar el {0} ")]
-        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0} ")]
+        [Required(ErrorMessage = "Debe seleccionar el {0}")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0}")]
         public int IdEmpleadoAutoriza { get; set; }
         public virtual Empleado EmpleadoAutoriza { get; set; }
 
@@ -33,8 +33,8 @@ namespace bd.swrm.entidades.Negocio
         public DateTime Fecha { get; set; }
 
         [Display(Name = "Bodega:")]
-        [Required(ErrorMessage = "Debe seleccionar la {0} ")]
-        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar la {0} ")]
+        [Required(ErrorMessage = "Debe seleccionar la {0}")]
+        [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar la {0}")]
         public int IdBodega { get; set; }
         public virtual Bodega Bodega { get; set; }
 

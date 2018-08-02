@@ -10,7 +10,7 @@ namespace bd.swrm.entidades.Negocio
         public int IdSalidaArticulos { get; set; }
 
         [Display(Name = "Motivo de salida:")]
-        [Required(ErrorMessage = "Debe seleccionar el {0} ")]
+        [Required(ErrorMessage = "Debe seleccionar el {0}")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0}")]
         public int IdMotivoSalidaArticulos { get; set; }
         public virtual MotivoSalidaArticulos MotivoSalidaArticulos { get; set; }
@@ -32,13 +32,13 @@ namespace bd.swrm.entidades.Negocio
         public virtual Proveedor ProveedorDevolucion { get; set; }
 
         [Display(Name = "Empleado que realiza el despacho:")]
-        [Required(ErrorMessage = "Debe seleccionar el {0} ")]
+        [Required(ErrorMessage = "Debe seleccionar el {0}")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0}")]
         public int? IdEmpleadoDespacho { get; set; }
         public virtual Empleado EmpleadoDespacho { get; set; }
 
         [Display(Name = "Requerimiento de artículo:")]
-        [Required(ErrorMessage = "Debe seleccionar el {0} ")]
+        [Required(ErrorMessage = "Debe seleccionar el {0}")]
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0}")]
         public int IdRequerimientoArticulos { get; set; }
         public virtual RequerimientoArticulos RequerimientoArticulos { get; set; }
