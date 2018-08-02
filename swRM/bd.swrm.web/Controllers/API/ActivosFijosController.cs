@@ -267,7 +267,7 @@ namespace bd.swrm.web.Controllers.API
             var lista = new List<RecepcionActivoFijoDetalleSeleccionado>();
             try
             {
-                var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true, incluirAltasActivoFijo: true).Where(c => idRecepcionActivoFijoDetalleSeleccionadoEstado.Estados.Contains(c.Estado.Nombre.ToUpper())).ToListAsync();
+                var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true, incluirAltasActivoFijo: true, incluirBajasActivoFijo: idRecepcionActivoFijoDetalleSeleccionadoEstado.Estados.Contains(Estados.Baja)).Where(c => idRecepcionActivoFijoDetalleSeleccionadoEstado.Estados.Contains(c.Estado.Nombre.ToUpper())).ToListAsync();
                 var listaIdsRAFDSeleccionados = idRecepcionActivoFijoDetalleSeleccionadoEstado.ListaIdRecepcionActivoFijoDetalleSeleccionado.Where(c=> c.seleccionado).Select(c => c.idRecepcionActivoFijoDetalle);
                 foreach (var item in listaRecepcionActivoFijoDetalle)
                 {
@@ -733,16 +733,12 @@ namespace bd.swrm.web.Controllers.API
                             IdRecepcionActivoFijoDetalle = item.IdRecepcionActivoFijoDetalle,
                             IdBajaActivoFijo = nuevaBajaActivoFijo.IdBajaActivoFijo
                         });
-                        var rafd = await db.RecepcionActivoFijoDetalle.Include(c => c.RecepcionActivoFijo).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == item.IdRecepcionActivoFijoDetalle);
+                        var rafd = await db.RecepcionActivoFijoDetalle.Include(c => c.RecepcionActivoFijo).Include(c=> c.ComponentesActivoFijoOrigen).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == item.IdRecepcionActivoFijoDetalle);
                         rafd.IdEstado = estadoBaja.IdEstado;
                         await db.SaveChangesAsync();
-
-                        var listadoComponentes = await db.ComponenteActivoFijo.Include(c=> c.RecepcionActivoFijoDetalleComponente).Where(c => c.IdRecepcionActivoFijoDetalleOrigen == item.IdRecepcionActivoFijoDetalle).ToListAsync();
-                        foreach (var comp in listadoComponentes)
-                        {
-                            comp.RecepcionActivoFijoDetalleComponente.IdEstado = estadoBaja.IdEstado;
-                            await db.SaveChangesAsync();
-                        }
+                        await GestionarComponentesRecepcionActivoFijoDetalle(rafd, isBajaInsertar: true, bajaActivoFijoDetalle: new BajaActivoFijoDetalle {
+                            IdBajaActivoFijo = nuevaBajaActivoFijo.IdBajaActivoFijo
+                        });
                     }
                     transaction.Commit();
                 }
@@ -1172,6 +1168,21 @@ namespace bd.swrm.web.Controllers.API
                             db.ActivoFijo.Update(activoFijoActualizar);
                             await db.SaveChangesAsync();
                         }
+                        else
+                        {
+                            activoFijoActualizar = new ActivoFijo
+                            {
+                                IdSubClaseActivoFijo = listadoRafd[0].ActivoFijo.IdSubClaseActivoFijo,
+                                IdModelo = listadoRafd[0].ActivoFijo.IdModelo,
+                                Nombre = listadoRafd[0].ActivoFijo.Nombre,
+                                ValorCompra = listadoRafd[0].ActivoFijo.ValorCompra,
+                                Depreciacion = listadoRafd[0].ActivoFijo.Depreciacion,
+                                ValidacionTecnica = listadoRafd[0].ActivoFijo.ValidacionTecnica
+                            };
+                            db.ActivoFijo.Add(activoFijoActualizar);
+                            await db.SaveChangesAsync();
+                        }
+
                         for (int i = 0; i < listadoRafd.Count; i++)
                         {
                             if (listadoRafd[i].IdRecepcionActivoFijoDetalle == 0)
@@ -1879,7 +1890,7 @@ namespace bd.swrm.web.Controllers.API
                 return new List<ActivoFijo>();
             }
         }
-        private async Task GestionarComponentesRecepcionActivoFijoDetalle(RecepcionActivoFijoDetalle item, UbicacionActivoFijo ubicacionComponente, bool isRecepcion = false, bool isAltaInsertar = false, bool isAltaEditar = false, AltaActivoFijoDetalle altaActivoFijoDetalle = null, bool isTransferenciaInsertar = false, bool isTransferenciaEditar = false, TransferenciaActivoFijoDetalle transferenciaActivoFijoDetalle = null)
+        private async Task GestionarComponentesRecepcionActivoFijoDetalle(RecepcionActivoFijoDetalle item, UbicacionActivoFijo ubicacionComponente = null, bool isRecepcion = false, bool isAltaInsertar = false, bool isAltaEditar = false, AltaActivoFijoDetalle altaActivoFijoDetalle = null, bool isTransferenciaInsertar = false, TransferenciaActivoFijoDetalle transferenciaActivoFijoDetalle = null, bool isBajaInsertar = false, BajaActivoFijoDetalle bajaActivoFijoDetalle = null)
         {
             var listaIdsComponentesBD = await db.ComponenteActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalleOrigen == item.IdRecepcionActivoFijoDetalle).Select(c => c.IdRecepcionActivoFijoDetalleComponente).ToListAsync();
             var listaExcept = listaIdsComponentesBD.Except(item.ComponentesActivoFijoOrigen.Select(c => c.IdRecepcionActivoFijoDetalleComponente).ToList());
@@ -1900,7 +1911,7 @@ namespace bd.swrm.web.Controllers.API
                 }
                 else
                 {
-                    if (isRecepcion || isAltaEditar || isTransferenciaEditar)
+                    if (isRecepcion || isAltaEditar)
                     {
                         var ubicacionComponenteActualizar = await db.UbicacionActivoFijo.OrderBy(c => c.FechaUbicacion).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == comp.IdRecepcionActivoFijoDetalleComponente && c.Confirmacion);
                         if (ubicacionComponenteActualizar != null)
@@ -1917,9 +1928,7 @@ namespace bd.swrm.web.Controllers.API
                     if (isAltaInsertar)
                     {
                         var rafd = await db.RecepcionActivoFijoDetalle.Include(c => c.RecepcionActivoFijo).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == comp.IdRecepcionActivoFijoDetalleComponente);
-                        var estadoDB = await db.Estado.FirstOrDefaultAsync(c => c.Nombre.ToUpper() == Estados.Alta);
-                        rafd.IdEstado = estadoDB.IdEstado;
-                        db.RecepcionActivoFijoDetalle.Update(rafd);
+                        rafd.IdEstado = (await db.Estado.FirstOrDefaultAsync(c => c.Nombre.ToUpper() == Estados.Alta)).IdEstado;
                         await db.SaveChangesAsync();
                     }
 
@@ -1959,10 +1968,25 @@ namespace bd.swrm.web.Controllers.API
                         await db.SaveChangesAsync();
                     }
                 }
+                if (isBajaInsertar)
+                {
+                    var rafd = await db.RecepcionActivoFijoDetalle.Include(c => c.RecepcionActivoFijo).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == comp.IdRecepcionActivoFijoDetalleComponente);
+                    rafd.IdEstado = (await db.Estado.FirstOrDefaultAsync(c => c.Nombre.ToUpper() == Estados.Baja)).IdEstado;
+                    await db.SaveChangesAsync();
+
+                    db.BajaActivoFijoDetalle.Add(new BajaActivoFijoDetalle
+                    {
+                        IdBajaActivoFijo = bajaActivoFijoDetalle.IdBajaActivoFijo,
+                        IdRecepcionActivoFijoDetalle = comp.IdRecepcionActivoFijoDetalleComponente
+                    });
+                    await db.SaveChangesAsync();
+                }
                 Task.Run(async () => {
-                    ubicacionComponente.IdRecepcionActivoFijoDetalle = 0;
+                    if (ubicacionComponente != null)
+                        ubicacionComponente.IdRecepcionActivoFijoDetalle = 0;
+
                     var rafd = await db.RecepcionActivoFijoDetalle.Include(c => c.RecepcionActivoFijo).Include(c=> c.ComponentesActivoFijoOrigen).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == comp.IdRecepcionActivoFijoDetalleComponente);
-                    await GestionarComponentesRecepcionActivoFijoDetalle(rafd, ubicacionComponente, isRecepcion, isAltaInsertar, isAltaEditar, altaActivoFijoDetalle, isTransferenciaInsertar, isTransferenciaEditar, transferenciaActivoFijoDetalle);
+                    await GestionarComponentesRecepcionActivoFijoDetalle(rafd, ubicacionComponente: ubicacionComponente, isRecepcion: isRecepcion, isAltaInsertar: isAltaInsertar, isAltaEditar: isAltaEditar, altaActivoFijoDetalle: altaActivoFijoDetalle, isTransferenciaInsertar: isTransferenciaInsertar, transferenciaActivoFijoDetalle: transferenciaActivoFijoDetalle, isBajaInsertar: false, bajaActivoFijoDetalle: bajaActivoFijoDetalle);
                 }).Wait(-1);
             }
             foreach (var idcomp in listaExcept)
