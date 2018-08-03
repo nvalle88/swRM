@@ -697,7 +697,6 @@ namespace bd.swrm.web.Controllers.API
                             Confirmacion = true
                         }, isAltaInsertar: true, altaActivoFijoDetalle: nuevaAltaActivoFijoDetalle);
                     }
-                    Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
                     transaction.Commit();
                 }
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = nuevaAltaActivoFijo };
