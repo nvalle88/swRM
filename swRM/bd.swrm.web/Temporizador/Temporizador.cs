@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Linq;
+using bd.swrm.entidades.Constantes;
 
 namespace bd.swrm.web.Temporizador
 {
@@ -41,11 +42,22 @@ namespace bd.swrm.web.Temporizador
         #region Depreciación de Activos Fijos
         public static void InicializarTemporizadorDepreciacion()
         {
+            DateTime fechaEjecucionTimer = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, ConstantesTimerDepreciacion.Hora, ConstantesTimerDepreciacion.Minutos, ConstantesTimerDepreciacion.Segundos);
+            TimeSpan tiempoEspera = new TimeSpan();
+
+            if (DateTime.Now > fechaEjecucionTimer)
+            {
+                var fechaMannana = fechaEjecucionTimer.AddDays(1);
+                tiempoEspera = fechaMannana - DateTime.Now;
+            }
+            else
+                tiempoEspera = fechaEjecucionTimer - DateTime.Now;
+
             InicializarTemporizador(timerDepreciacion, async () =>
             {
                 await DepreciacionActivosFijosAlta();
                 await ExistenciaMaestroArticuloSucursal();
-            }, new TimeSpan(0, 0, 5), new TimeSpan(24, 0, 0));
+            }, tiempoEspera, new TimeSpan(24, 0, 0));
         }
         private static async Task<DepreciacionActivoFijo> InsertarDepreciacionActivoFijo(decimal valorCompra, decimal depreciacionAcumulada, decimal valorResidual, DateTime ultimaFechaDepreciacionAlta, int idRecepcionActivoFijoDetalle)
         {
@@ -83,38 +95,37 @@ namespace bd.swrm.web.Temporizador
         {
             try
             {
-                var listaRecepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle.Include(c => c.ActivoFijo).ThenInclude(c => c.SubClaseActivoFijo).ThenInclude(c => c.ClaseActivoFijo).ThenInclude(c => c.CategoriaActivoFijo).Where(c => c.Estado.Nombre == Estados.Alta && c.ActivoFijo.Depreciacion).Include(c => c.DepreciacionActivoFijo).ToListAsync();
-                if (listaRecepcionActivoFijoDetalle.Count == 0)
-                    timerDepreciacion.Dispose();
-                else
+                var listaRecepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle
+                    .Include(c => c.ActivoFijo).ThenInclude(c => c.SubClaseActivoFijo).ThenInclude(c => c.ClaseActivoFijo).ThenInclude(c => c.CategoriaActivoFijo)
+                    .Include(c=> c.ActivoFijo).ThenInclude(c=> c.RecepcionActivoFijoDetalle)
+                    .Where(c => c.Estado.Nombre == Estados.Alta && c.ActivoFijo.Depreciacion).Include(c => c.DepreciacionActivoFijo)
+                    .ToListAsync();
+                foreach (var recepcionActivoFijoDetalle in listaRecepcionActivoFijoDetalle)
                 {
-                    foreach (var recepcionActivoFijoDetalle in listaRecepcionActivoFijoDetalle)
-                    {
-                        decimal valorCompraRevalorizacion = await ObtenerValorCompraRevalorizacion(recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
-                        var porCientoDepreciacionAnual = recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.CategoriaActivoFijo.PorCientoDepreciacionAnual;
-                        var totalDepreciacionAnual = (valorCompraRevalorizacion * porCientoDepreciacionAnual) / 100;
-                        var indiceDepreciacionMensual = totalDepreciacionAnual / 12;
+                    decimal valorCompraRevalorizacion = await ObtenerValorCompraRevalorizacion(recepcionActivoFijoDetalle);
+                    var porCientoDepreciacionAnual = recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.CategoriaActivoFijo.PorCientoDepreciacionAnual;
+                    var totalDepreciacionAnual = (valorCompraRevalorizacion * porCientoDepreciacionAnual) / 100;
+                    var indiceDepreciacionMensual = totalDepreciacionAnual / 12;
 
-                        var ultimaDepreciacion = recepcionActivoFijoDetalle?.DepreciacionActivoFijo.OrderByDescending(c => c.FechaDepreciacion).FirstOrDefault();
-                        if (ultimaDepreciacion != null)
+                    var ultimaDepreciacion = recepcionActivoFijoDetalle?.DepreciacionActivoFijo.OrderByDescending(c => c.FechaDepreciacion).FirstOrDefault();
+                    if (ultimaDepreciacion != null)
+                    {
+                        if ((ultimaDepreciacion.FechaDepreciacion.Subtract(DateTime.Now).TotalDays) * (-1) >= 30)
                         {
-                            if ((ultimaDepreciacion.FechaDepreciacion.Subtract(DateTime.Now).TotalDays) * (-1) >= 30)
+                            if (ultimaDepreciacion.ValorResidual > 1)
                             {
-                                if (ultimaDepreciacion.ValorResidual > 1)
-                                {
-                                    var nuevaDepreciacionActivoFijo = await InsertarDepreciacionActivoFijo(valorCompraRevalorizacion, (ultimaDepreciacion.DepreciacionAcumulada + indiceDepreciacionMensual), (ultimaDepreciacion.ValorResidual - indiceDepreciacionMensual), ultimaDepreciacion.FechaDepreciacion, recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
-                                    await CalculoRecursivoDepreciacion(nuevaDepreciacionActivoFijo, indiceDepreciacionMensual);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            var recepcionActivoFijoDetalleAltaActivoFijo = db.AltaActivoFijoDetalle.Include(c => c.AltaActivoFijo).ThenInclude(c => c.FacturaActivoFijo).FirstOrDefault(c => c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
-                            if ((recepcionActivoFijoDetalleAltaActivoFijo.AltaActivoFijo.FechaAlta.Subtract(DateTime.Now).TotalDays) * (-1) >= 30)
-                            {
-                                var nuevaDepreciacionActivoFijo = await InsertarDepreciacionActivoFijo(valorCompraRevalorizacion, (indiceDepreciacionMensual), (valorCompraRevalorizacion - indiceDepreciacionMensual), recepcionActivoFijoDetalleAltaActivoFijo.AltaActivoFijo.FechaAlta, recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
+                                var nuevaDepreciacionActivoFijo = await InsertarDepreciacionActivoFijo(valorCompraRevalorizacion, (ultimaDepreciacion.DepreciacionAcumulada + indiceDepreciacionMensual), (ultimaDepreciacion.ValorResidual - indiceDepreciacionMensual), ultimaDepreciacion.FechaDepreciacion, recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
                                 await CalculoRecursivoDepreciacion(nuevaDepreciacionActivoFijo, indiceDepreciacionMensual);
                             }
+                        }
+                    }
+                    else
+                    {
+                        var recepcionActivoFijoDetalleAltaActivoFijo = db.AltaActivoFijoDetalle.Include(c => c.AltaActivoFijo).ThenInclude(c => c.FacturaActivoFijo).FirstOrDefault(c => c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
+                        if ((recepcionActivoFijoDetalleAltaActivoFijo.AltaActivoFijo.FechaAlta.Subtract(DateTime.Now).TotalDays) * (-1) >= 30)
+                        {
+                            var nuevaDepreciacionActivoFijo = await InsertarDepreciacionActivoFijo(valorCompraRevalorizacion, (indiceDepreciacionMensual), (valorCompraRevalorizacion - indiceDepreciacionMensual), recepcionActivoFijoDetalleAltaActivoFijo.AltaActivoFijo.FechaAlta, recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
+                            await CalculoRecursivoDepreciacion(nuevaDepreciacionActivoFijo, indiceDepreciacionMensual);
                         }
                     }
                 }
@@ -124,12 +135,12 @@ namespace bd.swrm.web.Temporizador
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
             }
         }
-        private static async Task<decimal> ObtenerValorCompraRevalorizacion(int idRecepcionActivoFijoDetalle)
+        private static async Task<decimal> ObtenerValorCompraRevalorizacion(RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
         {
             try
             {
-                var revalorizacionActivoFijo = await db.RevalorizacionActivoFijo.Include(c => c.RecepcionActivoFijoDetalle).ThenInclude(c => c.ActivoFijo).OrderByDescending(x => x.FechaRevalorizacion).FirstOrDefaultAsync(m => m.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle);
-                return revalorizacionActivoFijo != null ? revalorizacionActivoFijo.ValorCompra : (await db.RecepcionActivoFijoDetalle.Include(c => c.ActivoFijo).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle)).ActivoFijo.ValorCompra;
+                var revalorizacionActivoFijo = await db.RevalorizacionActivoFijo.Include(c => c.RecepcionActivoFijoDetalle).ThenInclude(c => c.ActivoFijo).OrderByDescending(x => x.FechaRevalorizacion).FirstOrDefaultAsync(m => m.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
+                return revalorizacionActivoFijo != null ? revalorizacionActivoFijo.ValorCompra : recepcionActivoFijoDetalle.ActivoFijo.ValorCompra / recepcionActivoFijoDetalle.ActivoFijo.RecepcionActivoFijoDetalle.Count;
             }
             catch (Exception)
             {

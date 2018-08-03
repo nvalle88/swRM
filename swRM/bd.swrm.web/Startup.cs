@@ -40,7 +40,6 @@ namespace bd.swrm.web
             services.AddTransient<IEmailSender, AuthMessageSender>();
             services.AddSingleton<IClaimsTransfer, ClaimsTransferService>();
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
 
             // Constantes de correo
             ConstantesCorreo.Smtp = Configuration.GetSection("Smtp").Value;
@@ -51,6 +50,13 @@ namespace bd.swrm.web
             ConstantesCorreo.NameFrom = Configuration.GetSection("NameFrom").Value;
             ConstantesCorreo.MensajeCorreoSuperior = Configuration.GetSection("MensajeCorreoSuperior").Value;
             ConstantesCorreo.CorreoEncargadoSeguro = Configuration.GetSection("CorreoEncargadoSeguro").Value;
+
+            //Constantes de función de depreciación
+            ConstantesTimerDepreciacion.Hora = int.Parse(Configuration.GetSection("Hora").Value);
+            ConstantesTimerDepreciacion.Minutos = int.Parse(Configuration.GetSection("Minutos").Value);
+            ConstantesTimerDepreciacion.Segundos = int.Parse(Configuration.GetSection("Segundos").Value);
+
+            Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
