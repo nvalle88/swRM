@@ -517,7 +517,6 @@ namespace bd.swrm.web.Controllers.API
                     var polizaSeguro = new PolizaSeguroActivoFijo
                     {
                         IdRecepcionActivoFijo = recepcionActivoFijo.IdRecepcionActivoFijo,
-                        IdSubramo = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.PolizaSeguroActivoFijo.IdSubramo,
                         IdCompaniaSeguro = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.PolizaSeguroActivoFijo.IdCompaniaSeguro
                     };
                     db.PolizaSeguroActivoFijo.Add(polizaSeguro);
@@ -607,7 +606,6 @@ namespace bd.swrm.web.Controllers.API
                     }
                     transaction.Commit();
                     var recepcionAF = await db.RecepcionActivoFijo
-                        .Include(c=> c.PolizaSeguroActivoFijo).ThenInclude(c=> c.Subramo).ThenInclude(c=> c.Ramo)
                         .Include(c=> c.PolizaSeguroActivoFijo).ThenInclude(c=> c.CompaniaSeguro)
                         .Include(c=> c.MotivoAlta)
                         .Include(c=> c.Proveedor)
@@ -618,14 +616,13 @@ namespace bd.swrm.web.Controllers.API
 
                     await emailSender.SendEmailAsync(ConstantesCorreo.CorreoEncargadoSeguro, "Nueva recepción de Activos Fijos.",
                     $@"Se ha guardado una recepción de Activos Fijos en el sistema de Recursos Materiales con los siguientes datos: \n \n
+                            No. de recepción: {recepcionAF.IdRecepcionActivoFijo}, \n \n
                             Motivo de recepción: {recepcionAF.MotivoAlta.Descripcion}, \n \n
-                            Proveedor: {recepcionAF.Proveedor.Nombre} {recepcionAF.Proveedor.Apellidos}, \n \n
+                            Proveedor: {recepcionAF.Proveedor.RazonSocial}, \n \n
                             Fondo de financiamiento: {recepcionAF.FondoFinanciamiento.Nombre}, \n \n
-                            Fecha de recepción: {recepcionAF.FechaRecepcion.ToString("dd-MM-yyyy hh:mm tt")}, \n \n
-                            Orden de compra: {recepcionAF.OrdenCompra}, \n \n
+                            Fecha de acta de entrega y recepción: {recepcionAF.FechaRecepcion.ToString("dd-MM-yyyy hh:mm tt")}, \n \n
+                            Orden de compra / Contratos: {recepcionAF.OrdenCompra}, \n \n
                             Sucursal: {sucursal.Nombre}, \n \n
-                            Ramo: {recepcionAF.PolizaSeguroActivoFijo.Subramo.Ramo.Nombre}, \n \n
-                            Subramo: {recepcionAF.PolizaSeguroActivoFijo.Subramo.Nombre}, \n \n
                             Compañía de seguro: {recepcionAF.PolizaSeguroActivoFijo.CompaniaSeguro.Nombre}");
                 }
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = listaRecepcionActivoFijoDetalleTransfer };
@@ -648,6 +645,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     nuevaAltaActivoFijo.IdAltaActivoFijo = altaActivoFijo.IdAltaActivoFijo;
                     nuevaAltaActivoFijo.FechaAlta = altaActivoFijo.FechaAlta;
+                    nuevaAltaActivoFijo.FechaPago = altaActivoFijo.FechaPago;
                     nuevaAltaActivoFijo.IdMotivoAlta = altaActivoFijo.IdMotivoAlta;
 
                     if (altaActivoFijo.FacturaActivoFijo != null)
@@ -1129,7 +1127,6 @@ namespace bd.swrm.web.Controllers.API
                     var polizaSeguroActivoFijoActualizar = await db.PolizaSeguroActivoFijo.FirstOrDefaultAsync(c => c.IdRecepcionActivoFijo == listaRecepcionActivoFijoDetalleTransfer[0].IdRecepcionActivoFijo);
                     if (polizaSeguroActivoFijoActualizar != null)
                     {
-                        polizaSeguroActivoFijoActualizar.IdSubramo = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.PolizaSeguroActivoFijo.IdSubramo;
                         polizaSeguroActivoFijoActualizar.IdCompaniaSeguro = listaRecepcionActivoFijoDetalleTransfer[0].RecepcionActivoFijo.PolizaSeguroActivoFijo.IdCompaniaSeguro;
                         db.PolizaSeguroActivoFijo.Update(polizaSeguroActivoFijoActualizar);
                     }
@@ -1327,6 +1324,7 @@ namespace bd.swrm.web.Controllers.API
                     {
                         altaActivoFijoActualizar.IdMotivoAlta = altaActivoFijo.IdMotivoAlta;
                         altaActivoFijoActualizar.FechaAlta = altaActivoFijo.FechaAlta;
+                        altaActivoFijoActualizar.FechaPago = altaActivoFijo.FechaPago;
 
                         if (altaActivoFijoActualizar.FacturaActivoFijo != null && altaActivoFijo.FacturaActivoFijo == null)
                         {
@@ -1722,10 +1720,13 @@ namespace bd.swrm.web.Controllers.API
             return db.ActivoFijo
                     .Include(c => c.SubClaseActivoFijo).ThenInclude(c => c.ClaseActivoFijo).ThenInclude(c => c.TipoActivoFijo)
                     .Include(c => c.SubClaseActivoFijo).ThenInclude(c => c.ClaseActivoFijo).ThenInclude(c=> c.CategoriaActivoFijo)
+                    .Include(c=> c.SubClaseActivoFijo).ThenInclude(c=> c.Subramo).ThenInclude(c=> c.Ramo)
                     .Include(c => c.Modelo).ThenInclude(c => c.Marca)
                     .OrderBy(c=> c.IdSubClaseActivoFijo)
                     .ThenBy(c=> c.SubClaseActivoFijo.IdClaseActivoFijo)
                     .ThenBy(c=> c.SubClaseActivoFijo.ClaseActivoFijo.IdTipoActivoFijo)
+                    .ThenBy(c=> c.SubClaseActivoFijo.IdSubramo)
+                    .ThenBy(c=> c.SubClaseActivoFijo.Subramo.IdRamo)
                     .ThenBy(c=> c.Nombre);
         }
         private IQueryable<RecepcionActivoFijoDetalle> ObtenerListadoDetallesActivosFijos(int? idActivoFijo = null, bool? incluirActivoFijo = null, bool? incluirAltasActivoFijo = null, bool? incluirBajasActivoFijo = null, bool incluirClaimsTransferencia = true)
@@ -1734,7 +1735,6 @@ namespace bd.swrm.web.Controllers.API
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.Proveedor)
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.MotivoAlta)
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.FondoFinanciamiento)
-                    .Include(c=> c.RecepcionActivoFijo).ThenInclude(c=> c.PolizaSeguroActivoFijo).ThenInclude(c => c.Subramo).ThenInclude(c => c.Ramo)
                     .Include(c => c.RecepcionActivoFijo).ThenInclude(c => c.PolizaSeguroActivoFijo).ThenInclude(c => c.CompaniaSeguro)
                     .Include(c=> c.RecepcionActivoFijoDetalleEdificio)
                     .Include(c=> c.RecepcionActivoFijoDetalleVehiculo)
@@ -2140,7 +2140,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                var recepcionActivoFijoBD = db.RecepcionActivoFijo.Include(c => c.PolizaSeguroActivoFijo).ThenInclude(c => c.Subramo).ThenInclude(c => c.Ramo).Include(c => c.PolizaSeguroActivoFijo).ThenInclude(c => c.CompaniaSeguro).Include(c => c.MotivoAlta).Include(c => c.Proveedor).Include(c => c.FondoFinanciamiento);
+                var recepcionActivoFijoBD = db.RecepcionActivoFijo.Include(c => c.PolizaSeguroActivoFijo).Include(c => c.PolizaSeguroActivoFijo).ThenInclude(c => c.CompaniaSeguro).Include(c => c.MotivoAlta).Include(c => c.Proveedor).Include(c => c.FondoFinanciamiento);
                 var recepcionActivoFijo = clonacionService.ClonarRecepcionActivoFijo(predicado != null ? await recepcionActivoFijoBD.Where(predicado).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijo == id) : await recepcionActivoFijoBD.FirstOrDefaultAsync(c => c.IdRecepcionActivoFijo == id));
                 recepcionActivoFijo.RecepcionActivoFijoDetalle = new List<RecepcionActivoFijoDetalle>();
 
