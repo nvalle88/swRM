@@ -258,8 +258,8 @@ namespace bd.swrm.servicios.Servicios
                 return proveedor != null ? new Proveedor
                 {
                     IdProveedor = proveedor.IdProveedor,
-                    Nombre = proveedor.Nombre,
-                    Apellidos = proveedor.Apellidos,
+                    RepresentanteLegal = proveedor.RepresentanteLegal,
+                    PersonaContacto = proveedor.PersonaContacto,
                     RazonSocial = proveedor.RazonSocial,
                     Direccion = proveedor.Direccion,
                     Identificacion = proveedor.Identificacion

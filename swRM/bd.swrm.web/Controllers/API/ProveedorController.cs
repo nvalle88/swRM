@@ -34,7 +34,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.Proveedor.Include(c=> c.LineaServicio).OrderBy(x => x.Nombre).ThenBy(c=> c.Apellidos).ToListAsync();
+                return await db.Proveedor.Include(c=> c.LineaServicio).OrderBy(x => x.RazonSocial).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -49,7 +49,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.Proveedor.Include(c => c.LineaServicio).Where(c=> c.LineaServicio.Nombre == proveedorTransfer.LineaServicio && c.Activo == proveedorTransfer.Activo).OrderBy(x => x.Nombre).ThenBy(c => c.Apellidos).ToListAsync();
+                return await db.Proveedor.Include(c => c.LineaServicio).Where(c=> c.LineaServicio.Nombre == proveedorTransfer.LineaServicio && c.Activo == proveedorTransfer.Activo).OrderBy(x => x.RazonSocial).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -91,8 +91,8 @@ namespace bd.swrm.web.Controllers.API
                     {
                         try
                         {
-                            ProveedorActualizar.Nombre = proveedor.Nombre;
-                            ProveedorActualizar.Apellidos = proveedor.Apellidos;
+                            ProveedorActualizar.RepresentanteLegal = proveedor.RepresentanteLegal;
+                            ProveedorActualizar.PersonaContacto = proveedor.PersonaContacto;
                             ProveedorActualizar.Identificacion = proveedor.Identificacion;
                             ProveedorActualizar.Direccion = proveedor.Direccion;
                             ProveedorActualizar.Codigo = proveedor.Codigo;
