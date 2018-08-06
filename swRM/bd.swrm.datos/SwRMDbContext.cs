@@ -1139,7 +1139,7 @@ namespace bd.swrm.datos
                 entity.HasKey(e => e.IdProveedor)
                     .HasName("PK_Proveedor");
 
-                entity.Property(e => e.Apellidos)
+                entity.Property(e => e.RepresentanteLegal)
                     .IsRequired()
                     .HasMaxLength(200);
 
@@ -1159,7 +1159,7 @@ namespace bd.swrm.datos
                     .IsRequired()
                     .HasMaxLength(20);
 
-                entity.Property(e => e.Nombre)
+                entity.Property(e => e.PersonaContacto)
                     .IsRequired()
                     .HasMaxLength(200);
 
