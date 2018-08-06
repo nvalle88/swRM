@@ -209,6 +209,8 @@ namespace bd.swrm.datos
 
                 entity.Property(e => e.FechaAlta).HasColumnType("datetime");
 
+                entity.Property(e => e.FechaPago).HasColumnType("datetime");
+
                 entity.HasOne(d => d.FacturaActivoFijo)
                     .WithMany(p => p.AltaActivoFijo)
                     .HasForeignKey(d => d.IdFacturaActivoFijo)
@@ -1114,12 +1116,6 @@ namespace bd.swrm.datos
                     .HasForeignKey<PolizaSeguroActivoFijo>(d => d.IdRecepcionActivoFijo)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_PolizaSeguroActivoFijo_RecepcionActivoFijo");
-
-                entity.HasOne(d => d.Subramo)
-                    .WithMany(p => p.PolizasSeguroActivoFijo)
-                    .HasForeignKey(d => d.IdSubramo)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_PolizaSeguroActivoFijo_Subramo");
             });
 
             modelBuilder.Entity<ProcesoJudicialActivoFijo>(entity =>
@@ -1429,6 +1425,12 @@ namespace bd.swrm.datos
                     .WithMany(p => p.SubClaseActivoFijo)
                     .HasForeignKey(d => d.IdClaseActivoFijo)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.Subramo)
+                    .WithMany(p => p.SubClaseActivoFijo)
+                    .HasForeignKey(d => d.IdSubramo)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_SubClaseActivoFijo_Subramo");
             });
 
             modelBuilder.Entity<SubClaseArticulo>(entity =>

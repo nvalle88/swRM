@@ -512,10 +512,8 @@ namespace bd.swrm.servicios.Servicios
                 {
                     IdRecepcionActivoFijo = polizaSeguroActivoFijo.IdRecepcionActivoFijo,
                     IdCompaniaSeguro = polizaSeguroActivoFijo.IdCompaniaSeguro,
-                    IdSubramo = polizaSeguroActivoFijo.IdSubramo,
                     NumeroPoliza = polizaSeguroActivoFijo.NumeroPoliza,
-                    CompaniaSeguro = ClonarCompaniaSeguro(polizaSeguroActivoFijo?.CompaniaSeguro),
-                    Subramo = ClonarSubramo(polizaSeguroActivoFijo?.Subramo)
+                    CompaniaSeguro = ClonarCompaniaSeguro(polizaSeguroActivoFijo?.CompaniaSeguro)
                 } : null;
             }
             catch (Exception)
@@ -660,8 +658,10 @@ namespace bd.swrm.servicios.Servicios
                 {
                     IdSubClaseActivoFijo = subClaseActivoFijo.IdSubClaseActivoFijo,
                     IdClaseActivoFijo = subClaseActivoFijo.IdClaseActivoFijo,
+                    IdSubramo = subClaseActivoFijo.IdSubramo,
                     Nombre = subClaseActivoFijo.Nombre,
-                    ClaseActivoFijo = ClonarClaseActivoFijo(subClaseActivoFijo?.ClaseActivoFijo)
+                    ClaseActivoFijo = ClonarClaseActivoFijo(subClaseActivoFijo?.ClaseActivoFijo),
+                    Subramo = ClonarSubramo(subClaseActivoFijo?.Subramo)
                 } : null;
             }
             catch (Exception)
