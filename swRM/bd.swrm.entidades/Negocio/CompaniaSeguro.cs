@@ -8,6 +8,7 @@ namespace bd.swrm.entidades.Negocio
     {
         public CompaniaSeguro()
         {
+            DocumentoActivoFijo = new HashSet<DocumentoActivoFijo>();
             PolizasSeguroActivoFijo = new HashSet<PolizaSeguroActivoFijo>();
         }
 
@@ -31,6 +32,7 @@ namespace bd.swrm.entidades.Negocio
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy hh:mm tt}", ApplyFormatInEditMode = true)]
         public DateTime FechaFinVigencia { get; set; }
 
+        public virtual ICollection<DocumentoActivoFijo> DocumentoActivoFijo { get; set; }
         public virtual ICollection<PolizaSeguroActivoFijo> PolizasSeguroActivoFijo { get; set; }
     }
 }
