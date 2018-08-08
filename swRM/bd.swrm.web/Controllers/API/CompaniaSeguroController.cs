@@ -13,6 +13,7 @@ using bd.swrm.entidades.Enumeradores;
 using bd.log.guardar.Enumeradores;
 using bd.log.guardar.Utiles;
 using bd.swrm.entidades.Utils;
+using bd.swrm.servicios.Interfaces;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -21,10 +22,12 @@ namespace bd.swrm.web.Controllers.API
     public class CompaniaSeguroController : Controller
     {
         private readonly SwRMDbContext db;
+        private readonly IUploadFileService uploadFileService;
 
-        public CompaniaSeguroController(SwRMDbContext db)
+        public CompaniaSeguroController(SwRMDbContext db, IUploadFileService uploadFileService)
         {
             this.db = db;
+            this.uploadFileService = uploadFileService;
         }
 
         [HttpGet]
@@ -73,7 +76,7 @@ namespace bd.swrm.web.Controllers.API
                 {
                     db.CompaniaSeguro.Add(companiaSeguro);
                     await db.SaveChangesAsync();
-                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = companiaSeguro };
                 }
                 return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
             }
@@ -104,7 +107,7 @@ namespace bd.swrm.web.Controllers.API
                             companiaSeguroActualizar.FechaFinVigencia = companiaSeguro.FechaFinVigencia;
                             db.CompaniaSeguro.Update(companiaSeguroActualizar);
                             await db.SaveChangesAsync();
-                            return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                            return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = companiaSeguroActualizar };
                         }
                         catch (Exception ex)
                         {
@@ -133,9 +136,21 @@ namespace bd.swrm.web.Controllers.API
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
 
-                db.CompaniaSeguro.Remove(respuesta);
-                await db.SaveChangesAsync();
-                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                using (var transaction = db.Database.BeginTransaction())
+                {
+                    var listaDocumentosActivoFijo = await db.DocumentoActivoFijo.Where(c => c.IdCompaniaSeguro == respuesta.IdCompaniaSeguro).ToListAsync();
+                    db.DocumentoActivoFijo.RemoveRange(listaDocumentosActivoFijo);
+                    await db.SaveChangesAsync();
+
+                    db.CompaniaSeguro.Remove(respuesta);
+                    await db.SaveChangesAsync();
+
+                    foreach (var item in listaDocumentosActivoFijo)
+                        uploadFileService.DeleteFile(item.Url);
+
+                    transaction.Commit();
+                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                }
             }
             catch (Exception ex)
             {
