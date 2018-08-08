@@ -246,17 +246,20 @@ namespace bd.swrm.web.Controllers.API
 
         [HttpPost]
         [Route("ObtenerDetalleActivoFijoParaInventario")]
-        public async Task<Response> PostDetalleActivoFijoParaInventario([FromBody] string codigoSecuencial)
+        public async Task<List<RecepcionActivoFijoDetalle>> PostDetalleActivoFijoParaInventario([FromBody] InventarioTransfer inventarioTransfer)
         {
             try
             {
-                var recepcionActivoFijoDetalle = ObtenerRecepcionActivoFijoDetalle(await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true, incluirAltasActivoFijo: true).FirstOrDefaultAsync(c => c.CodigoActivoFijo.Codigosecuencial == codigoSecuencial), incluirActivoFijo: true);
-                return new Response { IsSuccess = recepcionActivoFijoDetalle != null, Message = recepcionActivoFijoDetalle != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = recepcionActivoFijoDetalle };
+                var lista = new List<RecepcionActivoFijoDetalle>();
+                var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true, incluirAltasActivoFijo: true).Where(c => c.CodigoActivoFijo.Codigosecuencial == inventarioTransfer.Codigosecuencial && c.Estado.Nombre.ToUpper() == Estados.Alta && !inventarioTransfer.ListadoRafdSeleccionados.Contains(c.IdRecepcionActivoFijoDetalle)).ToListAsync();
+                foreach (var item in listaRecepcionActivoFijoDetalle)
+                    lista.Add(ObtenerRecepcionActivoFijoDetalle(item, incluirActivoFijo: true));
+                return lista;
             }
             catch (Exception ex)
             {
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                return new Response { IsSuccess = false, Message = Mensaje.Error };
+                return new List<RecepcionActivoFijoDetalle>();
             }
         }
 
