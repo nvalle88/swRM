@@ -737,6 +737,7 @@ namespace bd.swrm.servicios.Servicios
                 {
                     IdAltaActivoFijo = altaActivoFijo.IdAltaActivoFijo,
                     FechaAlta = altaActivoFijo.FechaAlta,
+                    FechaPago = altaActivoFijo.FechaPago,
                     IdMotivoAlta = altaActivoFijo.IdMotivoAlta,
                     IdFacturaActivoFijo = altaActivoFijo.IdFacturaActivoFijo,
                     MotivoAlta = ClonarMotivoAlta(altaActivoFijo?.MotivoAlta),
