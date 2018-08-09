@@ -147,6 +147,21 @@ namespace bd.swrm.web.Controllers.API
             return await ListarRecepcionesActivosFijos(predicadoDetalleActivoFijo: c => c.Estado.Nombre.ToUpper() == Estados.ValidacionTecnica);
         }
 
+        [HttpGet]
+        [Route("ListarIdsRecepcionesActivosFijos")]
+        public async Task<List<int>> GetListadoIdsRecepcionesActivosFijos()
+        {
+            try
+            {
+                var listadoRecepcionesActivosFijos = await ListarRecepcionesActivosFijos(predicado: c=> c.RecepcionActivoFijoDetalle.Count > 0, predicadoDetalleActivoFijo: c=> c.Estado.Nombre.ToUpper() == Estados.Recepcionado && c.RecepcionActivoFijo.MotivoAlta.Descripcion.ToUpper() != MotivosAlta.Adicion);
+                return listadoRecepcionesActivosFijos.Select(c => c.IdRecepcionActivoFijo).ToList();
+            }
+            catch (Exception)
+            {
+                return new List<int>();
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<Response> GetActivosFijos([FromRoute]int id)
         {
@@ -334,6 +349,21 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpPost]
+        [Route("ListarDepreciacionActivoFijo")]
+        public async Task<List<DepreciacionActivoFijo>> PostListarDepreciacionActivoFijo([FromBody] int id)
+        {
+            try
+            {
+                var listadoDepreciacionActivosFijos = await db.DepreciacionActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalle == id).OrderByDescending(c=> c.FechaDepreciacion).ToListAsync();
+                return listadoDepreciacionActivosFijos;
+            }
+            catch (Exception)
+            {
+                return new List<DepreciacionActivoFijo>();
+            }
+        }
+
+        [HttpPost]
         [Route("DetallesActivoFijoSeleccionadoPorEstadoAlta")]
         public async Task<List<RecepcionActivoFijoDetalleSeleccionado>> PostDetallesActivoFijoSeleccionadoPorEstadoAlta([FromBody] IdRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja)
         {
@@ -341,6 +371,10 @@ namespace bd.swrm.web.Controllers.API
             {
                 var lista = new List<RecepcionActivoFijoDetalleSeleccionado>();
                 var listaRecepcionActivoFijoDetalle = await ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true).Where(c => (c.Estado.Nombre.ToUpper() == Estados.Recepcionado || (c.Estado.Nombre.ToUpper() == Estados.Alta && idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja.ListaIdRecepcionActivoFijoDetalleSeleccionadoInicialesAltaBaja.Select(x=> x.idRecepcionActivoFijoDetalle).Contains(c.IdRecepcionActivoFijoDetalle))) && c.RecepcionActivoFijo.MotivoAlta.Descripcion.ToUpper() != MotivosAlta.Adicion).ToListAsync();
+
+                if (idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja.IdRecepcionActivoFijo > 0)
+                    listaRecepcionActivoFijoDetalle = listaRecepcionActivoFijoDetalle.Where(c => c.IdRecepcionActivoFijo == idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja.IdRecepcionActivoFijo).ToList();
+
                 var listaIdsRAFDSeleccionados = idRecepcionActivoFijoDetalleSeleccionadoIdsInicialesAltaBaja.ListaIdRecepcionActivoFijoDetalleSeleccionado.Select(c => c.idRecepcionActivoFijoDetalle);
                 foreach (var item in listaRecepcionActivoFijoDetalle)
                 {
