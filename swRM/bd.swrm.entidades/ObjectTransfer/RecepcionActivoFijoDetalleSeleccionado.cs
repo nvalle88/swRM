@@ -47,6 +47,7 @@ namespace bd.swrm.entidades.ObjectTransfer
     {
         public List<IdRecepcionActivoFijoDetalleSeleccionado> ListaIdRecepcionActivoFijoDetalleSeleccionado { get; set; }
         public List<IdRecepcionActivoFijoDetalleSeleccionado> ListaIdRecepcionActivoFijoDetalleSeleccionadoInicialesAltaBaja { get; set; }
+        public int? IdRecepcionActivoFijo { get; set; }
     }
 
     public class IdRecepcionActivoFijoDetalleSeleccionadoEstado
