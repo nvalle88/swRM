@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
+    using System.ComponentModel.DataAnnotations.Schema;
 
     public partial class AltaActivoFijo
     {
@@ -36,6 +37,9 @@
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0}")]
         public int? IdFacturaActivoFijo { get; set; }
         public virtual FacturaActivoFijo FacturaActivoFijo { get; set; }
+
+        [NotMapped]
+        public bool IsReversarAlta { get; set; }
 
         public virtual ICollection<AltaActivoFijoDetalle> AltaActivoFijoDetalle { get; set; }
         public virtual ICollection<DocumentoActivoFijo> DocumentoActivoFijo { get; set; }

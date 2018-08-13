@@ -72,8 +72,8 @@ namespace bd.swrm.servicios.Servicios
         {
             try
             {
-                var targetDirectory = Path.Combine(_hostingEnvironment.WebRootPath, $"{folder}/{fileName}");
-                var file = new FileStream(targetDirectory, FileMode.Open);
+                var targetDirectory = Path.Combine(_hostingEnvironment.WebRootPath, $"{folder}\\{fileName}");
+                var file = new FileStream(targetDirectory, FileMode.Open, FileAccess.Read);
 
                 byte[] data;
                 using (var br = new BinaryReader(file))
@@ -87,11 +87,12 @@ namespace bd.swrm.servicios.Servicios
             }
         }
 
-        public DocumentoActivoFijoTransfer GetFileDocumentoActivoFijo(string folder, string fileName)
+        public DocumentoActivoFijoTransfer GetFileDocumentoActivoFijo(string folder, int idDocumentoActivoFijo, string fileName)
         {
             try
             {
-                byte[] data = GetBytesFromFile(folder, fileName);
+                string extensionFile = FileExtension(fileName);
+                byte[] data = GetBytesFromFile(folder, $"{idDocumentoActivoFijo}{extensionFile}");
                 if (data.Length > 0)
                 {
                     return new DocumentoActivoFijoTransfer

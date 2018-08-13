@@ -42,6 +42,7 @@ namespace bd.swrm.web.Controllers.API
             try
             {
                 var ordenCompra = clonacionService.ClonarOrdenCompra(await ObtenerOrdenCompra(id));
+                ordenCompra.Factura.DocumentoActivoFijo = clonacionService.ClonarListadoDocumentoActivoFijo(await db.DocumentoActivoFijo.Where(c => c.IdFacturaActivoFijo == ordenCompra.IdFacturaActivoFijo).ToListAsync());
                 return new Response { IsSuccess = ordenCompra != null, Message = ordenCompra != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = ordenCompra };
             }
             catch (Exception ex)
@@ -74,7 +75,7 @@ namespace bd.swrm.web.Controllers.API
                 var listadoOrdenCompraDetalles = await db.OrdenCompraDetalles
                     .Include(c => c.MaestroArticuloSucursal).ThenInclude(c => c.Articulo).ThenInclude(c => c.UnidadMedida)
                     .Where(c => c.IdOrdenCompra == ordenCompra.IdOrdenCompra).ToListAsync();
-
+                
                 return ordenCompra;
             }
             catch (Exception)

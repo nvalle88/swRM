@@ -220,6 +220,7 @@ namespace bd.swrm.servicios.Servicios
 
                 if (nuevaOrdenCompra != null)
                 {
+                    nuevaOrdenCompra.Factura.DocumentoActivoFijo = ordenCompra.Factura.DocumentoActivoFijo;
                     foreach (var item in ordenCompra.OrdenCompraDetalles)
                     {
                         item.OrdenCompra = null;
@@ -854,6 +855,52 @@ namespace bd.swrm.servicios.Servicios
                     Sucursal = ClonarSucursal(dependencia?.Sucursal),
                     IdBodega = dependencia.IdBodega,
                     Bodega = ClonarBodega(dependencia?.Bodega)
+                } : null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public List<DocumentoActivoFijo> ClonarListadoDocumentoActivoFijo(List<DocumentoActivoFijo> listaDocumentoActivoFijo)
+        {
+            try
+            {
+                var nuevaListaDocumentoActivoFijo = new List<DocumentoActivoFijo>();
+                foreach (var item in listaDocumentoActivoFijo)
+                {
+                    nuevaListaDocumentoActivoFijo.Add(new DocumentoActivoFijo
+                    {
+                        IdDocumentoActivoFijo = item.IdDocumentoActivoFijo,
+                        Nombre = item.Nombre,
+                        Fecha = item.Fecha,
+                        Url = item.Url,
+                        IdActivoFijo = item.IdActivoFijo,
+                        IdRecepcionActivoFijoDetalle = item.IdRecepcionActivoFijoDetalle,
+                        IdAltaActivoFijo = item.IdAltaActivoFijo,
+                        IdFacturaActivoFijo = item.IdFacturaActivoFijo,
+                        IdProcesoJudicialActivoFijo = item.IdProcesoJudicialActivoFijo,
+                        IdRecepcionActivoFijo = item.IdRecepcionActivoFijo,
+                        IdCompaniaSeguro = item.IdCompaniaSeguro
+                    });
+                }
+                return nuevaListaDocumentoActivoFijo;
+            }
+            catch (Exception)
+            {
+                return new List<DocumentoActivoFijo>();
+            }
+        }
+
+        public TipoUtilizacionAlta ClonarTipoUtilizacionAlta(TipoUtilizacionAlta tipoUtilizacionAlta)
+        {
+            try
+            {
+                return tipoUtilizacionAlta != null ? new TipoUtilizacionAlta
+                {
+                    IdTipoUtilizacionAlta = tipoUtilizacionAlta.IdTipoUtilizacionAlta,
+                    Nombre = tipoUtilizacionAlta.Nombre
                 } : null;
             }
             catch (Exception)

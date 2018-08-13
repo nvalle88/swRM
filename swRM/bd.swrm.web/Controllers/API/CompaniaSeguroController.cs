@@ -23,11 +23,13 @@ namespace bd.swrm.web.Controllers.API
     {
         private readonly SwRMDbContext db;
         private readonly IUploadFileService uploadFileService;
+        private readonly IClonacion clonacionService;
 
-        public CompaniaSeguroController(SwRMDbContext db, IUploadFileService uploadFileService)
+        public CompaniaSeguroController(SwRMDbContext db, IUploadFileService uploadFileService, IClonacion clonacionService)
         {
             this.db = db;
             this.uploadFileService = uploadFileService;
+            this.clonacionService = clonacionService;
         }
 
         [HttpGet]
@@ -54,6 +56,7 @@ namespace bd.swrm.web.Controllers.API
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
                 var companiaSeguro = await db.CompaniaSeguro.SingleOrDefaultAsync(m => m.IdCompaniaSeguro == id);
+                companiaSeguro.DocumentoActivoFijo = clonacionService.ClonarListadoDocumentoActivoFijo(await db.DocumentoActivoFijo.Where(c => c.IdCompaniaSeguro == id).ToListAsync());
                 return new Response { IsSuccess = companiaSeguro != null, Message = companiaSeguro != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = companiaSeguro };
             }
             catch (Exception ex)

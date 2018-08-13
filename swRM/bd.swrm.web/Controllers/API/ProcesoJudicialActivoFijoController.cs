@@ -23,11 +23,13 @@ namespace bd.swrm.web.Controllers.API
     {
         private readonly SwRMDbContext db;
         private readonly IUploadFileService uploadFileService;
+        private readonly IClonacion clonacionService;
 
-        public ProcesoJudicialActivoFijoController(SwRMDbContext db, IUploadFileService uploadFileService)
+        public ProcesoJudicialActivoFijoController(SwRMDbContext db, IUploadFileService uploadFileService, IClonacion clonacionService)
         {
             this.db = db;
             this.uploadFileService = uploadFileService;
+            this.clonacionService = clonacionService;
         }
 
         [HttpGet]
@@ -69,6 +71,7 @@ namespace bd.swrm.web.Controllers.API
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
                 var procesoJudicialActivoFijo = await db.ProcesoJudicialActivoFijo.SingleOrDefaultAsync(m => m.IdProcesoJudicialActivoFijo == id);
+                procesoJudicialActivoFijo.DocumentoActivoFijo = clonacionService.ClonarListadoDocumentoActivoFijo(await db.DocumentoActivoFijo.Where(c => c.IdProcesoJudicialActivoFijo == id).ToListAsync());
                 return new Response { IsSuccess = procesoJudicialActivoFijo != null, Message = procesoJudicialActivoFijo != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = procesoJudicialActivoFijo };
             }
             catch (Exception ex)

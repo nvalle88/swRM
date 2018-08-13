@@ -51,5 +51,7 @@ namespace bd.swrm.servicios.Interfaces
         InventarioActivoFijo ClonarInventarioActivoFijo(InventarioActivoFijo inventarioActivoFijo);
         MovilizacionActivoFijo ClonarMovilizacionActivoFijo(MovilizacionActivoFijo movilizacionActivoFijo);
         Dependencia ClonarDependencia(Dependencia dependencia);
+        List<DocumentoActivoFijo> ClonarListadoDocumentoActivoFijo(List<DocumentoActivoFijo> listaDocumentoActivoFijo);
+        TipoUtilizacionAlta ClonarTipoUtilizacionAlta(TipoUtilizacionAlta tipoUtilizacionAlta);
     }
 }
