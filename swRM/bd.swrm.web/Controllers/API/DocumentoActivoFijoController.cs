@@ -107,11 +107,12 @@ namespace bd.swrm.web.Controllers.API
 
         [HttpPost]
         [Route("GetFile")]
-        public async Task<Response> GetDocumentoActivoFijo([FromBody] DocumentoActivoFijo documentoActivoFijo)
+        public async Task<Response> GetFileActivoFijo([FromBody] int idDocumentoActivoFijo)
         {
             try
             {
-                var respuestaFile = uploadFileService.GetFileDocumentoActivoFijo(Mensaje.CarpetaActivoFijoDocumento, documentoActivoFijo.Nombre);
+                var documentoActivoFijo = await db.DocumentoActivoFijo.FirstOrDefaultAsync(c => c.IdDocumentoActivoFijo == idDocumentoActivoFijo);
+                var respuestaFile = uploadFileService.GetFileDocumentoActivoFijo(Mensaje.CarpetaActivoFijoDocumento, idDocumentoActivoFijo, documentoActivoFijo.Nombre);
                 return new Response { IsSuccess = respuestaFile != null, Message = respuestaFile != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = respuestaFile };
             }
             catch (Exception ex)

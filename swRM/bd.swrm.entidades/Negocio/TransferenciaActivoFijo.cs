@@ -56,6 +56,9 @@ namespace bd.swrm.entidades.Negocio
         [Display(Name = "Sucursal de destino:")]
         public Sucursal SucursalDestino { get; set; }
 
+        [NotMapped]
+        public bool IsEditar { get; set; }
+
         public virtual ICollection<TransferenciaActivoFijoDetalle> TransferenciaActivoFijoDetalle { get; set; }
     }
 }
