@@ -39,6 +39,7 @@ namespace bd.swrm.web
             services.AddSingleton<IClonacion, ClonacionService>();
             services.AddTransient<IEmailSender, AuthMessageSender>();
             services.AddSingleton<IClaimsTransfer, ClaimsTransferService>();
+            services.AddSingleton<IPdfMethods, PdfMethodsService>();
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             // Constantes de correo

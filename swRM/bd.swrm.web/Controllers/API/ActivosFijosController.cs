@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,6 +18,22 @@ using bd.swrm.entidades.ObjectTransfer;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using bd.swrm.entidades.Constantes;
+using iText.Kernel.Pdf;
+using iText.Kernel.Geom;
+using iText.Html2pdf.Css.Util;
+using iText.Html2pdf;
+using iText.Html2pdf.Css.Media;
+using iText.Kernel.Events;
+using iText.Layout;
+using iText.Layout.Element;
+using iText.Layout.Borders;
+using iText.Layout.Properties;
+using iText.Layout.Layout;
+using System.IO;
+using iText.Kernel.Colors;
+using iText.IO.Image;
+using Microsoft.AspNetCore.Hosting;
+using bd.swrm.servicios.PDFHandler;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -30,14 +46,18 @@ namespace bd.swrm.web.Controllers.API
         private readonly IEmailSender emailSender;
         private readonly IClaimsTransfer claimsTransfer;
         private readonly IClonacion clonacionService;
+        private readonly IPdfMethods pdfMethodsService;
+        private readonly IHostingEnvironment _hostingEnvironment;
 
-        public ActivosFijosController(SwRMDbContext db, IUploadFileService uploadFileService, IEmailSender emailSender, IClaimsTransfer claimsTransfer, IHttpContextAccessor httpContextAccessor, IClonacion clonacionService)
+        public ActivosFijosController(SwRMDbContext db, IUploadFileService uploadFileService, IEmailSender emailSender, IClaimsTransfer claimsTransfer, IHttpContextAccessor httpContextAccessor, IClonacion clonacionService, IPdfMethods pdfMethodsService, IHostingEnvironment _hostingEnvironment)
         {
             this.uploadFileService = uploadFileService;
             this.db = db;
             this.emailSender = emailSender;
             this.claimsTransfer = claimsTransfer;
             this.clonacionService = clonacionService;
+            this.pdfMethodsService = pdfMethodsService;
+            this._hostingEnvironment = _hostingEnvironment;
         }
 
         [HttpGet]
@@ -657,16 +677,16 @@ namespace bd.swrm.web.Controllers.API
                     var claimTransfer = claimsTransfer.ObtenerClaimsTransferHttpContext();
                     var sucursal = await db.Sucursal.FirstOrDefaultAsync(c => c.IdSucursal == claimTransfer.IdSucursal);
 
-                    await emailSender.SendEmailAsync(ConstantesCorreo.CorreoEncargadoSeguro, "Nueva recepción de Activos Fijos.",
-                    $@"Se ha guardado una recepción de Activos Fijos en el sistema de Recursos Materiales con los siguientes datos: \n \n
-                            No. de recepción: {recepcionAF.IdRecepcionActivoFijo}, \n \n
-                            Motivo de recepción: {recepcionAF.MotivoAlta.Descripcion}, \n \n
+                    await emailSender.SendEmailAsync(ConstantesCorreo.CorreoEncargadoSeguro, "Nueva recepciÃ³n de Activos Fijos.",
+                    $@"Se ha guardado una recepciÃ³n de Activos Fijos en el sistema de Recursos Materiales con los siguientes datos: \n \n
+                            No. de recepciÃ³n: {recepcionAF.IdRecepcionActivoFijo}, \n \n
+                            Motivo de recepciÃ³n: {recepcionAF.MotivoAlta.Descripcion}, \n \n
                             Proveedor: {recepcionAF.Proveedor.RazonSocial}, \n \n
                             Fondo de financiamiento: {recepcionAF.FondoFinanciamiento.Nombre}, \n \n
-                            Fecha de acta de entrega y recepción: {recepcionAF.FechaRecepcion.ToString("dd-MM-yyyy hh:mm tt")}, \n \n
+                            Fecha de acta de entrega y recepciÃ³n: {recepcionAF.FechaRecepcion.ToString("dd-MM-yyyy hh:mm tt")}, \n \n
                             Orden de compra / Contratos: {recepcionAF.OrdenCompra}, \n \n
                             Sucursal: {sucursal.Nombre}, \n \n
-                            Compañía de seguro: {recepcionAF.PolizaSeguroActivoFijo.CompaniaSeguro.Nombre}");
+                            CompaÃ±Ã­a de seguro: {recepcionAF.PolizaSeguroActivoFijo.CompaniaSeguro.Nombre}");
                 }
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = listaRecepcionActivoFijoDetalleTransfer };
             }
@@ -1119,12 +1139,12 @@ namespace bd.swrm.web.Controllers.API
                     if (recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle == 0)
                     {
                         if (await db.RecepcionActivoFijoDetalleVehiculo.AnyAsync(c => c.NumeroChasis.ToUpper().Trim() == recepcionActivoFijoDetalle.RecepcionActivoFijoDetalleVehiculo.NumeroChasis.ToUpper().Trim()))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroChasis", Valor = "El Número de chasis: ya existe." });
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroChasis", Valor = "El NÃºmero de chasis: ya existe." });
                     }
                     else
                     {
                         if (await db.RecepcionActivoFijoDetalleVehiculo.Where(c => c.NumeroChasis.ToUpper().Trim() == recepcionActivoFijoDetalle.RecepcionActivoFijoDetalleVehiculo.NumeroChasis.ToUpper().Trim()).AnyAsync(c => c.IdRecepcionActivoFijoDetalle != recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroChasis", Valor = "El Número de chasis: ya existe." });
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroChasis", Valor = "El NÃºmero de chasis: ya existe." });
                     }
                 }
 
@@ -1133,12 +1153,12 @@ namespace bd.swrm.web.Controllers.API
                     if (recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle == 0)
                     {
                         if (await db.RecepcionActivoFijoDetalleVehiculo.AnyAsync(c => c.NumeroMotor.ToUpper().Trim() == recepcionActivoFijoDetalle.RecepcionActivoFijoDetalleVehiculo.NumeroMotor.ToUpper().Trim()))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroMotor", Valor = "El Número de motor: ya existe." });
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroMotor", Valor = "El NÃºmero de motor: ya existe." });
                     }
                     else
                     {
                         if (await db.RecepcionActivoFijoDetalleVehiculo.Where(c => c.NumeroMotor.ToUpper().Trim() == recepcionActivoFijoDetalle.RecepcionActivoFijoDetalleVehiculo.NumeroMotor.ToUpper().Trim()).AnyAsync(c => c.IdRecepcionActivoFijoDetalle != recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroMotor", Valor = "El Número de motor: ya existe." });
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroMotor", Valor = "El NÃºmero de motor: ya existe." });
                     }
                 }
 
@@ -1161,12 +1181,12 @@ namespace bd.swrm.web.Controllers.API
                     if (recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle == 0)
                     {
                         if (await db.RecepcionActivoFijoDetalleEdificio.AnyAsync(c => c.NumeroClaveCatastral.ToUpper().Trim() == recepcionActivoFijoDetalle.RecepcionActivoFijoDetalleEdificio.NumeroClaveCatastral.ToUpper().Trim()))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroClaveCatastral", Valor = "El Número de clave catastral: ya existe." });
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroClaveCatastral", Valor = "El NÃºmero de clave catastral: ya existe." });
                     }
                     else
                     {
                         if (await db.RecepcionActivoFijoDetalleEdificio.Where(c => c.NumeroClaveCatastral.ToUpper().Trim() == recepcionActivoFijoDetalle.RecepcionActivoFijoDetalleEdificio.NumeroClaveCatastral.ToUpper().Trim()).AnyAsync(c => c.IdRecepcionActivoFijoDetalle != recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle))
-                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroClaveCatastral", Valor = "El Número de clave catastral: ya existe." });
+                            listaPropiedadValorErrores.Add(new PropiedadValor { Propiedad = "NumeroClaveCatastral", Valor = "El NÃºmero de clave catastral: ya existe." });
                     }
                 }
 
@@ -2059,7 +2079,7 @@ namespace bd.swrm.web.Controllers.API
         }
         #endregion
 
-        #region Gestión de Componentes
+        #region GestiÃ³n de Componentes
         private async Task GestionarComponentesRecepcionActivoFijoDetalle(RecepcionActivoFijoDetalle item, UbicacionActivoFijo ubicacionComponente = null, bool isRecepcion = false, bool isAltaInsertar = false, bool isAltaEditar = false, AltaActivoFijoDetalle altaActivoFijoDetalle = null, bool isTransferenciaInsertar = false, TransferenciaActivoFijoDetalle transferenciaActivoFijoDetalle = null, bool isBajaInsertar = false, BajaActivoFijoDetalle bajaActivoFijoDetalle = null)
         {
             var listaIdsComponentesBD = await db.ComponenteActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalleOrigen == item.IdRecepcionActivoFijoDetalle).Select(c => c.IdRecepcionActivoFijoDetalleComponente).ToListAsync();
@@ -2685,6 +2705,104 @@ namespace bd.swrm.web.Controllers.API
             {
                 db.RecepcionActivoFijoDetalleVehiculo.Remove(recepcionActivoFijoDetalleVehiculo);
                 db.SaveChanges();
+            }
+        }
+        #endregion
+
+        #region Exportar a PDF
+        [HttpPost]
+        [Route("PDFTransferenciaCambioCustodio")]
+        public async Task<byte[]> ExportarPDFTransferenciaCambioCustodio([FromBody] int idTransferenciaActivoFijo)
+        {
+            try
+            {
+                var claimTransfer = claimsTransfer.ObtenerClaimsTransferHttpContext();
+                var empleado = await db.Empleado.FirstOrDefaultAsync(c => c.IdEmpleado == claimTransfer.IdEmpleado);
+
+                var response = await GetTransferenciaActivoFijo(idTransferenciaActivoFijo);
+                var transferenciaActivoFijo = response.Resultado as TransferenciaActivoFijo;
+
+                MemoryStream memoryStream = new MemoryStream();
+                PdfWriter pdfWritter = new PdfWriter(memoryStream);
+                PdfDocument pdfDocument = new PdfDocument(pdfWritter);
+
+                PageSize pageSize = PageSize.A4.Rotate();
+                float width = CssUtils.ParseAbsoluteLength("" + pageSize.GetWidth());
+
+                pdfDocument.SetTagged();
+                pdfDocument.SetDefaultPageSize(pageSize);
+
+                ConverterProperties props = new ConverterProperties();
+                MediaDeviceDescription mediaDescription = new MediaDeviceDescription(MediaType.SCREEN);
+                mediaDescription.SetWidth(width);
+                props.SetMediaDeviceDescription(mediaDescription);
+
+                var eventHandler = new CambioCustodioHandler(pdfMethodsService, transferenciaActivoFijo.FechaTransferencia, transferenciaActivoFijo.TransferenciaActivoFijoDetalle.FirstOrDefault(), empleado.NombreUsuario);
+                pdfDocument.AddEventHandler(PdfDocumentEvent.END_PAGE, eventHandler);
+
+                Document document = new Document(pdfDocument);
+                document.SetBottomMargin(70);
+
+                Table table = new Table(new float[] { 230, 90, 90, 90, 90, 90, 90 });
+                table.SetWidth(pdfDocument.GetDefaultPageSize().GetWidth() - 72);
+
+                pdfMethodsService.AdicionarValorCelda("BANCO DE DESARROLLO DEL ECUADOR B.P.", table, colspan: 7, pintarBordeIzquierdo: false, pintarBordeDerecho: false, pintarBordeArriba: false, pintarBordeAbajo: false, isBold: true, fontSize: 10, isHeaderCell: true);
+                pdfMethodsService.AdicionarValorCelda("ACTA ENTREGA RECEPCIÃ“N DE BIENES.", table, colspan: 7, pintarBordeIzquierdo: false, pintarBordeDerecho: false, pintarBordeArriba: false, pintarBordeAbajo: false, isBold: true, fontSize: 10, isHeaderCell: true);
+                pdfMethodsService.AdicionarValorCelda("REGLAMENTO UTILIZACIÃ“N Y CONTROL DE LOS BIENES DEL SECTOR PÃšBLICO", table, colspan: 7, pintarBordeIzquierdo: false, pintarBordeDerecho: false, pintarBordeArriba: false, pintarBordeAbajo: false, isBold: true, fontSize: 10, isHeaderCell: true);
+
+                pdfMethodsService.AdicionarCeldaHeader("NOMBRE DE ACTIVO", table, textAlignment: TextAlignment.LEFT, isHeaderCell: true);
+                pdfMethodsService.AdicionarCeldaHeader("CLASE DE ACTIVO", table, textAlignment: TextAlignment.LEFT, isHeaderCell: true);
+                pdfMethodsService.AdicionarCeldaHeader("SUCURSAL", table, textAlignment: TextAlignment.LEFT, isHeaderCell: true);
+                pdfMethodsService.AdicionarCeldaHeader("CÃ“DIGO CONCATENADO", table, textAlignment: TextAlignment.LEFT, isHeaderCell: true);
+                pdfMethodsService.AdicionarCeldaHeader("AT_MARCA", table, textAlignment: TextAlignment.LEFT, isHeaderCell: true);
+                pdfMethodsService.AdicionarCeldaHeader("AT_MODELO", table, textAlignment: TextAlignment.LEFT, isHeaderCell: true);
+                pdfMethodsService.AdicionarCeldaHeader("AT_SERIE", table, textAlignment: TextAlignment.LEFT, isHeaderCell: true);
+
+                Image imagenCuadrado = new Image(ImageDataFactory.Create(System.IO.Path.Combine(_hostingEnvironment.WebRootPath, $"images\\cuadrado.png"))).SetWidth(7);
+                pdfMethodsService.AdicionarValorCelda($"{transferenciaActivoFijo.TransferenciaActivoFijoDetalle.FirstOrDefault().UbicacionActivoFijoDestino.Empleado.Persona.Nombres} {transferenciaActivoFijo.TransferenciaActivoFijoDetalle.FirstOrDefault().UbicacionActivoFijoDestino.Empleado.Persona.Apellidos}", table, textAlignment: TextAlignment.LEFT, pintarBordeArriba: false, pintarBordeAbajo: false, colspan: 7, backgroundColor: new DeviceRgb(241, 237, 252), imagen: imagenCuadrado, isBold: true);
+
+                var igrouping = transferenciaActivoFijo.TransferenciaActivoFijoDetalle.GroupBy(c => c.RecepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.CategoriaActivoFijo.Nombre);
+                foreach (var item in igrouping)
+                {
+                    pdfMethodsService.AdicionarValorCelda(item.Key, table, textAlignment: TextAlignment.LEFT, colspan: 7, pintarBordeArriba: false, pintarBordeAbajo: false, backgroundColor: new DeviceRgb(241, 237, 252), paddingLeft: 9, isBold: true, imagen: imagenCuadrado);
+                    foreach (var item1 in item)
+                    {
+                        pdfMethodsService.AdicionarValorCelda(item1.RecepcionActivoFijoDetalle.ActivoFijo.Nombre, table, TextAlignment.LEFT, pintarBordeDerecho: false, pintarBordeAbajo: false, pintarBordeArriba: false, paddingLeft: 18);
+                        pdfMethodsService.AdicionarValorCelda(item1.RecepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.Nombre, table, TextAlignment.LEFT, pintarBordeIzquierdo: false, pintarBordeDerecho: false, pintarBordeAbajo: false, pintarBordeArriba: false, paddingLeft: 18);
+                        pdfMethodsService.AdicionarValorCelda(item1.RecepcionActivoFijoDetalle.SucursalActual.Nombre, table, TextAlignment.LEFT, pintarBordeIzquierdo: false, pintarBordeDerecho: false, pintarBordeAbajo: false, pintarBordeArriba: false, paddingLeft: 18);
+                        pdfMethodsService.AdicionarValorCelda(item1.RecepcionActivoFijoDetalle.CodigoActivoFijo.Codigosecuencial, table, TextAlignment.LEFT, pintarBordeIzquierdo: false, pintarBordeDerecho: false, pintarBordeAbajo: false, pintarBordeArriba: false, paddingLeft: 18);
+                        pdfMethodsService.AdicionarValorCelda(item1.RecepcionActivoFijoDetalle.ActivoFijo.Modelo.Marca.Nombre, table, TextAlignment.LEFT, pintarBordeIzquierdo: false, pintarBordeDerecho: false, pintarBordeAbajo: false, pintarBordeArriba: false, paddingLeft: 18);
+                        pdfMethodsService.AdicionarValorCelda(item1.RecepcionActivoFijoDetalle.ActivoFijo.Modelo.Nombre, table, TextAlignment.LEFT, pintarBordeIzquierdo: false, pintarBordeDerecho: false, pintarBordeAbajo: false, pintarBordeArriba: false, paddingLeft: 18);
+                        pdfMethodsService.AdicionarValorCelda(item1.RecepcionActivoFijoDetalle?.Serie ?? "-", table, TextAlignment.LEFT, pintarBordeIzquierdo: false, pintarBordeAbajo: false, pintarBordeArriba: false, paddingLeft: 18);
+                    }
+                    pdfMethodsService.AdicionarValorCelda($"SUBTOTAL: {item.Count()}", table, colspan: 7, textAlignment: TextAlignment.RIGHT, pintarBordeAbajo: false, pintarBordeArriba: false, backgroundColor: new DeviceRgb(241, 237, 252), isBold: true);
+                }
+                pdfMethodsService.AdicionarValorCelda($"TOTAL: {igrouping.Count()}", table, colspan: 7, textAlignment: TextAlignment.RIGHT, pintarBordeArriba: false, backgroundColor: new DeviceRgb(241, 237, 252), isBold: true);
+                document.Add(table);
+
+                document.Close();
+                pdfDocument.Close();
+                return memoryStream.ToArray();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new byte[0];
+            }
+        }
+
+        [HttpPost]
+        [Route("PDFTransferenciaCambioUbicacionSucursales")]
+        public async Task<byte[]> ExportarPDFTransferenciaCambioUbicacion([FromBody] int idTransferenciaActivoFijo)
+        {
+            try
+            {
+                return await ExportarPDFTransferenciaCambioCustodio(idTransferenciaActivoFijo);
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new byte[0];
             }
         }
         #endregion

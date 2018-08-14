@@ -85,6 +85,9 @@ namespace bd.swrm.entidades.Negocio
         public int? IdDependencia { get; set; }
         public virtual Dependencia Dependencia { get; set; }
 
+        [Display(Name = "Nombre de usuario:")]
+        public string NombreUsuario { get; set; }
+
         public virtual ICollection<AjusteInventarioArticulos> AjusteInventarioArticulos { get; set; }
         public virtual ICollection<Bodega> Bodega { get; set; }
         public virtual ICollection<TransferenciaActivoFijo> TransferenciasActivoFijoEmpleadoResponsableEnvio { get; set; }
