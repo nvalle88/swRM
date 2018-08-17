@@ -38,5 +38,9 @@ namespace bd.swrm.entidades.Negocio
         [Required(ErrorMessage = "Debe introducir el {0}")]
         [Display(Name = "¿Es Componente?")]
         public bool IsComponente { get; set; }
+
+        [NotMapped]
+        [Display(Name = "Componentes")]
+        public string Componentes { get; set; }
     }
 }

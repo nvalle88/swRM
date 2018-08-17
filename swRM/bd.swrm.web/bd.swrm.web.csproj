@@ -13,6 +13,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\ActivoFijoDocumentos\**" />
+    <Content Remove="wwwroot\ActivoFijoDocumentos\**" />
+    <EmbeddedResource Remove="wwwroot\ActivoFijoDocumentos\**" />
+    <None Remove="wwwroot\ActivoFijoDocumentos\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Properties\PublishProfiles\CustomProfile.pubxml" />
     <None Remove="Properties\PublishProfiles\FolderProfile.pubxml" />
   </ItemGroup>
@@ -40,7 +47,6 @@
     <Folder Include="Controllers\MVC\" />
     <Folder Include="Properties\PublishProfiles\" />
     <Folder Include="Properties\PublishProfiles\" />
-    <Folder Include="wwwroot\ActivoFijoDocumentos\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\SalvarLogEntry\bd.guardarlog.servicios\bd.log.guardar.csproj" />
