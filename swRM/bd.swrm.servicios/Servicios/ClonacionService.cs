@@ -75,6 +75,7 @@ namespace bd.swrm.servicios.Servicios
                     IdEmpleado = empleado.IdEmpleado,
                     IdPersona = empleado.IdPersona,
                     IdDependencia = empleado.IdDependencia,
+                    NombreUsuario = empleado.NombreUsuario,
                     Persona = ClonarPersona(empleado?.Persona),
                     Dependencia = ClonarDependencia(empleado?.Dependencia)
                 } : null;
@@ -243,7 +244,8 @@ namespace bd.swrm.servicios.Servicios
                 {
                     IdPersona = persona.IdPersona,
                     Nombres = persona.Nombres,
-                    Apellidos = persona.Apellidos
+                    Apellidos = persona.Apellidos,
+                    Identificacion = persona.Identificacion
                 } : null;
             }
             catch (Exception)
