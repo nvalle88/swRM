@@ -10,7 +10,7 @@ namespace bd.swrm.servicios.Servicios
 {
     public class ExcelMethodsService : IExcelMethods
     {
-        public ExcelRange Ajustar(ExcelWorksheet ws, string texto, int filaInicial, int columnaInicial, int? filaFinal = null, int? columnaFinal = null, System.Drawing.Font font = null, bool isBold = false, ExcelHorizontalAlignment excelHorizontalAlignment = ExcelHorizontalAlignment.Left, bool isMerge = false, ExcelVerticalAlignment excelVerticalAlignment = ExcelVerticalAlignment.Center, bool isWrapText = false)
+        public ExcelRange Ajustar(ExcelWorksheet ws, string texto, int filaInicial, int columnaInicial, int? filaFinal = null, int? columnaFinal = null, Font font = null, bool isBold = false, ExcelHorizontalAlignment excelHorizontalAlignment = ExcelHorizontalAlignment.Left, bool isMerge = false, ExcelVerticalAlignment excelVerticalAlignment = ExcelVerticalAlignment.Center, bool isWrapText = false, bool isUnderLine = false, bool isItalic = false)
         {
             var excelRange = filaFinal != null && columnaFinal != null ? ws.Cells[filaInicial, columnaInicial, (int)filaFinal, (int)columnaFinal] : ws.Cells[filaInicial, columnaInicial];
 
@@ -29,12 +29,14 @@ namespace bd.swrm.servicios.Servicios
             excelRange.Style.Font.Bold = isBold;
             excelRange.Style.WrapText = isWrapText;
             excelRange.Value = texto;
+            excelRange.Style.Font.UnderLine = isUnderLine;
+            excelRange.Style.Font.Italic = isItalic;
             return excelRange;
         }
 
         public Font ArialFont(float size)
         {
-            return new System.Drawing.Font("Arial", size);
+            return new Font("Arial", size);
         }
     }
 }

@@ -236,6 +236,13 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpGet]
+        [Route("ObtenerBajaActivosFijosConComponentes/{id}")]
+        public async Task<Response> GetBajaActivoFijoConComponentes([FromRoute] int id)
+        {
+            return await ObtenerBajaActivoFijo(id, incluirComponentes: true);
+        }
+
+        [HttpGet]
         [Route("ObtenerTransferenciaActivoFijo/{id}")]
         public async Task<Response> GetTransferenciaActivoFijo([FromRoute] int id)
         {
@@ -406,7 +413,8 @@ namespace bd.swrm.web.Controllers.API
                     lista.Add(new RecepcionActivoFijoDetalleSeleccionado
                     {
                         RecepcionActivoFijoDetalle = ObtenerRecepcionActivoFijoDetalle(item, incluirComponentes: true, incluirActivoFijo: true),
-                        Seleccionado = listaIdsRAFDSeleccionados.Contains(item.IdRecepcionActivoFijoDetalle)
+                        Seleccionado = listaIdsRAFDSeleccionados.Contains(item.IdRecepcionActivoFijoDetalle),
+                        Componentes = await ObtenerComponentesRecepcionActivoFijo(item)
                     });
                 }
                 return lista;
@@ -431,7 +439,8 @@ namespace bd.swrm.web.Controllers.API
                     lista.Add(new RecepcionActivoFijoDetalleSeleccionado
                     {
                         RecepcionActivoFijoDetalle = await ObtenerDetalleActivoFijo(item.IdRecepcionActivoFijoDetalle, incluirComponentes: true, incluirActivoFijo: true, incluirAltasActivoFijo: true),
-                        Seleccionado = listaIdsRAFDSeleccionados.Contains(item.IdRecepcionActivoFijoDetalle)
+                        Seleccionado = listaIdsRAFDSeleccionados.Contains(item.IdRecepcionActivoFijoDetalle),
+                        Componentes = await ObtenerComponentesRecepcionActivoFijo(item)
                     });
                 }
                 return lista;
@@ -683,14 +692,14 @@ namespace bd.swrm.web.Controllers.API
                     var sucursal = await db.Sucursal.FirstOrDefaultAsync(c => c.IdSucursal == claimTransfer.IdSucursal);
 
                     await emailSender.SendEmailAsync(ConstantesCorreo.CorreoEncargadoSeguro, "Nueva recepción de Activos Fijos.",
-                    $@"Se ha guardado una recepción de Activos Fijos en el sistema de Recursos Materiales con los siguientes datos: \n \n
-                            No. de recepción: {recepcionAF.IdRecepcionActivoFijo}, \n \n
-                            Motivo de recepción: {recepcionAF.MotivoAlta.Descripcion}, \n \n
-                            Proveedor: {recepcionAF.Proveedor.RazonSocial}, \n \n
-                            Fondo de financiamiento: {recepcionAF.FondoFinanciamiento.Nombre}, \n \n
-                            Fecha de acta de entrega y recepción: {recepcionAF.FechaRecepcion.ToString("dd-MM-yyyy hh:mm tt")}, \n \n
-                            Orden de compra / Contratos: {recepcionAF.OrdenCompra}, \n \n
-                            Sucursal: {sucursal.Nombre}, \n \n
+                    $@"Se ha guardado una recepción de Activos Fijos en el sistema de Recursos Materiales con los siguientes datos: {System.Environment.NewLine}{System.Environment.NewLine}
+                            No. de recepción: {recepcionAF.IdRecepcionActivoFijo}, {System.Environment.NewLine}{System.Environment.NewLine}
+                            Motivo de recepción: {recepcionAF.MotivoAlta.Descripcion}, {System.Environment.NewLine}{System.Environment.NewLine}
+                            Proveedor: {recepcionAF.Proveedor.RazonSocial}, {System.Environment.NewLine}{System.Environment.NewLine}
+                            Fondo de financiamiento: {recepcionAF.FondoFinanciamiento.Nombre}, {System.Environment.NewLine}{System.Environment.NewLine}
+                            Fecha de acta de entrega y recepción: {recepcionAF.FechaRecepcion.ToString("dd-MM-yyyy hh:mm tt")}, {System.Environment.NewLine}{System.Environment.NewLine}
+                            Orden de compra / Contratos: {recepcionAF.OrdenCompra}, {System.Environment.NewLine}{System.Environment.NewLine}
+                            Sucursal: {sucursal.Nombre}, {System.Environment.NewLine}{System.Environment.NewLine}
                             Compañía de seguro: {recepcionAF.PolizaSeguroActivoFijo.CompaniaSeguro.Nombre}");
                 }
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = listaRecepcionActivoFijoDetalleTransfer };
@@ -1232,12 +1241,14 @@ namespace bd.swrm.web.Controllers.API
                     var igrouping = listaRecepcionActivoFijoDetalleTransfer.GroupBy(c => new { c.ActivoFijo.IdSubClaseActivoFijo, c.ActivoFijo.IdModelo, c.ActivoFijo.Nombre }).ToList();
                     if (igrouping.Count > 0)
                     {
-                        var listaActivosFijosEliminar = await db.ActivoFijo.Include(c => c.RecepcionActivoFijoDetalle)
-                        .Where(c => c.RecepcionActivoFijoDetalle.Count > 0 && c.RecepcionActivoFijoDetalle.FirstOrDefault().IdRecepcionActivoFijo == listaRecepcionActivoFijoDetalleTransfer[0].IdRecepcionActivoFijo)
-                        .Select(c => c.IdActivoFijo)
-                        .Except(listaRecepcionActivoFijoDetalleTransfer.Where(c => c.IdActivoFijo > 0).Select(c => c.IdActivoFijo).Distinct()).ToListAsync();
+                        var listaActivosFijosEliminar = await (db.RecepcionActivoFijoDetalle.Include(c => c.Estado)
+                            .Where(c => c.IdRecepcionActivoFijo == listaRecepcionActivoFijoDetalleTransfer[0].IdRecepcionActivoFijo
+                            && (c.Estado.Nombre == Estados.Recepcionado || c.Estado.Nombre == Estados.ValidacionTecnica))
+                            .Select(c => c.IdRecepcionActivoFijoDetalle)
+                            .Except(listaRecepcionActivoFijoDetalleTransfer.Where(c => c.IdActivoFijo > 0).Select(c => c.IdRecepcionActivoFijoDetalle).Distinct()).ToListAsync());
+
                         foreach (var item in listaActivosFijosEliminar)
-                            await DeleteActivosFijos(item);
+                            await DeleteDetalleActivoFijo(item);
                     }
 
                     foreach (var item in igrouping)
@@ -1696,15 +1707,12 @@ namespace bd.swrm.web.Controllers.API
             try
             {
                 var respuesta = await db.RecepcionActivoFijoDetalle
-                    .Include(c => c.CodigoActivoFijo)
                     .FirstOrDefaultAsync(m => m.IdRecepcionActivoFijoDetalle == id);
 
                 if (respuesta == null)
                     return new Response { IsSuccess = false, Message = Mensaje.RegistroNoEncontrado };
-
-                db.CodigoActivoFijo.Remove(respuesta.CodigoActivoFijo);
+                
                 db.ComponenteActivoFijo.RemoveRange(db.ComponenteActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalleComponente == id || c.IdRecepcionActivoFijoDetalleOrigen == id));
-
                 EliminarSeccionAlta(id);
                 EliminarBajaPorIdRecepcionActivoFijoDetalle(id);
                 EliminarRecepcionActivoFijoDetalleEdificioPorIdRecepcionActivoFijoDetalle(id);
@@ -1718,6 +1726,7 @@ namespace bd.swrm.web.Controllers.API
                     EliminarRecepcionActivoFijo(respuesta.IdRecepcionActivoFijo);
                 }
                 EliminarRecepcionActivoFijoDetalle(id);
+                EliminarCodigoActivoFijo(respuesta.IdCodigoActivoFijo);
                 await db.SaveChangesAsync();
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
@@ -2177,7 +2186,8 @@ namespace bd.swrm.web.Controllers.API
                         db.BajaActivoFijoDetalle.Add(new BajaActivoFijoDetalle
                         {
                             IdBajaActivoFijo = bajaActivoFijoDetalle.IdBajaActivoFijo,
-                            IdRecepcionActivoFijoDetalle = comp.IdRecepcionActivoFijoDetalleComponente
+                            IdRecepcionActivoFijoDetalle = comp.IdRecepcionActivoFijoDetalleComponente,
+                            IsComponente = true
                         });
                         await db.SaveChangesAsync();
                     }
@@ -2277,7 +2287,7 @@ namespace bd.swrm.web.Controllers.API
                 return null;
             }
         }
-        private async Task<Response> ObtenerAltaActivoFijo(int id, Expression<Func<AltaActivoFijo, bool>> predicado = null, bool? incluirComponentes = false)
+        private async Task<Response> ObtenerAltaActivoFijo(int id, Expression<Func<AltaActivoFijo, bool>> predicado = null, bool incluirComponentes = false)
         {
             try
             {
@@ -2298,7 +2308,8 @@ namespace bd.swrm.web.Controllers.API
                             RecepcionActivoFijoDetalle = recepcionActivoFijoDetalle,
                             IdUbicacionActivoFijo = item.IdUbicacionActivoFijo,
                             TipoUtilizacionAlta = clonacionService.ClonarTipoUtilizacionAlta(await db.TipoUtilizacionAlta.FirstOrDefaultAsync(c => c.IdTipoUtilizacionAlta == item.IdTipoUtilizacionAlta)),
-                            UbicacionActivoFijo = clonacionService.ClonarUbicacionActivoFijo(await db.UbicacionActivoFijo.Include(c => c.Bodega).ThenInclude(c=> c.Sucursal).Include(c => c.Empleado).ThenInclude(c => c.Persona).Include(c=> c.Empleado).ThenInclude(c=> c.Dependencia).ThenInclude(c=> c.Sucursal).FirstOrDefaultAsync(c => c.IdUbicacionActivoFijo == item.IdUbicacionActivoFijo && c.Confirmacion))
+                            UbicacionActivoFijo = clonacionService.ClonarUbicacionActivoFijo(await db.UbicacionActivoFijo.Include(c => c.Bodega).ThenInclude(c=> c.Sucursal).Include(c => c.Empleado).ThenInclude(c => c.Persona).Include(c=> c.Empleado).ThenInclude(c=> c.Dependencia).ThenInclude(c=> c.Sucursal).FirstOrDefaultAsync(c => c.IdUbicacionActivoFijo == item.IdUbicacionActivoFijo && c.Confirmacion)),
+                            Componentes = await ObtenerComponentesRecepcionActivoFijo(recepcionActivoFijoDetalle)
                         });
                         if (recepcionActivoFijoDetalle.Estado.Nombre.ToUpper() == Estados.Alta)
                             altaActivoFijo.IsReversarAlta = true;
@@ -2315,13 +2326,13 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
-        private async Task<Response> ObtenerBajaActivoFijo(int id, Expression<Func<BajaActivoFijo, bool>> predicado = null)
+        private async Task<Response> ObtenerBajaActivoFijo(int id, Expression<Func<BajaActivoFijo, bool>> predicado = null, bool incluirComponentes = false)
         {
             try
             {
                 var bajaActivoFijoBD = db.BajaActivoFijo.Include(c => c.MotivoBaja);
                 var bajaActivoFijo = clonacionService.ClonarBajaActivoFijo(predicado != null ? await bajaActivoFijoBD.Where(predicado).FirstOrDefaultAsync(c => c.IdBajaActivoFijo == id) : await bajaActivoFijoBD.FirstOrDefaultAsync(c => c.IdBajaActivoFijo == id));
-                var listadoIdsRecepcionActivoFijoDetalleBajaActivoFijo = await db.BajaActivoFijoDetalle.Include(c => c.RecepcionActivoFijoDetalle).ThenInclude(c => c.Estado).Where(c => c.IdBajaActivoFijo == bajaActivoFijo.IdBajaActivoFijo && c.RecepcionActivoFijoDetalle.Estado.Nombre.ToUpper() == Estados.Baja).ToListAsync();
+                var listadoIdsRecepcionActivoFijoDetalleBajaActivoFijo = await db.BajaActivoFijoDetalle.Include(c => c.RecepcionActivoFijoDetalle).ThenInclude(c => c.Estado).Where(c => c.IdBajaActivoFijo == bajaActivoFijo.IdBajaActivoFijo && c.RecepcionActivoFijoDetalle.Estado.Nombre.ToUpper() == Estados.Baja && c.IsComponente == incluirComponentes).ToListAsync();
                 bajaActivoFijo.BajaActivoFijoDetalle = new List<BajaActivoFijoDetalle>();
                 foreach (var item in listadoIdsRecepcionActivoFijoDetalleBajaActivoFijo)
                 {
@@ -2332,7 +2343,8 @@ namespace bd.swrm.web.Controllers.API
                         {
                             IdRecepcionActivoFijoDetalle = item.IdRecepcionActivoFijoDetalle,
                             IdBajaActivoFijo = bajaActivoFijo.IdBajaActivoFijo,
-                            RecepcionActivoFijoDetalle = recepcionActivoFijoDetalle
+                            RecepcionActivoFijoDetalle = recepcionActivoFijoDetalle,
+                            Componentes = await ObtenerComponentesRecepcionActivoFijo(recepcionActivoFijoDetalle)
                         });
                     }
 
@@ -2574,6 +2586,11 @@ namespace bd.swrm.web.Controllers.API
         {
             EliminarListadoDocumentoActivoFijo(db.DocumentoActivoFijo.Where(c => c.IdActivoFijo == idActivoFijo));
             db.ActivoFijo.Remove(db.ActivoFijo.FirstOrDefault(c=> c.IdActivoFijo == idActivoFijo));
+            db.SaveChanges();
+        }
+        private void EliminarCodigoActivoFijo(int idCodigoActivoFijo)
+        {
+            db.CodigoActivoFijo.Remove(db.CodigoActivoFijo.FirstOrDefault(c => c.IdCodigoActivoFijo == idCodigoActivoFijo));
             db.SaveChanges();
         }
         private void EliminarBajaPorIdRecepcionActivoFijoDetalle(int idRecepcionActivoFijoDetalle)
@@ -2830,210 +2847,391 @@ namespace bd.swrm.web.Controllers.API
                 var fontArial16 = excelMethodsService.ArialFont(16);
                 var fontArial20 = excelMethodsService.ArialFont(20);
 
+                var controlBienes = "CONTROL DE BIENES";
+                var usuarioFinal = "USUARIO FINAL";
+
                 using (ExcelPackage objExcelPackage = new ExcelPackage())
                 {
-                    ExcelWorksheet objWorksheet = objExcelPackage.Workbook.Worksheets.Add("FORMATO");
-                    Func<ExcelWorksheet, int, int, int> accion = (ws, fila, columna) =>
+                    double cantWorkSheet = (movilizacionActivoFijo.MovilizacionActivoFijoDetalle.Count / 6);
+                    cantWorkSheet = movilizacionActivoFijo.MovilizacionActivoFijoDetalle.Count % 6 == 0 ? cantWorkSheet : cantWorkSheet + 1;
+
+                    int posMovilizacionTabla = 0;
+                    int posMovilizacionTablaAnterior = 0;
+                    for (int i = 0; i < cantWorkSheet; i++)
                     {
-                        var filaOriginal = fila;
-                        var columnaOriginal = columna;
-
-                        fila += 2;
-                        columna += 2;
-                        
-                        var excelRange = excelMethodsService.Ajustar(ws, "CONTROL DE BIENES", fila, columna, fila, columna + 11, font: fontArial20, isBold: true, excelHorizontalAlignment: OfficeOpenXml.Style.ExcelHorizontalAlignment.Center, isMerge: true);
-                        fila++;
-
-                        excelRange = excelMethodsService.Ajustar(ws, "AUTORIZACIÓN PARA TRASLADAR BIENES FUERA DE LA INSTITUCIÓN", fila, columna, fila, columna + 11, font: fontArial16, isBold: true, excelHorizontalAlignment: OfficeOpenXml.Style.ExcelHorizontalAlignment.Center, isMerge: true);
-                        fila++;
-
-                        ws.Cells[fila, columna].Worksheet.Row(fila).Height = 14.25D;
-                        fila++;
-
-                        excelRange = excelMethodsService.Ajustar(ws, "AUTORIZADO A:", fila, columna, font: fontArial14, isBold: true);
-                        ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
-                        fila++;
-
-                        ws.Cells[fila, columna].Worksheet.Row(fila).Height = 8.25D;
-                        fila++;
-
-                        excelRange = excelMethodsService.Ajustar(ws, "CÉDULA DE CIUDADANÍA:", fila, columna, font: fontArial14, isBold: true);
-                        excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                        excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
-                        ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
-
-                        excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo?.EmpleadoResponsable?.Persona?.Identificacion ?? String.Empty, fila, columna + 2, fila, columna + 4, font: fontArial14, isMerge: true);
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-
-                        excelRange = excelMethodsService.Ajustar(ws, "FECHA:", fila, columna + 6, font: fontArial14, isBold: true);
-                        excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                        excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
-
-                        excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo.FechaSalida.ToString("dd/MM/yyyy"), fila, columna + 8, fila, columna + 10, font: fontArial14, isMerge: true);
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-                        fila++;
-
-                        ws.Cells[fila, columna].Worksheet.Row(fila).Height = 8.25D;
-                        fila++;
-
-                        excelRange = excelMethodsService.Ajustar(ws, "NOMBRE:", fila, columna, font: fontArial14, isBold: true);
-                        excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                        excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
-                        ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
-
-                        string usuarioEmpleadoResponsable = movilizacionActivoFijo?.EmpleadoResponsable?.NombreUsuario ?? String.Empty;
-                        if (!String.IsNullOrEmpty(usuarioEmpleadoResponsable))
-                            usuarioEmpleadoResponsable = $" ({usuarioEmpleadoResponsable})";
-
-                        excelRange = excelMethodsService.Ajustar(ws, $"{movilizacionActivoFijo.EmpleadoResponsable.Persona.Nombres} {movilizacionActivoFijo.EmpleadoResponsable.Persona.Apellidos}{usuarioEmpleadoResponsable}", fila, columna + 2, fila, columna + 4, font: fontArial12, isMerge: true);
-                        excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(191, 191, 191));
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-
-                        excelRange = excelMethodsService.Ajustar(ws, "SUCURSAL:", fila, columna + 6, font: fontArial14, isBold: true);
-                        excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                        excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
-
-                        excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo?.EmpleadoResponsable?.Dependencia?.Sucursal?.Nombre ?? String.Empty, fila, columna + 8, fila, columna + 10, font: fontArial12, isMerge: true);
-                        excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(191, 191, 191));
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-                        fila++;
-
-                        ws.Cells[fila, columna].Worksheet.Row(fila).Height = 8.25D;
-                        fila++;
-
-                        excelRange = excelMethodsService.Ajustar(ws, "ÁREA REQUIRIENTE:", fila, columna, font: fontArial14, isBold: true);
-                        excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                        excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
-                        ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
-
-                        excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo?.EmpleadoResponsable?.Dependencia?.Nombre ?? String.Empty, fila, columna + 2, fila, columna + 4, font: fontArial12, isMerge: true);
-                        excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(191, 191, 191));
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-
-                        excelRange = excelMethodsService.Ajustar(ws, "JEFE INMEDIATO:", fila, columna + 6, font: fontArial14, isBold: true);
-                        excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                        excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
-
-                        string usuarioEmpleadoSolicita = movilizacionActivoFijo?.EmpleadoSolicita?.NombreUsuario ?? String.Empty;
-                        if (!String.IsNullOrEmpty(usuarioEmpleadoSolicita))
-                            usuarioEmpleadoSolicita = $" ({usuarioEmpleadoSolicita})";
-
-                        excelRange = excelMethodsService.Ajustar(ws, $"{movilizacionActivoFijo.EmpleadoSolicita.Persona.Nombres} {movilizacionActivoFijo.EmpleadoSolicita.Persona.Apellidos}{usuarioEmpleadoSolicita}", fila, columna + 8, fila, columna + 10, font: fontArial12, isMerge: true);
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-                        fila++;
-
-                        ws.Cells[fila, columna].Worksheet.Row(fila).Height = 8.25D;
-                        fila++;
-
-                        excelRange = excelMethodsService.Ajustar(ws, "MOTIVO DEL TRASLADO:", fila, columna, font: fontArial14, isBold: true);
-                        excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                        excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
-                        ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
-
-                        excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo.MotivoTraslado.Descripcion, fila, columna + 2, fila, columna + 11, font: fontArial14, isMerge: true);
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-                        fila++;
-
-                        ws.Cells[fila, columna].Worksheet.Row(fila).Height = 8.25D;
-                        fila++;
-
-                        excelRange = excelMethodsService.Ajustar(ws, "AUTORIZACIÓN:", fila, columna, font: fontArial14, isBold: true);
-                        excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                        excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
-                        ws.Cells[fila, columna].Worksheet.Row(fila).Height = 37.50D;
-
-                        excelRange = excelMethodsService.Ajustar(ws, "Se autoriza la salida y movilización de los bienes de larga duración de propiedad del Banco del Desarrollo del Ecuador B.P., detallados a continuación, para uso exclusivo de actividades oficiales e institucionales:", fila, columna + 2, fila, columna + 11, font: fontArial14, isMerge: true, isWrapText: true);
-                        fila++;
-
-                        ws.Cells[fila, columna].Worksheet.Row(fila).Height = 8.25D;
-                        fila++;
-
-                        excelRange = excelMethodsService.Ajustar(ws, "CÓDIGO INSTITUCIONAL", fila, columna, fila, columna + 1, font: fontArial14, isBold: true, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-
-                        excelRange = excelMethodsService.Ajustar(ws, "DESCRIPCIÓN", fila, columna + 2, fila, columna + 5, font: fontArial14, isBold: true, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-
-                        excelRange = excelMethodsService.Ajustar(ws, "MARCA", fila, columna + 6, font: fontArial14, isBold: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-
-                        excelRange = excelRange = excelMethodsService.Ajustar(ws, "MODELO", fila, columna + 7, fila, columna + 8, font: fontArial14, isBold: true, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-
-                        excelRange = excelMethodsService.Ajustar(ws, "No. SERIE", fila, columna + 9, font: fontArial14, isBold: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-
-                        excelRange = excelMethodsService.Ajustar(ws, "ACCESORIOS", fila, columna + 10, font: fontArial14, isBold: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-
-                        excelRange = excelMethodsService.Ajustar(ws, "OBSERVACIONES", fila, columna + 11, font: fontArial14, isBold: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-
-                        excelRange = ws.Cells[fila, columna, fila, columna + 11];
-                        excelRange.Worksheet.Row(fila).Height = 35.25D;
-                        excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(191, 191, 191));
-                        excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
-
-                        foreach (var item in movilizacionActivoFijo.MovilizacionActivoFijoDetalle)
+                        ExcelWorksheet objWorksheet = objExcelPackage.Workbook.Worksheets.Add($"HOJA{i+1}");
+                        Func<ExcelWorksheet, int, int, string, int> accion = (ws, fila, columna, footer) =>
                         {
+                            var filaOriginal = fila;
+                            var columnaOriginal = columna;
 
-                        }
+                            fila = footer == usuarioFinal ? fila + 1 : fila + 2;
+                            columna += 2;
 
-                        ws.Cells[filaOriginal, columnaOriginal].Worksheet.Row(filaOriginal).Height = 19.50D;
-                        ws.Cells[filaOriginal, columnaOriginal + 1].Worksheet.Row(filaOriginal + 1).Height = 9.75D;
+                            var excelRange = excelMethodsService.Ajustar(ws, controlBienes, fila, columna, fila, columna + 11, font: fontArial20, isBold: true, excelHorizontalAlignment: OfficeOpenXml.Style.ExcelHorizontalAlignment.Center, isMerge: true);
+                            fila++;
 
-                        ws.Cells[filaOriginal, columnaOriginal].Worksheet.Column(columnaOriginal).Width = 2.70D;
-                        ws.Cells[filaOriginal, columnaOriginal + 1].Worksheet.Column(columnaOriginal + 1).Width = 2.70D;
-                        ws.Cells[filaOriginal, columnaOriginal + 2].Worksheet.Column(columnaOriginal + 2).Width = 39.84D;
-                        ws.Cells[filaOriginal, columnaOriginal + 3].Worksheet.Column(columnaOriginal + 3).Width = 1.45D;
-                        ws.Cells[filaOriginal, columnaOriginal + 4].Worksheet.Column(columnaOriginal + 4).Width = 25.70D;
-                        ws.Cells[filaOriginal, columnaOriginal + 5].Worksheet.Column(columnaOriginal + 5).Width = 9.84D;
-                        ws.Cells[filaOriginal, columnaOriginal + 6].Worksheet.Column(columnaOriginal + 6).Width = 22.84D;
-                        ws.Cells[filaOriginal, columnaOriginal + 7].Worksheet.Column(columnaOriginal + 7).Width = 4.70D;
-                        ws.Cells[filaOriginal, columnaOriginal + 8].Worksheet.Column(columnaOriginal + 8).Width = 25.27D;
-                        ws.Cells[filaOriginal, columnaOriginal + 9].Worksheet.Column(columnaOriginal + 9).Width = 1.53D;
-                        ws.Cells[filaOriginal, columnaOriginal + 10].Worksheet.Column(columnaOriginal + 10).Width = 18.70D;
-                        ws.Cells[filaOriginal, columnaOriginal + 11].Worksheet.Column(columnaOriginal + 11).Width = 22.84D;
-                        ws.Cells[filaOriginal, columnaOriginal + 12].Worksheet.Column(columnaOriginal + 12).Width = 27.99D;
-                        ws.Cells[filaOriginal, columnaOriginal + 13].Worksheet.Column(columnaOriginal + 13).Width = 24.70D;
-                        ws.Cells[filaOriginal, columnaOriginal + 14].Worksheet.Column(columnaOriginal + 14).Width = 2.84D;
-                        ws.Cells[filaOriginal, columnaOriginal + 15].Worksheet.Column(columnaOriginal + 15).Width = 3.27D;
-                        ws.Cells[filaOriginal, columnaOriginal + 16].Worksheet.Column(columnaOriginal + 16).Width = 3.27D;
-                        ws.Cells[filaOriginal, columnaOriginal + 17].Worksheet.Column(columnaOriginal + 17).Width = 3.27D;
+                            excelRange = excelMethodsService.Ajustar(ws, "AUTORIZACIÓN PARA TRASLADAR BIENES FUERA DE LA INSTITUCIÓN", fila, columna, fila, columna + 11, font: fontArial16, isBold: true, excelHorizontalAlignment: OfficeOpenXml.Style.ExcelHorizontalAlignment.Center, isMerge: true);
+                            fila++;
 
-                        var finfo = new System.IO.FileInfo(System.IO.Path.Combine(_hostingEnvironment.WebRootPath, "images\\logoExcelBDE.png"));
-                        var picture = ws.Drawings.AddPicture($"Imagen_{filaOriginal}", finfo);
-                        picture.SetSize(250, 95);
-                        picture.SetPosition(filaOriginal, 0, columnaOriginal + 12, -60);
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 14.25D;
+                            fila++;
 
-                        return fila;
-                    };
-                    var row = accion(objWorksheet, 1, 1);
-                    accion(objWorksheet, 43, 1);
+                            excelRange = excelMethodsService.Ajustar(ws, "AUTORIZADO A:", fila, columna, font: fontArial14, isBold: true);
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
+                            fila++;
 
-                    objWorksheet.PrinterSettings.PaperSize = ePaperSize.A4;
-                    objWorksheet.PrinterSettings.BottomMargin = 0;
-                    objWorksheet.PrinterSettings.FooterMargin = 0;
-                    objWorksheet.PrinterSettings.HeaderMargin = 0;
-                    objWorksheet.PrinterSettings.LeftMargin = .30M;
-                    objWorksheet.PrinterSettings.RightMargin = 0;
-                    objWorksheet.PrinterSettings.TopMargin = 0;
-                    objWorksheet.PrinterSettings.Scale = 41;
-                    objWorksheet.View.ZoomScale = 70;
-                    objWorksheet.PrinterSettings.HorizontalCentered = true;
-                    objWorksheet.PrinterSettings.VerticalCentered = true;
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 8.25D;
+                            fila++;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "CÉDULA DE CIUDADANÍA:", fila, columna, font: fontArial14, isBold: true);
+                            excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
+
+                            excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo?.EmpleadoResponsable?.Persona?.Identificacion ?? String.Empty, fila, columna + 2, fila, columna + 4, font: fontArial14, isMerge: true);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, "FECHA:", fila, columna + 6, font: fontArial14, isBold: true);
+                            excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+
+                            excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo.FechaSalida.ToString("dd/MM/yyyy"), fila, columna + 8, fila, columna + 10, font: fontArial14, isMerge: true);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                            fila++;
+
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 8.25D;
+                            fila++;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "NOMBRE:", fila, columna, font: fontArial14, isBold: true);
+                            excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
+
+                            string usuarioEmpleadoResponsable = movilizacionActivoFijo?.EmpleadoResponsable?.NombreUsuario ?? String.Empty;
+                            if (!String.IsNullOrEmpty(usuarioEmpleadoResponsable))
+                                usuarioEmpleadoResponsable = $" ({usuarioEmpleadoResponsable})";
+
+                            excelRange = excelMethodsService.Ajustar(ws, $"{movilizacionActivoFijo.EmpleadoResponsable.Persona.Nombres} {movilizacionActivoFijo.EmpleadoResponsable.Persona.Apellidos}{usuarioEmpleadoResponsable}", fila, columna + 2, fila, columna + 4, font: fontArial12, isMerge: true);
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(191, 191, 191));
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, "SUCURSAL:", fila, columna + 6, font: fontArial14, isBold: true);
+                            excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+
+                            excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo?.EmpleadoResponsable?.Dependencia?.Sucursal?.Nombre ?? String.Empty, fila, columna + 8, fila, columna + 10, font: fontArial12, isMerge: true);
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(191, 191, 191));
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                            fila++;
+
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 8.25D;
+                            fila++;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "ÁREA REQUIRIENTE:", fila, columna, font: fontArial14, isBold: true);
+                            excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
+
+                            excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo?.EmpleadoResponsable?.Dependencia?.Nombre ?? String.Empty, fila, columna + 2, fila, columna + 4, font: fontArial12, isMerge: true);
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(191, 191, 191));
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, "JEFE INMEDIATO:", fila, columna + 6, font: fontArial14, isBold: true);
+                            excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+
+                            string usuarioEmpleadoSolicita = movilizacionActivoFijo?.EmpleadoSolicita?.NombreUsuario ?? String.Empty;
+                            if (!String.IsNullOrEmpty(usuarioEmpleadoSolicita))
+                                usuarioEmpleadoSolicita = $" ({usuarioEmpleadoSolicita})";
+
+                            excelRange = excelMethodsService.Ajustar(ws, $"{movilizacionActivoFijo.EmpleadoSolicita.Persona.Nombres} {movilizacionActivoFijo.EmpleadoSolicita.Persona.Apellidos}{usuarioEmpleadoSolicita}", fila, columna + 8, fila, columna + 10, font: fontArial12, isMerge: true);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                            fila++;
+
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 8.25D;
+                            fila++;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "MOTIVO DEL TRASLADO:", fila, columna, font: fontArial14, isBold: true);
+                            excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
+
+                            excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo.MotivoTraslado.Descripcion, fila, columna + 2, fila, columna + 11, font: fontArial14, isMerge: true);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                            fila++;
+
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 8.25D;
+                            fila++;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "AUTORIZACIÓN:", fila, columna, font: fontArial14, isBold: true);
+                            excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 37.50D;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "Se autoriza la salida y movilización de los bienes de larga duración de propiedad del Banco del Desarrollo del Ecuador B.P., detallados a continuación, para uso exclusivo de actividades oficiales e institucionales:", fila, columna + 2, fila, columna + 11, font: fontArial14, isMerge: true, isWrapText: true);
+                            fila++;
+
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 8.25D;
+                            fila++;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "CÓDIGO INSTITUCIONAL", fila, columna, fila, columna + 1, font: fontArial14, isBold: true, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, "DESCRIPCIÓN", fila, columna + 2, fila, columna + 5, font: fontArial14, isBold: true, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, "MARCA", fila, columna + 6, font: fontArial14, isBold: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelRange = excelMethodsService.Ajustar(ws, "MODELO", fila, columna + 7, fila, columna + 8, font: fontArial14, isBold: true, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, "No. SERIE", fila, columna + 9, font: fontArial14, isBold: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, "ACCESORIOS", fila, columna + 10, font: fontArial14, isBold: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, "OBSERVACIONES", fila, columna + 11, font: fontArial14, isBold: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = ws.Cells[fila, columna, fila, columna + 11];
+                            excelRange.Worksheet.Row(fila).Height = 35.25D;
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(191, 191, 191));
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                            fila++;
+
+                            var posMovilizacionTablaAux = posMovilizacionTabla;
+                            var filaAux = fila;
+                            for (int j = posMovilizacionTablaAux; j < (posMovilizacionTablaAux + 6); j++)
+                            {
+                                var movilizacionActivoFijoDetalle = movilizacionActivoFijo.MovilizacionActivoFijoDetalle.ElementAtOrDefault(j);
+                                excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijoDetalle?.RecepcionActivoFijoDetalle?.CodigoActivoFijo?.Codigosecuencial ?? String.Empty, fila, columna, fila, columna + 1, font: fontArial14, isMerge: true, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                                excelRange.Worksheet.Row(fila).Height = 30.75D;
+
+                                excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijoDetalle?.RecepcionActivoFijoDetalle?.ActivoFijo?.Nombre ?? String.Empty, fila, columna + 2, fila, columna + 5, font: fontArial14, isMerge: true, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                                excelRange.Worksheet.Row(fila).Height = 30.75D;
+
+                                excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijoDetalle?.RecepcionActivoFijoDetalle?.ActivoFijo?.Modelo?.Marca?.Nombre ?? String.Empty, fila, columna + 6, font: fontArial14, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                                excelRange.Worksheet.Row(fila).Height = 30.75D;
+
+                                excelRange = excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijoDetalle?.RecepcionActivoFijoDetalle?.ActivoFijo?.Modelo?.Nombre ?? String.Empty, fila, columna + 7, fila, columna + 8, font: fontArial14, isMerge: true, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                                excelRange.Worksheet.Row(fila).Height = 30.75D;
+
+                                excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijoDetalle?.RecepcionActivoFijoDetalle?.Serie ?? String.Empty, fila, columna + 9, font: fontArial14, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                                excelRange.Worksheet.Row(fila).Height = 30.75D;
+
+                                excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijoDetalle != null ? ObtenerComponentesRecepcionActivoFijo(movilizacionActivoFijoDetalle?.RecepcionActivoFijoDetalle).Result : String.Empty, fila, columna + 10, font: fontArial14, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                                excelRange.Worksheet.Row(fila).Height = 30.75D;
+
+                                excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijoDetalle?.Observaciones ?? String.Empty, fila, columna + 11, font: fontArial14, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                                excelRange.Worksheet.Row(fila).Height = 30.75D;
+
+                                posMovilizacionTabla++;
+                                fila++;
+                            }
+
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 19.50D;
+                            fila++;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "FECHA DE SALIDA:", fila, columna, font: fontArial14, isBold: true);
+                            excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
+
+                            excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo?.FechaSalida.ToString("dd/MM/yyyy") ?? String.Empty, fila, columna + 2, font: fontArial14, isMerge: true);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                            fila++;
+
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 8.25D;
+                            fila++;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "FECHA DE RETORNO:", fila, columna, font: fontArial14, isBold: true);
+                            excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
+
+                            excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo?.FechaRetorno.ToString("dd/MM/yyyy") ?? String.Empty, fila, columna + 2, font: fontArial14, isMerge: true);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                            fila++;
+
+                            ws.Cells[fila, columna].Worksheet.Row(fila).Height = 29.25D;
+                            fila++;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "SOLICITADO POR:", fila, columna + 2, font: fontArial14, isBold: true);
+                            excelRange = excelMethodsService.Ajustar(ws, "RETIRADO POR:", fila, columna + 6, font: fontArial14, isBold: true);
+                            excelRange = excelMethodsService.Ajustar(ws, "AUTORIZADO POR:", fila, columna + 10, font: fontArial14, isBold: true);
+                            excelRange.Worksheet.Row(fila).Height = 19.50D;
+                            fila += 3;
+
+                            excelRange = excelMethodsService.Ajustar(ws, $"{movilizacionActivoFijo.EmpleadoSolicita.Persona.Nombres} {movilizacionActivoFijo.EmpleadoSolicita.Persona.Apellidos}{usuarioEmpleadoSolicita}", fila, columna, fila, columna + 3, font: fontArial14, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange.Worksheet.Row(fila).Height = 19.50D;
+
+                            excelRange = excelMethodsService.Ajustar(ws, $"{movilizacionActivoFijo.EmpleadoResponsable.Persona.Nombres} {movilizacionActivoFijo.EmpleadoResponsable.Persona.Apellidos}{usuarioEmpleadoResponsable}", fila, columna + 4, fila, columna + 8, font: fontArial14, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+
+                            string usuarioEmpleadoAutoriza = movilizacionActivoFijo?.EmpleadoAutorizado?.NombreUsuario ?? String.Empty;
+                            if (!String.IsNullOrEmpty(usuarioEmpleadoAutoriza))
+                                usuarioEmpleadoAutoriza = $" ({usuarioEmpleadoAutoriza})";
+                            excelRange = excelMethodsService.Ajustar(ws, $"{movilizacionActivoFijo.EmpleadoAutorizado.Persona.Nombres} {movilizacionActivoFijo.EmpleadoAutorizado.Persona.Apellidos}{usuarioEmpleadoAutoriza}", fila, columna + 9, fila, columna + 11, font: fontArial14, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            ws.Cells[fila, columna + 10].Style.Border.Bottom.Style = ExcelBorderStyle.Dashed;
+                            fila++;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "JEFE INMEDIATO", fila, columna, fila, columna + 3, font: fontArial14, isBold: true, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange.Worksheet.Row(fila).Height = 19.50D;
+                            excelRange = excelMethodsService.Ajustar(ws, "CUSTODIO RESPONSABLE", fila, columna + 4, fila, columna + 8, font: fontArial14, isBold: true, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange = excelMethodsService.Ajustar(ws, controlBienes, fila, columna + 9, fila, columna + 11, font: fontArial14, isBold: true, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            fila++;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "DIRECCIÓN DE BIENES Y SERVICIO", fila, columna, fila, columna + 3, font: fontArial14, isBold: true, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange = excelMethodsService.Ajustar(ws, "DIRECCIÓN DE BIENES Y SERVICIO", fila, columna + 4, fila, columna + 8, font: fontArial14, isBold: true, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange = excelMethodsService.Ajustar(ws, "DIRECCIÓN DE BIENES Y SERVICIO", fila, columna + 9, fila, columna + 11, font: fontArial14, isBold: true, isMerge: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange.Worksheet.Row(fila).Height = 19.50D;
+                            fila += 3;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "APLICACIÓN DE NORMATIVA:", fila, columna, font: fontArial14, isBold: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange = excelMethodsService.Ajustar(ws, "- Reglamento General para la administración, utilización y control de los bienes y existencias del sector público.", fila, columna + 2, fila, columna + 11, font: fontArial12, isBold: true, isMerge: true);
+                            fila++;
+                            excelRange = excelMethodsService.Ajustar(ws, "- Normas Técnicas de Control Interno.", fila, columna + 2, fila, columna + 10, font: fontArial12, isBold: true, isMerge: true);
+
+                            excelRange = excelMethodsService.Ajustar(ws, footer, fila, columna + 11, font: fontArial12, isBold: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
+                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 0, 0));
+                            excelRange.Worksheet.Row(fila).Height = 20.25D;
+                            fila++;
+
+                            ws.Cells[filaOriginal, columnaOriginal].Worksheet.Row(filaOriginal).Height = footer == controlBienes ? 19.50D : 9.75D;
+
+                            if (footer == controlBienes)
+                                ws.Cells[filaOriginal, columnaOriginal + 1].Worksheet.Row(filaOriginal + 1).Height = 9.75D;
+
+                            ws.Cells[filaOriginal, columnaOriginal].Worksheet.Column(columnaOriginal).Width = 2.70D;
+                            ws.Cells[filaOriginal, columnaOriginal + 1].Worksheet.Column(columnaOriginal + 1).Width = 2.70D;
+                            ws.Cells[filaOriginal, columnaOriginal + 2].Worksheet.Column(columnaOriginal + 2).Width = 39.84D;
+                            ws.Cells[filaOriginal, columnaOriginal + 3].Worksheet.Column(columnaOriginal + 3).Width = 1.45D;
+                            ws.Cells[filaOriginal, columnaOriginal + 4].Worksheet.Column(columnaOriginal + 4).Width = 25.70D;
+                            ws.Cells[filaOriginal, columnaOriginal + 5].Worksheet.Column(columnaOriginal + 5).Width = 9.84D;
+                            ws.Cells[filaOriginal, columnaOriginal + 6].Worksheet.Column(columnaOriginal + 6).Width = 22.84D;
+                            ws.Cells[filaOriginal, columnaOriginal + 7].Worksheet.Column(columnaOriginal + 7).Width = 4.70D;
+                            ws.Cells[filaOriginal, columnaOriginal + 8].Worksheet.Column(columnaOriginal + 8).Width = 25.27D;
+                            ws.Cells[filaOriginal, columnaOriginal + 9].Worksheet.Column(columnaOriginal + 9).Width = 1.53D;
+                            ws.Cells[filaOriginal, columnaOriginal + 10].Worksheet.Column(columnaOriginal + 10).Width = 18.70D;
+                            ws.Cells[filaOriginal, columnaOriginal + 11].Worksheet.Column(columnaOriginal + 11).Width = 22.84D;
+                            ws.Cells[filaOriginal, columnaOriginal + 12].Worksheet.Column(columnaOriginal + 12).Width = 27.99D;
+                            ws.Cells[filaOriginal, columnaOriginal + 13].Worksheet.Column(columnaOriginal + 13).Width = 24.70D;
+                            ws.Cells[filaOriginal, columnaOriginal + 14].Worksheet.Column(columnaOriginal + 14).Width = 2.84D;
+                            ws.Cells[filaOriginal, columnaOriginal + 15].Worksheet.Column(columnaOriginal + 15).Width = 3.27D;
+                            ws.Cells[filaOriginal, columnaOriginal + 16].Worksheet.Column(columnaOriginal + 16).Width = 3.27D;
+                            ws.Cells[filaOriginal, columnaOriginal + 17].Worksheet.Column(columnaOriginal + 17).Width = 3.27D;
+
+                            var finfo = new System.IO.FileInfo(System.IO.Path.Combine(_hostingEnvironment.WebRootPath, "images\\logoExcelBDE.png"));
+                            var picture = ws.Drawings.AddPicture($"Imagen_{filaOriginal}", finfo);
+                            picture.SetSize(250, 95);
+                            picture.SetPosition(footer == usuarioFinal ? filaOriginal - 1 : filaOriginal, 0, columnaOriginal + 12, -60);
+
+                            ws.Cells[footer == usuarioFinal ? filaOriginal : filaOriginal + 1, columnaOriginal + 1, fila, 15].Style.Border.BorderAround(ExcelBorderStyle.Medium);
+                            return fila;
+                        };
+
+                        Action<ExcelWorksheet, int, int> accionDetalles = (ws, fila, columna) =>
+                        {
+                            var filaOriginal = fila;
+                            var columnaOriginal = columna;
+
+                            var excelRange = excelMethodsService.Ajustar(ws, "APLICACIÓN DE NORMATIVA LEGAL VIGENTE.", fila, columna, fila + 1, columna + 9, font: fontArial16, isBold: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, isMerge: true);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Medium);
+                            fila += 2;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "Reglamento General para la administración, utilización y control de los bienes y existencias del sector publico.", fila, columna, fila + 1, columna + 5, font: fontArial14, isBold: true, isMerge: true, isWrapText: true, isUnderLine: true, isItalic: true, excelVerticalAlignment: ExcelVerticalAlignment.Bottom);
+                            excelRange = excelMethodsService.Ajustar(ws, "Normas Técnicas de Control Interno.", fila, columna + 7, fila + 1, columna + 9, font: fontArial14, isBold: true, isMerge: true, isWrapText: true, isUnderLine: true, isItalic: true);
+                            fila += 2;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "Art. 2.- De las personas y entidades responsables.", fila, columna, fila, columna + 5, font: fontArial14, isBold: true, isMerge: true, isItalic: true, excelVerticalAlignment: ExcelVerticalAlignment.Bottom);
+                            excelRange = excelMethodsService.Ajustar(ws, "406-08-Uso de los bienes de larga duración", fila, columna + 7, fila, columna + 9, font: fontArial14, isBold: true, isMerge: true, isItalic: true, excelVerticalAlignment: ExcelVerticalAlignment.Bottom);
+                            fila++;
+
+                            excelRange = excelMethodsService.Ajustar(ws, $"“El presente reglamento rige para todas las entidades y organismos descritos en el artículo 1 del presente reglamento, servidoras y servidores, obreras y obreros del sector público, a cuyo cargo se encuentre la custodia, uso y control de los bienes del Estado.{System.Environment.NewLine}{System.Environment.NewLine}Por tanto, no habrá servidora y servidor que por razón de su cargo, función o jerarquía se encuentre exenta o exento del cumplimiento de las disposiciones del presente reglamento, de conformidad a lo previsto en el artículo 233 de la Constitución de la República del Ecuador.{System.Environment.NewLine}{System.Environment.NewLine}Para efectos de aplicación de este reglamento, las siguientes personas son las responsables de la administración, registro, control, cuidado y uso de los bienes de cada entidad:{System.Environment.NewLine}{System.Environment.NewLine}Guardalmacén ó Administradora o Administrador de Bienes.- Será el responsable administrativo del control en la inspección, recepción, registro, custodia, distribución, conservación y baja de los bienes.Usuario Final ó Custodio Responsable.- Será el responsable del cuidado, uso, custodia y conservación de los bienes asignados, servidora o servidor de las entidades y organismos del sector público y aquel que por efectos de acuerdos o convenios, se encuentre prestando servicios en la entidad, al cual se le haya asignado bienes para el desempeño de sus funciones y los que por delegación expresa se agreguen a su cuidado.” (…).", fila, columna, fila + 15, columna + 5, font: fontArial14, isMerge: true, isWrapText: true, excelVerticalAlignment: ExcelVerticalAlignment.Top);
+                            excelRange = excelMethodsService.Ajustar(ws, $"“En cada entidad pública los bienes de larga duración se utilizarán únicamente en las labores institucionales y por ningún motivo para fines personales, políticos, electorales, religiosos u otras actividades particulares.{System.Environment.NewLine}{System.Environment.NewLine}Solamente el personal autorizado debe tener acceso a los bienes de la institución, debiendo asumir la responsabilidad por su buen uso y conservación.{System.Environment.NewLine}{System.Environment.NewLine}Cada servidora o servidor será responsable del uso, custodia y conservación de los bienes de larga duración que hayan sido entregados para el desempeño de sus funciones, dejando constancia escrita de su recepción; y por ningún motivo serán utilizados para otros fines que no sean los institucionales. El daño, pérdida o destrucción del bien por negligencia comprobada o mal uso, no imputable al deterioro normal de las cosas, será responsabilidad del servidor que lo tiene a su guarda.{System.Environment.NewLine}{System.Environment.NewLine}En el caso de bienes que son utilización indistintamente por varias personas, es responsabilidad del Jefe de la Unidad Administrativa, definir los aspectos relativos a su uso, custodia y verificación, de manera que estos sean utilizados correctamente.{System.Environment.NewLine}{System.Environment.NewLine}El daño, pérdida o destrucción del bien por negligencia comprobada o mal uso, no imputable al deterioro normal de las cosas, será responsabilidad del servidor que lo tiene a su cargo.{System.Environment.NewLine}{System.Environment.NewLine}Los cambios que se produzcan y que alteren la ubicación y naturaleza de los bienes, serán reportados a la dirección correspondiente, por el personal responsable del uso y custodia de los mismos, para que se adopten los correctivos que cada caso requiera.”.", fila, columna + 7, fila + 29, columna + 9, font: fontArial14, isMerge: true, isWrapText: true, excelVerticalAlignment: ExcelVerticalAlignment.Top);
+                            fila += 16;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "Art. 16.- Utilización de los bienes y existencias.", fila, columna, fila, columna + 5, font: fontArial14, isBold: true, isMerge: true, isItalic: true, excelVerticalAlignment: ExcelVerticalAlignment.Bottom);
+                            fila++;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "“Los bienes y existencias de las entidades y organismos del sector público, se utilizarán únicamente para los fines propios de la Institución. Es prohibido el uso de dichos bienes y existencias para fines políticos, electorales, doctrinarios o religiosos o para actividades particulares y/o extrañas al servicio público o al objetivo misional de la institución”.", fila, columna, fila + 3, columna + 5, font: fontArial14, isMerge: true, isWrapText: true, excelVerticalAlignment: ExcelVerticalAlignment.Top);
+                            fila += 4;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "Art. 87.- Denuncia.", fila, columna, fila, columna + 5, font: fontArial14, isBold: true, isMerge: true, isItalic: true, excelVerticalAlignment: ExcelVerticalAlignment.Bottom);
+                            fila++;
+
+                            excelRange = excelMethodsService.Ajustar(ws, "“Cuando alguno de los bienes hubiere desaparecido, por hurto, robo, abigeato o por cualquier causa semejante, la servidora o servidor encargado de su custodia, comunicará inmediatamente por escrito este hecho al Guardalmacén o a quien haga sus veces, al jefe inmediato y a la máxima autoridad de la institución o su delegado, con todos los pormenores que fueren del caso, inmediatamente conocido el hecho.” (…).", fila, columna, fila + 5, columna + 5, font: fontArial14, isMerge: true, isWrapText: true, excelVerticalAlignment: ExcelVerticalAlignment.Top);
+                            fila += 6;
+
+                            ws.Cells[filaOriginal, columnaOriginal].Worksheet.Column(columnaOriginal).Width = 42.48D;
+                            ws.Cells[filaOriginal, columnaOriginal + 1].Worksheet.Column(columnaOriginal + 1).Width = 11.35D;
+                            ws.Cells[filaOriginal, columnaOriginal + 2].Worksheet.Column(columnaOriginal + 2).Width = 11.35D;
+                            ws.Cells[filaOriginal, columnaOriginal + 3].Worksheet.Column(columnaOriginal + 3).Width = 11.35D;
+                            ws.Cells[filaOriginal, columnaOriginal + 4].Worksheet.Column(columnaOriginal + 4).Width = 22.10D;
+                            ws.Cells[filaOriginal, columnaOriginal + 5].Worksheet.Column(columnaOriginal + 5).Width = 16.60D;
+                            ws.Cells[filaOriginal, columnaOriginal + 6].Worksheet.Column(columnaOriginal + 6).Width = 2.60D;
+                            ws.Cells[filaOriginal, columnaOriginal + 7].Worksheet.Column(columnaOriginal + 7).Width = 11.35D;
+                            ws.Cells[filaOriginal, columnaOriginal + 8].Worksheet.Column(columnaOriginal + 8).Width = 11.35D;
+                            ws.Cells[filaOriginal, columnaOriginal + 9].Worksheet.Column(columnaOriginal + 9).Width = 69.48D;
+                            ws.Cells[filaOriginal, columnaOriginal + 10].Worksheet.Column(columnaOriginal + 10).Width = 3.23D;
+                            ws.Cells[filaOriginal, columnaOriginal + 11].Worksheet.Column(columnaOriginal + 11).Width = 3.35D;
+                        };
+
+                        var row = accion(objWorksheet, 1, 1, controlBienes);
+                        accionDetalles(objWorksheet, 2, 19);
+                        row++;
+                        objWorksheet.Cells[row, 1].Worksheet.Row(row).Height = 42D;
+
+                        var excellRange = excelMethodsService.Ajustar(objWorksheet, String.Empty, row, 1, row, 16, isMerge: true);
+                        excellRange.Style.Border.Bottom.Style = ExcelBorderStyle.Dashed;
+                        row++;
+                        
+                        excellRange = excelMethodsService.Ajustar(objWorksheet, String.Empty, row, 1, row, 16, isMerge: true);
+                        objWorksheet.Cells[row, 1].Worksheet.Row(row).Height = 42D;
+                        row++;
+
+                        posMovilizacionTabla = posMovilizacionTablaAnterior;
+                        accionDetalles(objWorksheet, row, 19);
+                        row = accion(objWorksheet, row, 1, usuarioFinal);
+
+                        objWorksheet.PrinterSettings.PaperSize = ePaperSize.A4;
+                        objWorksheet.PrinterSettings.BottomMargin = 0;
+                        objWorksheet.PrinterSettings.FooterMargin = 0;
+                        objWorksheet.PrinterSettings.HeaderMargin = 0;
+                        objWorksheet.PrinterSettings.LeftMargin = .30M;
+                        objWorksheet.PrinterSettings.RightMargin = 0;
+                        objWorksheet.PrinterSettings.TopMargin = 0;
+                        objWorksheet.PrinterSettings.Scale = 41;
+                        objWorksheet.View.ZoomScale = 70;
+                        objWorksheet.PrinterSettings.HorizontalCentered = true;
+                        objWorksheet.PrinterSettings.VerticalCentered = true;
+                        posMovilizacionTablaAnterior = posMovilizacionTabla;
+                    }
                     return objExcelPackage.GetAsByteArray();
                 }
             }
