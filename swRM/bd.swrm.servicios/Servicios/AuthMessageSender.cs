@@ -15,17 +15,10 @@ namespace bd.swrm.servicios.Servicios
         {
             try
             {
-                MailConfig.HostUri = ConstantesCorreo.Smtp;
-                MailConfig.PrimaryPort = Convert.ToInt32(ConstantesCorreo.PrimaryPort);
-                MailConfig.SecureSocketOptions = Convert.ToInt32(ConstantesCorreo.SecureSocketOptions);
-
                 Mail mail = new Mail
                 {
-                    Password = ConstantesCorreo.PasswordCorreo,
                     Body = ConstantesCorreo.MensajeCorreoSuperior + message,
-                    EmailFrom = ConstantesCorreo.CorreoRM,
                     EmailTo = emailTo,
-                    NameFrom = ConstantesCorreo.NameFrom,
                     NameTo = "Name To",
                     Subject = subject
                 };
