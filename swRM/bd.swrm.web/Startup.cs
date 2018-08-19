@@ -12,6 +12,7 @@ using bd.swrm.entidades.Constantes;
 using bd.swrm.servicios.Middlewares;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using EnviarCorreo;
 
 namespace bd.swrm.web
 {
@@ -43,13 +44,18 @@ namespace bd.swrm.web
             services.AddSingleton<IExcelMethods, ExcelMethodsService>();
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-            // Constantes de correo
-            ConstantesCorreo.Smtp = Configuration.GetSection("Smtp").Value;
-            ConstantesCorreo.PrimaryPort = Configuration.GetSection("PrimaryPort").Value;
-            ConstantesCorreo.SecureSocketOptions = Configuration.GetSection("SecureSocketOptions").Value;
-            ConstantesCorreo.CorreoRM = Configuration.GetSection("CorreoRM").Value;
-            ConstantesCorreo.PasswordCorreo = Configuration.GetSection("PasswordCorreo").Value;
-            ConstantesCorreo.NameFrom = Configuration.GetSection("NameFrom").Value;
+            // Configuración del correo
+            MailConfig.HostUri = Configuration.GetSection("Smtp").Value;
+            MailConfig.PrimaryPort = Convert.ToInt32(Configuration.GetSection("PrimaryPort").Value);
+            MailConfig.SecureSocketOptions = Convert.ToInt32(Configuration.GetSection("SecureSocketOptions").Value);
+
+            MailConfig.RequireAuthentication = Convert.ToBoolean(Configuration.GetSection("RequireAuthentication").Value);
+            MailConfig.UserName = Configuration.GetSection("UsuarioCorreo").Value;
+            MailConfig.Password = Configuration.GetSection("PasswordCorreo").Value;
+
+            MailConfig.EmailFrom = Configuration.GetSection("EmailFrom").Value;
+            MailConfig.NameFrom = Configuration.GetSection("NameFrom").Value;
+
             ConstantesCorreo.MensajeCorreoSuperior = Configuration.GetSection("MensajeCorreoSuperior").Value;
             ConstantesCorreo.CorreoEncargadoSeguro = Configuration.GetSection("CorreoEncargadoSeguro").Value;
 
