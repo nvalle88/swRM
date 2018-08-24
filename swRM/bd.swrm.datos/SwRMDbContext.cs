@@ -72,7 +72,6 @@ namespace bd.swrm.datos
         public virtual DbSet<RecepcionActivoFijoDetalleVehiculo> RecepcionActivoFijoDetalleVehiculo { get; set; }
         public virtual DbSet<RequerimientoArticulos> RequerimientoArticulos { get; set; }
         public virtual DbSet<RequerimientosArticulosDetalles> RequerimientosArticulosDetalles { get; set; }
-        public virtual DbSet<RevalorizacionActivoFijo> RevalorizacionActivoFijo { get; set; }
         public virtual DbSet<SalidaArticulos> SalidaArticulos { get; set; }
         public virtual DbSet<Sexo> Sexo { get; set; }
         public virtual DbSet<SubClaseActivoFijo> SubClaseActivoFijo { get; set; }
@@ -487,8 +486,6 @@ namespace bd.swrm.datos
                 entity.Property(e => e.ValorCompra).HasColumnType("decimal");
 
                 entity.Property(e => e.DepreciacionAcumulada).HasColumnType("decimal");
-
-                entity.Property(e => e.ValorResidual).HasColumnType("decimal");
 
                 entity.HasOne(d => d.RecepcionActivoFijoDetalle)
                     .WithMany(p => p.DepreciacionActivoFijo)
@@ -1353,20 +1350,6 @@ namespace bd.swrm.datos
                     .HasForeignKey(d => d.IdRequerimientosArticulos)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("FK_RequerimientosArticulosDetalles_RequerimientoArticulos");
-            });
-
-            modelBuilder.Entity<RevalorizacionActivoFijo>(entity =>
-            {
-                entity.HasKey(e => e.IdRevalorizacionActivoFijo)
-                    .HasName("PK_RevalorizacionActivoFijo");
-
-                entity.Property(e => e.ValorCompra).HasColumnType("decimal");
-
-                entity.HasOne(d => d.RecepcionActivoFijoDetalle)
-                    .WithMany(p => p.RevalorizacionActivoFijo)
-                    .HasForeignKey(d => d.IdRecepcionActivoFijoDetalle)
-                    .OnDelete(DeleteBehavior.Restrict)
-                    .HasConstraintName("FK_RevalorizacionActivoFijo_RecepcionActivoFijoDetalle");
             });
 
             modelBuilder.Entity<SalidaArticulos>(entity =>

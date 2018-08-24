@@ -602,6 +602,7 @@ namespace bd.swrm.servicios.Servicios
                     IdActivoFijo = activoFijo.IdActivoFijo,
                     Nombre = activoFijo.Nombre,
                     ValorCompra = activoFijo.ValorCompra,
+                    ValorCompraReal = activoFijo.ValorCompraReal,
                     Depreciacion = activoFijo.Depreciacion,
                     IdSubClaseActivoFijo = activoFijo.IdSubClaseActivoFijo,
                     IdModelo = activoFijo.IdModelo,
@@ -787,8 +788,13 @@ namespace bd.swrm.servicios.Servicios
                     Observaciones = transferenciaActivoFijo.Observaciones,
                     IdMotivoTransferencia = transferenciaActivoFijo.IdMotivoTransferencia,
                     IdEstado = transferenciaActivoFijo.IdEstado,
+                    IsEditar = transferenciaActivoFijo.IsEditar,
                     Estado = ClonarEstado(transferenciaActivoFijo?.Estado),
-                    MotivoTransferencia = ClonarMotivoTransferencia(transferenciaActivoFijo?.MotivoTransferencia)
+                    MotivoTransferencia = ClonarMotivoTransferencia(transferenciaActivoFijo?.MotivoTransferencia),
+                    SucursalOrigen = ClonarSucursal(transferenciaActivoFijo?.SucursalOrigen),
+                    SucursalDestino = ClonarSucursal(transferenciaActivoFijo?.SucursalDestino),
+                    EmpleadoResponsableEnvio = ClonarEmpleado(transferenciaActivoFijo?.EmpleadoResponsableEnvio),
+                    EmpleadoResponsableRecibo = ClonarEmpleado(transferenciaActivoFijo?.EmpleadoResponsableRecibo)
                 } : null;
             }
             catch (Exception)
@@ -903,6 +909,28 @@ namespace bd.swrm.servicios.Servicios
                 {
                     IdTipoUtilizacionAlta = tipoUtilizacionAlta.IdTipoUtilizacionAlta,
                     Nombre = tipoUtilizacionAlta.Nombre
+                } : null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public DepreciacionActivoFijo ClonarDepreciacionActivoFijo(DepreciacionActivoFijo depreciacionActivoFijo)
+        {
+            try
+            {
+                return depreciacionActivoFijo != null ? new DepreciacionActivoFijo
+                {
+                    IdDepreciacionActivoFijo = depreciacionActivoFijo.IdDepreciacionActivoFijo,
+                    FechaDepreciacion = depreciacionActivoFijo.FechaDepreciacion,
+                    ValorCompra = depreciacionActivoFijo.ValorCompra,
+                    DepreciacionAcumulada = depreciacionActivoFijo.DepreciacionAcumulada,
+                    IdRecepcionActivoFijoDetalle = depreciacionActivoFijo.IdRecepcionActivoFijoDetalle,
+                    IsRevalorizacion = depreciacionActivoFijo.IsRevalorizacion,
+                    ValorResidual = depreciacionActivoFijo.ValorCompra - depreciacionActivoFijo.DepreciacionAcumulada,
+                    RecepcionActivoFijoDetalle = ClonarRecepcionActivoFijoDetalle(depreciacionActivoFijo.RecepcionActivoFijoDetalle)
                 } : null;
             }
             catch (Exception)

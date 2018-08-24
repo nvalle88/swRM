@@ -33,7 +33,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.MantenimientoActivoFijo.OrderBy(x => x.FechaMantenimiento).Include(x => x.Empleado).ThenInclude(x => x.Persona).Include(x => x.RecepcionActivoFijoDetalle).ToListAsync();
+                return await db.MantenimientoActivoFijo.OrderByDescending(x => x.FechaMantenimiento).Include(x => x.Empleado).ThenInclude(x => x.Persona).Include(x => x.RecepcionActivoFijoDetalle).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -48,7 +48,7 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                return await db.MantenimientoActivoFijo.Include(x => x.Empleado).ThenInclude(x => x.Persona).Include(x => x.RecepcionActivoFijoDetalle).Where(c=> c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle).OrderBy(x => x.FechaMantenimiento).ToListAsync();
+                return await db.MantenimientoActivoFijo.Include(x => x.Empleado).ThenInclude(x => x.Persona).Include(x => x.RecepcionActivoFijoDetalle).Where(c=> c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle).OrderByDescending(x => x.FechaMantenimiento).ToListAsync();
             }
             catch (Exception ex)
             {
