@@ -3,6 +3,7 @@ namespace bd.swrm.entidades.Negocio
     using System;
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
+    using System.ComponentModel.DataAnnotations.Schema;
 
     public partial class ActivoFijo
     {
@@ -24,6 +25,11 @@ namespace bd.swrm.entidades.Negocio
         [Display(Name = "Valor de compra:")]
         [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal ValorCompra { get; set; }
+
+        [NotMapped]
+        [Display(Name = "Valor de compra:")]
+        [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
+        public decimal ValorCompraReal { get; set; }
 
         [Required(ErrorMessage = "Debe introducir la {0}")]
         [Display(Name = "¿Depreciación?")]

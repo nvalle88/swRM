@@ -15,6 +15,7 @@ using bd.log.guardar.Utiles;
 using bd.swrm.entidades.Utils;
 using bd.swrm.servicios.Interfaces;
 using bd.swrm.entidades.ObjectTransfer;
+using OfficeOpenXml;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -799,5 +800,33 @@ namespace bd.swrm.web.Controllers.API
                 return new Response { IsSuccess = false, Message = Mensaje.Error };
             }
         }
+
+        #region Exportar a Excel
+        [HttpPost]
+        [Route("ExcelOrdenCompra")]
+        public async Task<byte[]> PostExcelOrdenCompra([FromBody] int idOrdenCompra)
+        {
+            try
+            {
+                var ordenCompra = await ObtenerOrdenCompra(idOrdenCompra);
+                using (ExcelPackage objExcelPackage = new ExcelPackage())
+                {
+                    ExcelWorksheet objWorksheet = objExcelPackage.Workbook.Worksheets.Add("ORDEN-PEDIDO");
+
+
+
+
+
+
+                    return objExcelPackage.GetAsByteArray();
+                }
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new byte[0];
+            }
+        }
+        #endregion
     }
 }

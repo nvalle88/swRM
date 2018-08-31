@@ -1,4 +1,5 @@
 ﻿using bd.swrm.servicios.Interfaces;
+using bd.swrm.servicios.PDFHandler;
 using iText.IO.Image;
 using iText.Kernel.Colors;
 using iText.Layout.Borders;
@@ -29,7 +30,7 @@ namespace bd.swrm.servicios.Servicios
                 table.AddCell(cell);
         }
 
-        public void AdicionarValorCelda(string valorCelda, Table table, TextAlignment textAlignment = TextAlignment.CENTER, int colspan = 1, bool pintarBordeIzquierdo = true, bool pintarBordeDerecho = true, bool pintarBordeArriba = true, bool pintarBordeAbajo = true, bool isBold = false, float fontSize = 7, DeviceRgb backgroundColor = null, float? paddingLeft = 0, Image imagen = null, bool isHeaderCell = false, bool isFooterCell = false)
+        public Cell AdicionarValorCelda(string valorCelda, Table table, TextAlignment textAlignment = TextAlignment.CENTER, int colspan = 1, bool pintarBordeIzquierdo = true, bool pintarBordeDerecho = true, bool pintarBordeArriba = true, bool pintarBordeAbajo = true, bool isBold = false, float fontSize = 7, DeviceRgb backgroundColor = null, float? paddingLeft = 0, float? paddingTop = 0, Image imagen = null, bool isHeaderCell = false, bool isFooterCell = false, ColorCmykIsColoredBackground colorCmykIsColoredBackground = null, bool adicionarATable = true)
         {
             Paragraph parrafoCelda = new Paragraph();
             if (imagen != null)
@@ -61,12 +62,22 @@ namespace bd.swrm.servicios.Servicios
             if (paddingLeft != null)
                 nuevaCelda.SetPaddingLeft((float)paddingLeft);
 
-            if (isHeaderCell)
-                table.AddHeaderCell(nuevaCelda);
-            else if (isFooterCell)
-                table.AddFooterCell(nuevaCelda);
-            else
-                table.AddCell(nuevaCelda);
+            if (paddingTop != null)
+                nuevaCelda.SetPaddingTop((float)paddingTop);
+
+            if (colorCmykIsColoredBackground != null)
+                nuevaCelda.SetNextRenderer(new RoundedCellRenderer(nuevaCelda, colorCmykIsColoredBackground));
+
+            if (adicionarATable)
+            {
+                if (isHeaderCell)
+                    table.AddHeaderCell(nuevaCelda);
+                else if (isFooterCell)
+                    table.AddFooterCell(nuevaCelda);
+                else
+                    table.AddCell(nuevaCelda);
+            }
+            return nuevaCelda;
         }
     }
 }

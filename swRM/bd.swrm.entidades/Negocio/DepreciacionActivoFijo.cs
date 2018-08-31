@@ -2,6 +2,7 @@ namespace bd.swrm.entidades.Negocio
 {
     using System;
     using System.ComponentModel.DataAnnotations;
+    using System.ComponentModel.DataAnnotations.Schema;
 
     public partial class DepreciacionActivoFijo
     {
@@ -23,10 +24,10 @@ namespace bd.swrm.entidades.Negocio
         [Display(Name = "Depreciación acumulada:")]
         [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
         public decimal DepreciacionAcumulada { get; set; }
-
-        [Required(ErrorMessage = "Debe introducir el {0}")]
+        
         [Display(Name = "Valor Residual:")]
         [DisplayFormat(DataFormatString = "{0:C2}", ApplyFormatInEditMode = false)]
+        [NotMapped]
         public decimal ValorResidual { get; set; }
 
         //Propiedades Virtuales Referencias a otras clases
@@ -35,5 +36,9 @@ namespace bd.swrm.entidades.Negocio
         [Range(1, double.MaxValue, ErrorMessage = "Debe seleccionar el {0}")]
         public int IdRecepcionActivoFijoDetalle { get; set; }
         public virtual RecepcionActivoFijoDetalle RecepcionActivoFijoDetalle { get; set; }
+
+        [Required(ErrorMessage = "Debe introducir el {0}")]
+        [Display(Name = "¿Es Revalorización?")]
+        public bool IsRevalorizacion { get; set; }
     }
 }

@@ -37,6 +37,8 @@ using bd.swrm.servicios.PDFHandler;
 using OfficeOpenXml;
 using System.Text;
 using OfficeOpenXml.Style;
+using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Pdf.Xobject;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -138,6 +140,98 @@ namespace bd.swrm.web.Controllers.API
         }
 
         [HttpPost]
+        [Route("ListarTransferenciasActivosFijosPorIdRafd")]
+        public async Task<List<TransferenciaActivoFijoDetalle>> PostTransferenciasActivosFijosPorIdRafd([FromBody] int idRecepcionActivoFijoDetalle)
+        {
+            try
+            {
+                var lista = new List<TransferenciaActivoFijoDetalle>();
+                var listaTransferenciaActivoFijoDetalle = await db.TransferenciaActivoFijoDetalle
+                    .Include(c => c.RecepcionActivoFijoDetalle).ThenInclude(c => c.Estado)
+                    .Include(c => c.UbicacionActivoFijoOrigen).ThenInclude(c => c.Empleado).ThenInclude(c => c.Persona)
+                    .Include(c => c.UbicacionActivoFijoOrigen).ThenInclude(c => c.Bodega).ThenInclude(c => c.Sucursal)
+                    .Include(c => c.UbicacionActivoFijoOrigen).ThenInclude(c => c.Empleado).ThenInclude(c => c.Dependencia).ThenInclude(c => c.Sucursal)
+                    .Include(c => c.UbicacionActivoFijoDestino).ThenInclude(c => c.Empleado).ThenInclude(c => c.Persona)
+                    .Include(c => c.UbicacionActivoFijoDestino).ThenInclude(c => c.Bodega).ThenInclude(c => c.Sucursal)
+                    .Include(c => c.UbicacionActivoFijoDestino).ThenInclude(c => c.Empleado).ThenInclude(c => c.Dependencia).ThenInclude(c => c.Sucursal)
+                    .Include(c => c.TransferenciaActivoFijo).ThenInclude(c=> c.MotivoTransferencia)
+                    .Include(c => c.TransferenciaActivoFijo).ThenInclude(c => c.Estado)
+                    .Where(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle)
+                    .OrderByDescending(c=> c.TransferenciaActivoFijo.FechaTransferencia)
+                    .ToListAsync();
+
+                foreach (var item in listaTransferenciaActivoFijoDetalle)
+                {
+                    var recepcionActivoFijoDetalle = await ObtenerDetalleActivoFijo(item.IdRecepcionActivoFijoDetalle, incluirActivoFijo: true, incluirComponentes: true, incluirAltasActivoFijo: true, incluirClaimsTransferencia: false);
+                    if (recepcionActivoFijoDetalle != null && recepcionActivoFijoDetalle.Estado.Nombre.ToUpper() == Estados.Alta)
+                    {
+                        if (item.TransferenciaActivoFijo.IdEmpleadoResponsableEnvio != null)
+                            item.TransferenciaActivoFijo.EmpleadoResponsableEnvio = clonacionService.ClonarEmpleado(await db.Empleado.Include(c => c.Persona).Include(c => c.Dependencia).ThenInclude(c => c.Sucursal).FirstOrDefaultAsync(c => c.IdEmpleado == item.TransferenciaActivoFijo.IdEmpleadoResponsableEnvio));
+
+                        if (item.TransferenciaActivoFijo.IdEmpleadoResponsableRecibo != null)
+                            item.TransferenciaActivoFijo.EmpleadoResponsableRecibo = clonacionService.ClonarEmpleado(await db.Empleado.Include(c => c.Persona).Include(c => c.Dependencia).ThenInclude(c => c.Sucursal).FirstOrDefaultAsync(c => c.IdEmpleado == item.TransferenciaActivoFijo.IdEmpleadoResponsableRecibo));
+
+                        item.TransferenciaActivoFijo.SucursalOrigen = item?.UbicacionActivoFijoOrigen?.Empleado?.Dependencia?.Sucursal ?? item.UbicacionActivoFijoOrigen.Bodega.Sucursal;
+                        item.TransferenciaActivoFijo.SucursalDestino = item?.UbicacionActivoFijoDestino?.Empleado?.Dependencia?.Sucursal ?? item.UbicacionActivoFijoDestino.Bodega.Sucursal;
+
+                        lista.Add(new TransferenciaActivoFijoDetalle
+                        {
+                            IdRecepcionActivoFijoDetalle = item.IdRecepcionActivoFijoDetalle,
+                            IdTransferenciaActivoFijo = item.IdTransferenciaActivoFijo,
+                            IdUbicacionActivoFijoDestino = item.IdUbicacionActivoFijoDestino,
+                            IdUbicacionActivoFijoOrigen = item.IdUbicacionActivoFijoOrigen,
+                            IdCodigoActivoFijo = item.IdCodigoActivoFijo,
+                            UbicacionActivoFijoOrigen = clonacionService.ClonarUbicacionActivoFijo(item.UbicacionActivoFijoOrigen),
+                            UbicacionActivoFijoDestino = clonacionService.ClonarUbicacionActivoFijo(item.UbicacionActivoFijoDestino),
+                            RecepcionActivoFijoDetalle = recepcionActivoFijoDetalle,
+                            CodigoActivoFijo = clonacionService.ClonarCodigoActivoFijo(await db.CodigoActivoFijo.FirstOrDefaultAsync(c => c.IdCodigoActivoFijo == item.IdCodigoActivoFijo)),
+                            TransferenciaActivoFijo = clonacionService.ClonarTransferenciaActivoFijo(item.TransferenciaActivoFijo)
+                        });
+                    }
+                }
+                return lista;
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<TransferenciaActivoFijoDetalle>();
+            }
+        }
+
+        [HttpPost]
+        [Route("ListarUbicacionesCustodiosActivosFijosPorIdRafd")]
+        public async Task<List<UbicacionActivoFijo>> PostUbicacionesActivosFijosPorIdRafd([FromBody] int idRecepcionActivoFijoDetalle)
+        {
+            try
+            {
+                var listaUbicacionActivoFijo = await db.UbicacionActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle)
+                    .Include(c=> c.Empleado).ThenInclude(c=> c.Persona)
+                    .Include(c => c.Empleado).ThenInclude(c => c.Dependencia).ThenInclude(c=> c.Sucursal)
+                    .Where(c=> c.IdEmpleado != null && c.IdBodega == null)
+                    .OrderByDescending(c=> c.FechaUbicacion)
+                    .ToListAsync();
+
+                foreach (var item in listaUbicacionActivoFijo)
+                {
+                    var transferenciaActivoFijoDetalleDestino = await db.TransferenciaActivoFijoDetalle.Include(c=> c.TransferenciaActivoFijo).ThenInclude(c=> c.MotivoTransferencia).FirstOrDefaultAsync(c => c.IdUbicacionActivoFijoDestino == item.IdUbicacionActivoFijo && c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle);
+                    if (transferenciaActivoFijoDetalleDestino != null)
+                        item.MotivoUbicacion = transferenciaActivoFijoDetalleDestino.TransferenciaActivoFijo.MotivoTransferencia.Motivo_Transferencia;
+                    else
+                    {
+                        var altaActivoFijoDetalle = await db.AltaActivoFijoDetalle.FirstOrDefaultAsync(c => c.IdUbicacionActivoFijo == item.IdUbicacionActivoFijo && c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle);
+                        item.MotivoUbicacion = altaActivoFijoDetalle != null ? Estados.Alta : "RECEPCIÓN";
+                    }
+                }
+                return listaUbicacionActivoFijo;
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<UbicacionActivoFijo>();
+            }
+        }
+
+        [HttpPost]
         [Route("ListarInventariosActivosFijosPorRangoFecha")]
         public async Task<List<InventarioActivoFijo>> PostInventariosActivosFijosPorRangoFecha([FromBody] RangoFechaTransfer rangoFechaTransfer)
         {
@@ -198,6 +292,22 @@ namespace bd.swrm.web.Controllers.API
         public async Task<Response> GetObtenerRecepcionActivoFijo([FromRoute] int id)
         {
             return await ObtenerRecepcionActivoFijo(id, predicadoDetalleActivoFijo: c=> c.Estado.Nombre.ToUpper() == Estados.Recepcionado || c.Estado.Nombre == Estados.ValidacionTecnica);
+        }
+
+        [HttpGet]
+        [Route("ObtenerDetalleActivoFijo/{id}")]
+        public async Task<Response> GetObtenerDetalleActivoFijo([FromRoute] int id)
+        {
+            try
+            {
+                var recepcionActivoFijoDetalle = await ObtenerDetalleActivoFijo(id, incluirActivoFijo: true, incluirAltasActivoFijo: true, incluirBajasActivoFijo: true, incluirComponentes: true);
+                return new Response { IsSuccess = recepcionActivoFijoDetalle != null, Message = recepcionActivoFijoDetalle != null ? Mensaje.Satisfactorio : Mensaje.RegistroNoEncontrado, Resultado = recepcionActivoFijoDetalle };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
         }
 
         [HttpGet]
@@ -268,6 +378,21 @@ namespace bd.swrm.web.Controllers.API
         public async Task<Response> PostActivoFijoPorEstado([FromBody] IdEstadosTransfer idActivoFijoEstadosTransfer)
         {
             return idActivoFijoEstadosTransfer.Estados.Count > 0 ? await ObtenerActivoFijo(idActivoFijoEstadosTransfer.Id, predicadoDetalleActivoFijo: c=> idActivoFijoEstadosTransfer.Estados.Contains(c.Estado.Nombre.ToUpper())) : await ObtenerActivoFijo(idActivoFijoEstadosTransfer.Id);
+        }
+
+        [HttpPost]
+        [Route("UltimoValorCompraActivoFijo")]
+        public async Task<decimal> PostUltimoValorCompraActivoFijo([FromBody]int id)
+        {
+            try
+            {
+                var recepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle.Include(c => c.ActivoFijo).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == id);
+                return Temporizador.Temporizador.ObtenerValorCompraRealActivoFijo(recepcionActivoFijoDetalle);
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
         }
 
         [HttpPost]
@@ -386,11 +511,28 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                var listadoDepreciacionActivosFijos = await db.DepreciacionActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalle == id).OrderByDescending(c=> c.FechaDepreciacion).ToListAsync();
-                return listadoDepreciacionActivosFijos;
+                var listaDepreciacionActivosFijos = await db.DepreciacionActivoFijo.Include(c => c.RecepcionActivoFijoDetalle).Where(c => c.IdRecepcionActivoFijoDetalle == id && !c.IsRevalorizacion).OrderByDescending(c=> c.FechaDepreciacion).ToListAsync();
+                return listaDepreciacionActivosFijos.Select(c => clonacionService.ClonarDepreciacionActivoFijo(c)).ToList();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<DepreciacionActivoFijo>();
+            }
+        }
+
+        [HttpPost]
+        [Route("ListarRevalorizacionActivoFijo")]
+        public async Task<List<DepreciacionActivoFijo>> PostRevalorizacionActivoFijo([FromBody] int id)
+        {
+            try
+            {
+                var listaDepreciacionActivosFijos = await db.DepreciacionActivoFijo.Include(c => c.RecepcionActivoFijoDetalle).Where(c => c.IdRecepcionActivoFijoDetalle == id && c.IsRevalorizacion).OrderByDescending(x => x.FechaDepreciacion).ToListAsync();
+                return listaDepreciacionActivosFijos.Select(c => clonacionService.ClonarDepreciacionActivoFijo(c)).ToList();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
                 return new List<DepreciacionActivoFijo>();
             }
         }
@@ -457,7 +599,6 @@ namespace bd.swrm.web.Controllers.API
         {
             try
             {
-                var lista = new List<RecepcionActivoFijoDetalleSeleccionado>();
                 var listaIdsRafdTransferenciasCreadas = await db.TransferenciaActivoFijoDetalle.Include(c => c.UbicacionActivoFijoDestino)
                     .Where(c => !c.UbicacionActivoFijoDestino.Confirmacion)
                     .Select(c => c.IdRecepcionActivoFijoDetalle).ToListAsync();
@@ -469,6 +610,26 @@ namespace bd.swrm.web.Controllers.API
                 return listaRecepcionActivoFijoDetalle.Select(c=> new RecepcionActivoFijoDetalleSeleccionado {
                     RecepcionActivoFijoDetalle = ObtenerRecepcionActivoFijoDetalle(c, incluirComponentes: true, incluirActivoFijo: true),
                     Seleccionado = cambioCustodioViewModel.ListadoIdRecepcionActivoFijoDetalle.Contains(c.IdRecepcionActivoFijoDetalle)
+                }).ToList();
+            }
+            catch (Exception)
+            {
+                return new List<RecepcionActivoFijoDetalleSeleccionado>();
+            }
+        }
+
+        [HttpPost]
+        [Route("DetallesActivoFijoSeleccionadoPorEmpleadoBodega")]
+        public async Task<List<RecepcionActivoFijoDetalleSeleccionado>> PostDetallesActivoFijoSeleccionadoPorEmpleadoBodega([FromBody] IsBodegaEmpleadoTransfer isBodegaEmpleadoTransfer)
+        {
+            try
+            {
+                var listaRecepcionActivoFijoDetalleBD = ObtenerListadoDetallesActivosFijos(incluirActivoFijo: true, incluirAltasActivoFijo: true, incluirBajasActivoFijo: true);
+                var listaRecepcionActivoFijoDetalle = isBodegaEmpleadoTransfer.IdBodegaEmpleado == -1 ? isBodegaEmpleadoTransfer.IsBodega ? await listaRecepcionActivoFijoDetalleBD.Where(c => c.UbicacionActivoFijoActual.IdBodega != null).ToListAsync() : await listaRecepcionActivoFijoDetalleBD.Where(c => c.UbicacionActivoFijoActual.IdEmpleado != null).ToListAsync() : isBodegaEmpleadoTransfer.IsBodega ? await listaRecepcionActivoFijoDetalleBD.Where(c => c.UbicacionActivoFijoActual.IdBodega == isBodegaEmpleadoTransfer.IdBodegaEmpleado).ToListAsync() : await listaRecepcionActivoFijoDetalleBD.Where(c => c.UbicacionActivoFijoActual.IdEmpleado == isBodegaEmpleadoTransfer.IdBodegaEmpleado).ToListAsync();
+                return listaRecepcionActivoFijoDetalle.Select(c => new RecepcionActivoFijoDetalleSeleccionado
+                {
+                    RecepcionActivoFijoDetalle = ObtenerRecepcionActivoFijoDetalle(c, incluirComponentes: true, incluirActivoFijo: true),
+                    Seleccionado = false
                 }).ToList();
             }
             catch (Exception)
@@ -1023,6 +1184,23 @@ namespace bd.swrm.web.Controllers.API
                     transaction.Commit();
                 }
                 return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = nuevaMovilizacionActivoFijo };
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new Response { IsSuccess = false, Message = Mensaje.Error };
+            }
+        }
+
+        [HttpPost]
+        [Route("InsertarRevalorizacionActivoFijo")]
+        public async Task<Response> PostInsertarRevalorizacionActivoFijo([FromBody] DepreciacionActivoFijo depreciacionActivoFijo)
+        {
+            try
+            {
+                db.DepreciacionActivoFijo.Add(depreciacionActivoFijo);
+                await db.SaveChangesAsync();
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio, Resultado = depreciacionActivoFijo };
             }
             catch (Exception ex)
             {
@@ -1785,13 +1963,6 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        public Response Existe(ActivoFijo _ActivosFijos)
-        {
-            var bdd = _ActivosFijos.IdActivoFijo;
-            var loglevelrespuesta = db.ActivoFijo.Where(p => p.IdActivoFijo == bdd).FirstOrDefault();
-            return new Response { IsSuccess = loglevelrespuesta != null, Message = loglevelrespuesta != null ? Mensaje.ExisteRegistro : String.Empty, Resultado = loglevelrespuesta };
-        }
-
         private RecepcionActivoFijoDetalle ObtenerRecepcionActivoFijoDetalle(RecepcionActivoFijoDetalle rafdOld, bool? incluirComponentes = null, bool? incluirActivoFijo = null)
         {
             var recepcionActivoFijoDetalle = clonacionService.ClonarRecepcionActivoFijoDetalle(rafdOld);
@@ -1885,7 +2056,10 @@ namespace bd.swrm.web.Controllers.API
                 if (incluirActivoFijo != null)
                 {
                     if ((bool)incluirActivoFijo)
-                        item.ActivoFijo = clonacionService.ClonarActivoFijo(ObtenerDatosActivoFijo().FirstOrDefault(c=> c.IdActivoFijo == item.IdActivoFijo), new List<RecepcionActivoFijoDetalle>());
+                    {
+                        item.ActivoFijo = clonacionService.ClonarActivoFijo(ObtenerDatosActivoFijo().FirstOrDefault(c => c.IdActivoFijo == item.IdActivoFijo), new List<RecepcionActivoFijoDetalle>());
+                        item.ActivoFijo.ValorCompraReal = Temporizador.Temporizador.ObtenerValorCompraRealActivoFijo(item);
+                    }
                 }
             }
             recepcionActivoFijoDetalle = recepcionActivoFijoDetalle.OrderBy(c => c.UbicacionActivoFijoActual.IdBodega).ThenBy(c => c.UbicacionActivoFijoActual.IdEmpleado);
@@ -2490,7 +2664,6 @@ namespace bd.swrm.web.Controllers.API
         private void EliminarSeccionAlta(int idRecepcionActivoFijoDetalle)
         {
             EliminarMantenimientoPorIdRecepcionActivoFijoDetalle(idRecepcionActivoFijoDetalle);
-            EliminarRevalorizacionPorIdRecepcionActivoFijoDetalle(idRecepcionActivoFijoDetalle);
             EliminarDepreciacionPorIdRecepcionActivoFijoDetalle(idRecepcionActivoFijoDetalle);
             EliminarTransferenciaPorIdRecepcionActivoFijoDetalle(idRecepcionActivoFijoDetalle);
             EliminarInventarioPorIdRecepcionActivoFijoDetalle(idRecepcionActivoFijoDetalle);
@@ -2689,11 +2862,6 @@ namespace bd.swrm.web.Controllers.API
                 db.SaveChanges();
             }
         }
-        private void EliminarRevalorizacionPorIdRecepcionActivoFijoDetalle(int idRecepcionActivoFijoDetalle)
-        {
-            db.RevalorizacionActivoFijo.RemoveRange(db.RevalorizacionActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle));
-            db.SaveChanges();
-        }
         private void EliminarMantenimientoPorIdRecepcionActivoFijoDetalle(int idRecepcionActivoFijoDetalle)
         {
             db.MantenimientoActivoFijo.RemoveRange(db.MantenimientoActivoFijo.Where(c => c.IdRecepcionActivoFijoDetalle == idRecepcionActivoFijoDetalle));
@@ -2823,6 +2991,79 @@ namespace bd.swrm.web.Controllers.API
             try
             {
                 return await ExportarPDFTransferenciaCambioCustodio(idTransferenciaActivoFijo);
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new byte[0];
+            }
+        }
+
+        [HttpPost]
+        [Route("PDFReimprimirEtiquetas")]
+        public async Task<byte[]> ExportarPDFReimprimirEtiquetas([FromBody] List<byte[]> codigosBarras)
+        {
+            try
+            {
+                MemoryStream memoryStream = new MemoryStream();
+                PdfWriter pdfWritter = new PdfWriter(memoryStream);
+                PdfDocument pdfDocument = new PdfDocument(pdfWritter);
+
+                PageSize pageSize = PageSize.A4;
+                float width = CssUtils.ParseAbsoluteLength("" + pageSize.GetWidth());
+
+                pdfDocument.SetTagged();
+                pdfDocument.SetDefaultPageSize(pageSize);
+
+                ConverterProperties props = new ConverterProperties();
+                MediaDeviceDescription mediaDescription = new MediaDeviceDescription(MediaType.SCREEN);
+                mediaDescription.SetWidth(width);
+                props.SetMediaDeviceDescription(mediaDescription);
+
+                Document document = new Document(pdfDocument);
+                document.SetMargins(15, 15, 15, 15);
+
+                var claimTransfer = claimsTransfer.ObtenerClaimsTransferHttpContext();
+                var sucursal = await db.Sucursal.FirstOrDefaultAsync(c => c.IdSucursal == claimTransfer.IdSucursal);
+
+                Table table = new Table(new float[] { 260F, 15, 260F });
+                table.SetBorder(iText.Layout.Borders.Border.NO_BORDER);
+                
+                float[] black = new float[] { 63, 52, 51, 100 };
+                var colorCmykIsColoredBackground = new ColorCmykIsColoredBackground { CmykColor = black, IsColoredBackground = false };
+
+                Action<byte[]> crearCeldaEtiqueta = (codigoSecuencial) => {
+                    var nuevaCelda = pdfMethodsService.AdicionarValorCelda($"BANCO DE DESARROLLO DE ECUADOR{System.Environment.NewLine}{sucursal.Nombre}", table, colorCmykIsColoredBackground: colorCmykIsColoredBackground, pintarBordeAbajo: false, pintarBordeArriba: false, pintarBordeDerecho: false, pintarBordeIzquierdo: false, isBold: true, fontSize: 9, adicionarATable: false, paddingTop: 10);
+                    var tranState = new iText.Kernel.Pdf.Extgstate.PdfExtGState();
+                    var myImageDataCodigoSecuencial = ImageDataFactory.Create(codigoSecuencial, false);
+                    var imgCodigoSecuencial = new Image(myImageDataCodigoSecuencial);
+                    imgCodigoSecuencial.SetWidth(160);
+                    imgCodigoSecuencial.SetRelativePosition(50, 5, 0, 0);
+                    nuevaCelda.Add(imgCodigoSecuencial);
+
+                    tranState = new iText.Kernel.Pdf.Extgstate.PdfExtGState();
+                    var myImageDataLogoBde = ImageDataFactory.Create(System.IO.Path.Combine(_hostingEnvironment.WebRootPath, $"images\\logobde.png"));
+                    var imgLogoBde = new Image(myImageDataLogoBde);
+                    imgLogoBde.SetWidth(30);
+                    imgLogoBde.SetRelativePosition(15, 0, 0, 30);
+                    nuevaCelda.Add(imgLogoBde);
+                    nuevaCelda.SetKeepTogether(true);
+                    table.AddCell(nuevaCelda);
+                };
+                for (int i = 0; i < codigosBarras.Count; i+=2)
+                {
+                    if (i <= (codigosBarras.Count - 1))
+                    {
+                        crearCeldaEtiqueta(codigosBarras[i]);
+                        pdfMethodsService.AdicionarValorCelda(" ", table, pintarBordeAbajo: false, pintarBordeArriba: false, pintarBordeDerecho: false, pintarBordeIzquierdo: false);
+                    }
+                    if ((i + 1) <= (codigosBarras.Count - 1))
+                        crearCeldaEtiqueta(codigosBarras[i + 1]);
+                }
+                document.Add(table);
+                document.Close();
+                pdfDocument.Close();
+                return memoryStream.ToArray();
             }
             catch (Exception ex)
             {
