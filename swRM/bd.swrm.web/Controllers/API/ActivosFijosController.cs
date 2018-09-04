@@ -3127,8 +3127,7 @@ namespace bd.swrm.web.Controllers.API
 
                             excelRange = excelMethodsService.Ajustar(ws, "CÉDULA DE CIUDADANÍA:", fila, columna, font: fontArial14, isBold: true);
                             excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(0, 112, 192));
                             ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
 
                             excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo?.EmpleadoResponsable?.Persona?.Identificacion ?? String.Empty, fila, columna + 2, fila, columna + 4, font: fontArial14, isMerge: true);
@@ -3136,8 +3135,7 @@ namespace bd.swrm.web.Controllers.API
 
                             excelRange = excelMethodsService.Ajustar(ws, "FECHA:", fila, columna + 6, font: fontArial14, isBold: true);
                             excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(0, 112, 192));
 
                             excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo.FechaSalida.ToString("dd/MM/yyyy"), fila, columna + 8, fila, columna + 10, font: fontArial14, isMerge: true);
                             excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
@@ -3148,8 +3146,7 @@ namespace bd.swrm.web.Controllers.API
 
                             excelRange = excelMethodsService.Ajustar(ws, "NOMBRE:", fila, columna, font: fontArial14, isBold: true);
                             excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(0, 112, 192));
                             ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
 
                             string usuarioEmpleadoResponsable = movilizacionActivoFijo?.EmpleadoResponsable?.NombreUsuario ?? String.Empty;
@@ -3157,18 +3154,15 @@ namespace bd.swrm.web.Controllers.API
                                 usuarioEmpleadoResponsable = $" ({usuarioEmpleadoResponsable})";
 
                             excelRange = excelMethodsService.Ajustar(ws, $"{movilizacionActivoFijo.EmpleadoResponsable.Persona.Nombres} {movilizacionActivoFijo.EmpleadoResponsable.Persona.Apellidos}{usuarioEmpleadoResponsable}", fila, columna + 2, fila, columna + 4, font: fontArial12, isMerge: true);
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(191, 191, 191));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(191, 191, 191));
                             excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
 
                             excelRange = excelMethodsService.Ajustar(ws, "SUCURSAL:", fila, columna + 6, font: fontArial14, isBold: true);
                             excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(0, 112, 192));
 
                             excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo?.EmpleadoResponsable?.Dependencia?.Sucursal?.Nombre ?? String.Empty, fila, columna + 8, fila, columna + 10, font: fontArial12, isMerge: true);
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(191, 191, 191));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(191, 191, 191));
                             excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
                             fila++;
 
@@ -3177,19 +3171,16 @@ namespace bd.swrm.web.Controllers.API
 
                             excelRange = excelMethodsService.Ajustar(ws, "ÁREA REQUIRIENTE:", fila, columna, font: fontArial14, isBold: true);
                             excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(0, 112, 192));
                             ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
 
                             excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo?.EmpleadoResponsable?.Dependencia?.Nombre ?? String.Empty, fila, columna + 2, fila, columna + 4, font: fontArial12, isMerge: true);
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(191, 191, 191));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(191, 191, 191));
                             excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
 
                             excelRange = excelMethodsService.Ajustar(ws, "JEFE INMEDIATO:", fila, columna + 6, font: fontArial14, isBold: true);
                             excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(0, 112, 192));
 
                             string usuarioEmpleadoSolicita = movilizacionActivoFijo?.EmpleadoSolicita?.NombreUsuario ?? String.Empty;
                             if (!String.IsNullOrEmpty(usuarioEmpleadoSolicita))
@@ -3204,8 +3195,7 @@ namespace bd.swrm.web.Controllers.API
 
                             excelRange = excelMethodsService.Ajustar(ws, "MOTIVO DEL TRASLADO:", fila, columna, font: fontArial14, isBold: true);
                             excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(0, 112, 192));
                             ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
 
                             excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo.MotivoTraslado.Descripcion, fila, columna + 2, fila, columna + 11, font: fontArial14, isMerge: true);
@@ -3217,8 +3207,7 @@ namespace bd.swrm.web.Controllers.API
 
                             excelRange = excelMethodsService.Ajustar(ws, "AUTORIZACIÓN:", fila, columna, font: fontArial14, isBold: true);
                             excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(0, 112, 192));
                             ws.Cells[fila, columna].Worksheet.Row(fila).Height = 37.50D;
 
                             excelRange = excelMethodsService.Ajustar(ws, "Se autoriza la salida y movilización de los bienes de larga duración de propiedad del Banco del Desarrollo del Ecuador B.P., detallados a continuación, para uso exclusivo de actividades oficiales e institucionales:", fila, columna + 2, fila, columna + 11, font: fontArial14, isMerge: true, isWrapText: true);
@@ -3250,8 +3239,7 @@ namespace bd.swrm.web.Controllers.API
 
                             excelRange = ws.Cells[fila, columna, fila, columna + 11];
                             excelRange.Worksheet.Row(fila).Height = 35.25D;
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(191, 191, 191));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(191, 191, 191));
                             excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
                             fila++;
 
@@ -3297,8 +3285,7 @@ namespace bd.swrm.web.Controllers.API
 
                             excelRange = excelMethodsService.Ajustar(ws, "FECHA DE SALIDA:", fila, columna, font: fontArial14, isBold: true);
                             excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(0, 112, 192));
                             ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
 
                             excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo?.FechaSalida.ToString("dd/MM/yyyy") ?? String.Empty, fila, columna + 2, font: fontArial14, isMerge: true);
@@ -3310,8 +3297,7 @@ namespace bd.swrm.web.Controllers.API
 
                             excelRange = excelMethodsService.Ajustar(ws, "FECHA DE RETORNO:", fila, columna, font: fontArial14, isBold: true);
                             excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 112, 192));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(0, 112, 192));
                             ws.Cells[fila, columna].Worksheet.Row(fila).Height = 30D;
 
                             excelRange = excelMethodsService.Ajustar(ws, movilizacionActivoFijo?.FechaRetorno.ToString("dd/MM/yyyy") ?? String.Empty, fila, columna + 2, font: fontArial14, isMerge: true);
@@ -3358,8 +3344,7 @@ namespace bd.swrm.web.Controllers.API
 
                             excelRange = excelMethodsService.Ajustar(ws, footer, fila, columna + 11, font: fontArial12, isBold: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
                             excelRange.Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 255, 255));
-                            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            excelRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(0, 0, 0));
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(0, 0, 0));
                             excelRange.Worksheet.Row(fila).Height = 20.25D;
                             fila++;
 
