@@ -41,7 +41,8 @@ namespace bd.swrm.web.Controllers.API
                     .OrderBy(c=> c.Articulo)
                     .OrderBy(c => c.Minimo).ThenBy(c => c.Maximo).ToListAsync();
 
-                listadoMaestroArticuloSucursal.ForEach(async c => c.ValorActual = await ObtenerValorActual(c.IdMaestroArticuloSucursal));
+                foreach (var item in listadoMaestroArticuloSucursal)
+                    item.ValorActual = await ObtenerValorActual(item.IdMaestroArticuloSucursal);
                 return listadoMaestroArticuloSucursal;
             }
             catch (Exception ex)
@@ -63,8 +64,9 @@ namespace bd.swrm.web.Controllers.API
                     .OrderBy(c => c.IdSucursal)
                     .OrderBy(c => c.Articulo)
                     .OrderBy(c => c.Minimo).ThenBy(c => c.Maximo).ToListAsync();
-
-                listadoMaestroArticuloSucursal.ForEach(async c => c.ValorActual = await ObtenerValorActual(c.IdMaestroArticuloSucursal));
+                
+                foreach (var item in listadoMaestroArticuloSucursal)
+                    item.ValorActual = await ObtenerValorActual(item.IdMaestroArticuloSucursal);
                 return listadoMaestroArticuloSucursal;
             }
             catch (Exception ex)
@@ -74,7 +76,7 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
-        private async Task<decimal> ObtenerValorActual(int idMaestroArticuloSucursal)
+        public async Task<decimal> ObtenerValorActual(int idMaestroArticuloSucursal)
         {
             try
             {

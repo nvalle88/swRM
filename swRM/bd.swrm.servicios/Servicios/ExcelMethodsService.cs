@@ -38,5 +38,16 @@ namespace bd.swrm.servicios.Servicios
         {
             return new Font("Arial", size);
         }
+
+        public Font CalibriFont(float size)
+        {
+            return new Font("Calibri", size);
+        }
+
+        public void ChangeBackground(ExcelRange excelRange, Color color)
+        {
+            excelRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            excelRange.Style.Fill.BackgroundColor.SetColor(color);
+        }
     }
 }

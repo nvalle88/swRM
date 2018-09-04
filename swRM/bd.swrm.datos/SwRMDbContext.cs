@@ -1321,6 +1321,10 @@ namespace bd.swrm.datos
 
                 entity.Property(e => e.Observaciones).HasMaxLength(500);
 
+                entity.Property(e => e.CodigoPedido)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
                 entity.HasOne(d => d.Estado)
                     .WithMany(p => p.RequerimientoArticulos)
                     .HasForeignKey(d => d.IdEstado)
@@ -1338,6 +1342,8 @@ namespace bd.swrm.datos
             {
                 entity.HasKey(e => new { e.IdRequerimientosArticulos, e.IdMaestroArticuloSucursal })
                     .HasName("PK_RequerimientosArticulosDetalles_1");
+
+                entity.Property(e => e.ValorActual).HasColumnType("decimal");
 
                 entity.HasOne(d => d.MaestroArticuloSucursal)
                     .WithMany(p => p.RequerimientosArticulosDetalles)

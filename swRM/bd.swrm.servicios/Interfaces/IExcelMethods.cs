@@ -11,5 +11,7 @@ namespace bd.swrm.servicios.Interfaces
     {
         ExcelRange Ajustar(ExcelWorksheet ws, string texto, int filaInicial, int columnaInicial, int? filaFinal = null, int? columnaFinal = null, System.Drawing.Font font = null, bool isBold = false, ExcelHorizontalAlignment excelHorizontalAlignment = ExcelHorizontalAlignment.Left, bool isMerge = false, ExcelVerticalAlignment excelVerticalAlignment = ExcelVerticalAlignment.Center, bool isWrapText = false, bool isUnderLine = false, bool isItalic = false);
         Font ArialFont(float size);
+        Font CalibriFont(float size);
+        void ChangeBackground(ExcelRange excelRange, Color color);
     }
 }
