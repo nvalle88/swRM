@@ -261,11 +261,35 @@ namespace bd.swrm.servicios.Servicios
                 return proveedor != null ? new Proveedor
                 {
                     IdProveedor = proveedor.IdProveedor,
+                    Codigo = proveedor.Codigo,
                     RepresentanteLegal = proveedor.RepresentanteLegal,
                     PersonaContacto = proveedor.PersonaContacto,
                     RazonSocial = proveedor.RazonSocial,
                     Direccion = proveedor.Direccion,
-                    Identificacion = proveedor.Identificacion
+                    Identificacion = proveedor.Identificacion,
+                    IdLineaServicio = proveedor.IdLineaServicio,
+                    Telefono = proveedor.Telefono,
+                    Email = proveedor.Email,
+                    Cargo = proveedor.Cargo,
+                    Observaciones = proveedor.Observaciones,
+                    Activo = proveedor.Activo,
+                    LineaServicio = ClonarLineaServicio(proveedor?.LineaServicio)
+                } : null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public LineaServicio ClonarLineaServicio(LineaServicio lineaServicio)
+        {
+            try
+            {
+                return lineaServicio != null ? new LineaServicio
+                {
+                    IdLineaServicio = lineaServicio.IdLineaServicio,
+                    Nombre = lineaServicio.Nombre
                 } : null;
             }
             catch (Exception)

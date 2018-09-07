@@ -17,6 +17,7 @@ using bd.swrm.servicios.Interfaces;
 using bd.swrm.entidades.ObjectTransfer;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using bd.swrm.entidades.Comparadores;
 
 namespace bd.swrm.web.Controllers.API
 {
@@ -350,6 +351,92 @@ namespace bd.swrm.web.Controllers.API
                 return new List<MaestroArticuloSucursalSeleccionado>();
             }
             return lista;
+        }
+
+        [HttpPost]
+        [Route("ListadoProveedoresPorArticulo")]
+        public async Task<List<ArticuloProveedoresTransfer>> PostProveedoresPorArticulo([FromBody] int idArticulo)
+        {
+            try
+            {
+                var lista = new List<ArticuloProveedoresTransfer>();
+                var claimTransfer = claimsTransfer.ObtenerClaimsTransferHttpContext();
+                var myComparer = new MyComparer<Proveedor>((x, y) => { return x.IdProveedor == y.IdProveedor; }, (obj) => { return obj.IdProveedor.GetHashCode(); });
+
+                var ordenesCompraDetallesBD = ObtenerOrdenesCompra();
+                var ordenesCompraDetalles = idArticulo == -1 ? ordenesCompraDetallesBD : ordenesCompraDetallesBD.Where(c => c.MaestroArticuloSucursal.IdArticulo == idArticulo);
+                var groupOrdenesCompraDetalles = ordenesCompraDetalles.GroupBy(c => c.MaestroArticuloSucursal.Articulo);
+
+                foreach (var item in groupOrdenesCompraDetalles)
+                {
+                    var listadoProveedores = claimTransfer.IsAdminNacionalProveeduria ? item.Select(c => c.OrdenCompra.Proveedor).Distinct(myComparer).ToList() : item.Where(c=> c.OrdenCompra.EmpleadoResponsable.Dependencia.IdSucursal == claimTransfer.IdSucursal).Select(c => c.OrdenCompra.Proveedor).Distinct(myComparer).ToList();
+                    lista.Add(new ArticuloProveedoresTransfer {
+                        Articulo = clonacionService.ClonarArticulo(item.Key),
+                        ListadoProveedores = listadoProveedores.Select(c=> clonacionService.ClonarProveedor(c)).ToList()
+                    });
+                }
+                return lista;
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<ArticuloProveedoresTransfer>();
+            }
+        }
+
+        private IQueryable<OrdenCompraDetalles> ObtenerOrdenesCompra()
+        {
+            var ordenesCompraDetalles = db.OrdenCompraDetalles
+                    .Include(c => c.OrdenCompra).ThenInclude(c => c.Proveedor).ThenInclude(c => c.LineaServicio)
+                    .Include(c => c.OrdenCompra).ThenInclude(c => c.EmpleadoResponsable)
+                    .Include(c=> c.MaestroArticuloSucursal).ThenInclude(c => c.Sucursal).ThenInclude(c => c.Ciudad).ThenInclude(c => c.Provincia).ThenInclude(c => c.Pais)
+                    .Include(c => c.MaestroArticuloSucursal).ThenInclude(c => c.Articulo).ThenInclude(c=> c.SubClaseArticulo).ThenInclude(c=> c.ClaseArticulo).ThenInclude(c=> c.TipoArticulo)
+                    .Include(c => c.MaestroArticuloSucursal).ThenInclude(c => c.Articulo).ThenInclude(c=> c.UnidadMedida)
+                    .Include(c => c.MaestroArticuloSucursal).ThenInclude(c => c.Articulo).ThenInclude(c=> c.Modelo).ThenInclude(c=> c.Marca)
+                    .Where(c => c.OrdenCompra.EmpleadoResponsable.IdDependencia != null);
+
+            foreach (var item in ordenesCompraDetalles)
+                item.OrdenCompra.EmpleadoResponsable.Dependencia = db.Dependencia.Include(c => c.Sucursal).FirstOrDefault(c => c.IdDependencia == item.OrdenCompra.EmpleadoResponsable.IdDependencia);
+
+            return ordenesCompraDetalles;
+        }
+
+        [HttpPost]
+        [Route("ListadoArticulosPorProveedor")]
+        public async Task<List<MaestroArticuloSucursalSeleccionado>> PostArticulosPorProveedor([FromBody] int idProveedor)
+        {
+            try
+            {
+                var lista = new List<MaestroArticuloSucursalSeleccionado>();
+                var claimTransfer = claimsTransfer.ObtenerClaimsTransferHttpContext();
+                var myComparer = new MyComparer<MaestroArticuloSucursal>((x, y) => { return x.IdMaestroArticuloSucursal == y.IdMaestroArticuloSucursal; }, (obj) => { return obj.IdMaestroArticuloSucursal.GetHashCode(); });
+
+                var ordenesCompraDetallesBD = ObtenerOrdenesCompra();
+                var ordenesCompraDetalles = idProveedor == -1 ? ordenesCompraDetallesBD : ordenesCompraDetallesBD.Where(c => c.OrdenCompra.IdProveedor == idProveedor);
+                var groupOrdenesCompraDetalles = ordenesCompraDetalles.GroupBy(c => c.OrdenCompra.Proveedor);
+
+                foreach (var item in groupOrdenesCompraDetalles)
+                {
+                    var listadoMaestrosArticulosArticulos = claimTransfer.IsAdminNacionalProveeduria ? item.Select(c => c.MaestroArticuloSucursal).Distinct(myComparer).ToList() : item.Where(c => c.OrdenCompra.EmpleadoResponsable.Dependencia.IdSucursal == claimTransfer.IdSucursal).Select(c => c.MaestroArticuloSucursal).Distinct(myComparer).ToList();
+                    foreach (var mas in listadoMaestrosArticulosArticulos)
+                    {
+                        var maestroArticuloSucursal = clonacionService.ClonarMaestroArticuloSucursal(mas);
+                        maestroArticuloSucursal.ValorActual = await new MaestroArticuloSucursalController(db).ObtenerValorActual(mas.IdMaestroArticuloSucursal);
+
+                        lista.Add(new MaestroArticuloSucursalSeleccionado
+                        {
+                            MaestroArticuloSucursal = maestroArticuloSucursal,
+                            Proveedor = clonacionService.ClonarProveedor(item.Key)
+                        });
+                    }
+                }
+                return lista;
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<MaestroArticuloSucursalSeleccionado>();
+            }
         }
 
         [HttpPost]
@@ -1109,6 +1196,258 @@ namespace bd.swrm.web.Controllers.API
                     ws.PrinterSettings.PaperSize = ePaperSize.A4;
                     ws.PrinterSettings.Orientation = eOrientation.Landscape;
                     ws.PrinterSettings.FitToPage = true;
+                    return objExcelPackage.GetAsByteArray();
+                }
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new byte[0];
+            }
+        }
+
+        [HttpPost]
+        [Route("ExcelProveedoresPorArticulo")]
+        public async Task<byte[]> PostExcelProveedoresPorArticulo([FromBody] int idArticulo)
+        {
+            try
+            {
+                var listadoProveedoresPorArticulo = await PostProveedoresPorArticulo(idArticulo);
+                using (ExcelPackage objExcelPackage = new ExcelPackage())
+                {
+                    ExcelWorksheet ws = objExcelPackage.Workbook.Worksheets.Add("PROVEEDORES");
+                    int fila = 1;
+                    int filaOriginal = 1;
+
+                    int columna = 1;
+                    int columnaOriginal = 1;
+
+                    var fontCalibri10 = excelMethodsService.CalibriFont(10);
+                    var fontCalibri11 = excelMethodsService.CalibriFont(11);
+
+                    var codigoAreaGeografica = "[CÓDIGO ÁREA GEOGRÁFICA]";
+                    var excelRange = excelMethodsService.Ajustar(ws, $"BANCO DE DESARROLLO DEL ECUADOR B.P. - {codigoAreaGeografica}", fila, columna, fila, columna + 11, font: fontCalibri11, isBold: true, excelHorizontalAlignment: OfficeOpenXml.Style.ExcelHorizontalAlignment.Center, isMerge: true);
+                    fila++;
+
+                    excelRange = excelMethodsService.Ajustar(ws, "FECHA:", fila, columna + 5, font: fontCalibri11, isBold: true, isMerge: true, excelHorizontalAlignment: OfficeOpenXml.Style.ExcelHorizontalAlignment.Right);
+                    excelRange = excelMethodsService.Ajustar(ws, DateTime.Now.ToString("dd/MM/yyyy"), fila, columna + 6, font: fontCalibri11, isBold: true);
+
+                    excelRange = ws.Cells[filaOriginal, columnaOriginal, fila, columnaOriginal + 11];
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                    excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(255, 242, 204));
+                    fila++;
+
+                    excelRange = excelMethodsService.Ajustar(ws, "CÓDIGO", fila, columna, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "REPRESENTANTE LEGAL", fila, columna + 1, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "PERSONA DE CONTACTO", fila, columna + 2, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "IDENTIFICACIÓN", fila, columna + 3, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "LINEA DE SERVICIO", fila, columna + 4, font: fontCalibri10, isWrapText: true, isBold: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "RAZÓN SOCIAL", fila, columna + 5, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "TELÉFONO", fila, columna + 6, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "CORREO ELECTRÓNICO", fila, columna + 7, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "CARGO", fila, columna + 8, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "DIRECCIÓN", fila, columna + 9, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "OBSERVACIONES", fila, columna + 10, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "¿ACTIVO?", fila, columna + 11, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange.Worksheet.Row(fila).Height = 40.50D;
+                    excelRange = ws.Cells[fila, columna, fila, columna + 11];
+                    excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(255, 242, 204));
+                    fila++;
+
+                    foreach (var item in listadoProveedoresPorArticulo)
+                    {
+                        if (item.ListadoProveedores != null && item.ListadoProveedores.Count > 0)
+                        {
+                            excelRange = excelMethodsService.Ajustar(ws, item.Articulo.Nombre, fila, columna, fila, columna + 11, font: fontCalibri11, isWrapText: true, isMerge: true, isBold: true, isItalic: true);
+                            excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(221, 221, 221));
+                            fila++;
+
+                            foreach (var prov in item.ListadoProveedores)
+                            {
+                                excelRange = excelMethodsService.Ajustar(ws, prov.Codigo, fila, columna, font: fontCalibri11, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                                excelRange = excelMethodsService.Ajustar(ws, prov.RepresentanteLegal, fila, columna + 1, font: fontCalibri11, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                                excelRange = excelMethodsService.Ajustar(ws, prov.PersonaContacto, fila, columna + 2, font: fontCalibri11, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                                excelRange = excelMethodsService.Ajustar(ws, prov.Identificacion, fila, columna + 3, font: fontCalibri11, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                                excelRange = excelMethodsService.Ajustar(ws, prov.LineaServicio.Nombre, fila, columna + 4, font: fontCalibri11, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                                excelRange = excelMethodsService.Ajustar(ws, prov.RazonSocial, fila, columna + 5, font: fontCalibri11, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                                excelRange = excelMethodsService.Ajustar(ws, prov.Telefono, fila, columna + 6, font: fontCalibri11, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                                excelRange = excelMethodsService.Ajustar(ws, prov.Email, fila, columna + 7, font: fontCalibri11, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                                excelRange = excelMethodsService.Ajustar(ws, prov.Cargo, fila, columna + 8, font: fontCalibri11, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                                excelRange = excelMethodsService.Ajustar(ws, prov.Direccion, fila, columna + 9, font: fontCalibri11, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                                excelRange = excelMethodsService.Ajustar(ws, prov.Observaciones, fila, columna + 10, font: fontCalibri11, isWrapText: true);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                                excelRange = excelMethodsService.Ajustar(ws, prov.Activo ? "Si" : "No", fila, columna + 11, font: fontCalibri11, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                                excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                                fila++;
+                            }
+                        }
+                    }
+
+                    ws.Cells[fila, columna].Worksheet.Column(columna).Width = 13.50D;
+                    ws.Cells[fila, columna + 9].Worksheet.Column(columna + 9).Width = 29.10D;
+
+                    ws.PrinterSettings.PaperSize = ePaperSize.A4;
+                    ws.PrinterSettings.Orientation = eOrientation.Landscape;
+                    ws.PrinterSettings.FitToPage = true;
+                    return objExcelPackage.GetAsByteArray();
+                }
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new byte[0];
+            }
+        }
+
+        [HttpPost]
+        [Route("ExcelArticulosPorProveedor")]
+        public async Task<byte[]> PostExcelArticulosPorroveedor([FromBody] int idProveedor)
+        {
+            try
+            {
+                var listadoArticulosPorProveedor = await PostArticulosPorProveedor(idProveedor);
+                var groupByArticulosPorProveedor = listadoArticulosPorProveedor.GroupBy(c => c.Proveedor.RazonSocial);
+
+                using (ExcelPackage objExcelPackage = new ExcelPackage())
+                {
+                    ExcelWorksheet ws = objExcelPackage.Workbook.Worksheets.Add("ARTÍCULOS");
+                    int fila = 1;
+                    int filaOriginal = 1;
+
+                    int columna = 1;
+                    int columnaOriginal = 1;
+
+                    var fontCalibri10 = excelMethodsService.CalibriFont(10);
+                    var fontCalibri11 = excelMethodsService.CalibriFont(11);
+
+                    var codigoAreaGeografica = "[CÓDIGO ÁREA GEOGRÁFICA]";
+                    var excelRange = excelMethodsService.Ajustar(ws, $"BANCO DE DESARROLLO DEL ECUADOR B.P. - {codigoAreaGeografica}", fila, columna, fila, columna + 7, font: fontCalibri11, isBold: true, excelHorizontalAlignment: OfficeOpenXml.Style.ExcelHorizontalAlignment.Center, isMerge: true);
+                    fila++;
+
+                    excelRange = excelMethodsService.Ajustar(ws, "FECHA:", fila, columna + 4, font: fontCalibri11, isBold: true, isMerge: true, excelHorizontalAlignment: OfficeOpenXml.Style.ExcelHorizontalAlignment.Right);
+                    excelRange = excelMethodsService.Ajustar(ws, DateTime.Now.ToString("dd/MM/yyyy"), fila, columna + 5, font: fontCalibri11, isBold: true);
+
+                    excelRange = ws.Cells[filaOriginal, columnaOriginal, fila, columnaOriginal + 7];
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                    excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(255, 242, 204));
+                    fila++;
+
+                    excelRange = excelMethodsService.Ajustar(ws, "ARTÍCULO", fila, columna, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "TIPO DE ARTÍCULO", fila, columna + 1, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "CLASE DE ARTÍCULO", fila, columna + 2, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "SUBCLASE DE ARTÍCULO", fila, columna + 3, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "UNIDAD DE MEDIDA", fila, columna + 4, font: fontCalibri10, isWrapText: true, isBold: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "MARCA", fila, columna + 5, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "MODELO", fila, columna + 6, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange = excelMethodsService.Ajustar(ws, "VALOR DEL ARTÍCULO", fila, columna + 7, font: fontCalibri10, isBold: true, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center, excelVerticalAlignment: ExcelVerticalAlignment.Center);
+                    excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                    excelRange.Worksheet.Row(fila).Height = 40.50D;
+                    excelRange = ws.Cells[fila, columna, fila, columna + 7];
+                    excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(255, 242, 204));
+                    fila++;
+
+                    foreach (var item in groupByArticulosPorProveedor)
+                    {
+                        excelRange = excelMethodsService.Ajustar(ws, item.Key, fila, columna, fila, columna + 7, font: fontCalibri11, isWrapText: true, isMerge: true, isBold: true, isItalic: true);
+                        excelMethodsService.ChangeBackground(excelRange, System.Drawing.Color.FromArgb(221, 221, 221));
+                        fila++;
+
+                        foreach (var masSelecc in item)
+                        {
+                            excelRange = excelMethodsService.Ajustar(ws, masSelecc.MaestroArticuloSucursal.Articulo.Nombre, fila, columna, font: fontCalibri11, isWrapText: true);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, masSelecc.MaestroArticuloSucursal.Articulo.SubClaseArticulo.ClaseArticulo.TipoArticulo.Nombre, fila, columna + 1, font: fontCalibri11, isWrapText: true);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, masSelecc.MaestroArticuloSucursal.Articulo.SubClaseArticulo.ClaseArticulo.Nombre, fila, columna + 2, font: fontCalibri11, isWrapText: true);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, masSelecc.MaestroArticuloSucursal.Articulo.SubClaseArticulo.Nombre, fila, columna + 3, font: fontCalibri11, isWrapText: true);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, masSelecc.MaestroArticuloSucursal.Articulo.UnidadMedida.Nombre, fila, columna + 4, font: fontCalibri11, isWrapText: true);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, masSelecc.MaestroArticuloSucursal.Articulo.Modelo.Marca.Nombre, fila, columna + 5, font: fontCalibri11, isWrapText: true);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, masSelecc.MaestroArticuloSucursal.Articulo.Modelo.Nombre, fila, columna + 6, font: fontCalibri11, isWrapText: true);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            excelRange = excelMethodsService.Ajustar(ws, masSelecc.MaestroArticuloSucursal.ValorActual.ToString("C2").Replace("$", ""), fila, columna + 7, font: fontCalibri11, isWrapText: true, excelHorizontalAlignment: ExcelHorizontalAlignment.Center);
+                            excelRange.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+
+                            fila++;
+                        }
+                    }
+                    ws.Cells[fila, columna].Worksheet.Column(columna).Width = 28.60D;
+
+                    ws.PrinterSettings.PaperSize = ePaperSize.A4;
+                    ws.PrinterSettings.Orientation = eOrientation.Landscape;
+                    ws.PrinterSettings.FitToPage = true;
+
                     return objExcelPackage.GetAsByteArray();
                 }
             }
