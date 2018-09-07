@@ -65,6 +65,26 @@ namespace bd.swrm.web.Controllers.API
             }
         }
 
+        [HttpPost]
+        [Route("ListarArticulosPorSucursal")]
+        public async Task<List<Articulo>> PostArticulosPorSucursal([FromBody] int idSucursal)
+        {
+            try
+            {
+                return await db.MaestroArticuloSucursal
+                    .Include(c=> c.Articulo).ThenInclude(c => c.SubClaseArticulo).ThenInclude(c => c.ClaseArticulo).ThenInclude(c => c.TipoArticulo)
+                    .Include(c => c.Articulo).ThenInclude(c => c.UnidadMedida)
+                    .Include(c => c.Articulo).ThenInclude(c => c.Modelo).ThenInclude(c => c.Marca)
+                    .Where(c => c.IdSucursal == idSucursal && c.Habilitado)
+                    .Select(c => c.Articulo).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                return new List<Articulo>();
+            }
+        }
+ 
         [HttpGet("{id}")]
         public async Task<Response> GetArticulo([FromRoute] int id)
         {

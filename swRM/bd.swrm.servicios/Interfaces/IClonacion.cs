@@ -54,5 +54,6 @@ namespace bd.swrm.servicios.Interfaces
         List<DocumentoActivoFijo> ClonarListadoDocumentoActivoFijo(List<DocumentoActivoFijo> listaDocumentoActivoFijo);
         TipoUtilizacionAlta ClonarTipoUtilizacionAlta(TipoUtilizacionAlta tipoUtilizacionAlta);
         DepreciacionActivoFijo ClonarDepreciacionActivoFijo(DepreciacionActivoFijo depreciacionActivoFijo);
+        LineaServicio ClonarLineaServicio(LineaServicio lineaServicio);
     }
 }
