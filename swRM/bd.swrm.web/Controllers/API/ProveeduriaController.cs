@@ -1181,7 +1181,7 @@ namespace bd.swrm.web.Controllers.API
             fila++;
 
             excelRange = excelMethodsService.Ajustar(ws, "CENTRO DE COSTO:", fila, columna, font: fontCalibri11, isBold: true);
-            excelRange = excelMethodsService.Ajustar(ws, "[DENOMINACIÓN DEL CENTRO DE COSTO / CONCEPTO]", fila, columna + 1, fila, columna + columnaAux, font: fontCalibri11, isBold: true, isMerge: true);
+            excelRange = excelMethodsService.Ajustar(ws, requerimientoArticulos?.FuncionarioSolicitante?.Dependencia?.Nombre ?? String.Empty, fila, columna + 1, fila, columna + columnaAux, font: fontCalibri11, isBold: true, isMerge: true);
             fila++;
 
             excelRange = excelMethodsService.Ajustar(ws, "USUARIO:", fila, columna, font: fontCalibri11, isBold: true);
