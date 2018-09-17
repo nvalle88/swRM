@@ -73,30 +73,26 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.DocumentoActivoFijo.AnyAsync(c => c.Nombre.ToUpper().Trim() == documentoActivoFijoTransfer.Nombre.ToUpper().Trim()))
+                var documentoActivoFijo = await InsertarDocumentoActivoFijo(new DocumentoActivoFijo
                 {
-                    var documentoActivoFijo = await InsertarDocumentoActivoFijo(new DocumentoActivoFijo
-                    {
-                        Nombre = documentoActivoFijoTransfer.Nombre,
-                        Fecha = DateTime.Now,
-                        IdActivoFijo = documentoActivoFijoTransfer.IdActivoFijo,
-                        IdRecepcionActivoFijoDetalle = documentoActivoFijoTransfer.IdRecepcionActivoFijoDetalle,
-                        IdAltaActivoFijo = documentoActivoFijoTransfer.IdAltaActivoFijo,
-                        IdFacturaActivoFijo = documentoActivoFijoTransfer.IdFacturaActivoFijo,
-                        IdProcesoJudicialActivoFijo = documentoActivoFijoTransfer.IdProcesoJudicialActivoFijo,
-                        IdRecepcionActivoFijo = documentoActivoFijoTransfer.IdRecepcionActivoFijo,
-                        IdCompaniaSeguro = documentoActivoFijoTransfer.IdCompaniaSeguro
-                    });
-                    string extensionFile = uploadFileService.FileExtension(documentoActivoFijoTransfer.Nombre);
-                    await uploadFileService.UploadFile(documentoActivoFijoTransfer.Fichero, Mensaje.CarpetaActivoFijoDocumento, $"{documentoActivoFijo.IdDocumentoActivoFijo}{extensionFile}");
+                    Nombre = documentoActivoFijoTransfer.Nombre,
+                    Fecha = DateTime.Now,
+                    IdActivoFijo = documentoActivoFijoTransfer.IdActivoFijo,
+                    IdRecepcionActivoFijoDetalle = documentoActivoFijoTransfer.IdRecepcionActivoFijoDetalle,
+                    IdAltaActivoFijo = documentoActivoFijoTransfer.IdAltaActivoFijo,
+                    IdFacturaActivoFijo = documentoActivoFijoTransfer.IdFacturaActivoFijo,
+                    IdProcesoJudicialActivoFijo = documentoActivoFijoTransfer.IdProcesoJudicialActivoFijo,
+                    IdRecepcionActivoFijo = documentoActivoFijoTransfer.IdRecepcionActivoFijo,
+                    IdCompaniaSeguro = documentoActivoFijoTransfer.IdCompaniaSeguro
+                });
+                string extensionFile = uploadFileService.FileExtension(documentoActivoFijoTransfer.Nombre);
+                await uploadFileService.UploadFile(documentoActivoFijoTransfer.Fichero, Mensaje.CarpetaActivoFijoDocumento, $"{documentoActivoFijo.IdDocumentoActivoFijo}{extensionFile}");
 
-                    var seleccionado = await db.DocumentoActivoFijo.FindAsync(documentoActivoFijo.IdDocumentoActivoFijo);
-                    seleccionado.Url = $"{Mensaje.CarpetaActivoFijoDocumento}/{documentoActivoFijo.IdDocumentoActivoFijo}{extensionFile}";
-                    db.DocumentoActivoFijo.Update(seleccionado);
-                    await db.SaveChangesAsync();
-                    return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
-                }
-                return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
+                var seleccionado = await db.DocumentoActivoFijo.FindAsync(documentoActivoFijo.IdDocumentoActivoFijo);
+                seleccionado.Url = $"{Mensaje.CarpetaActivoFijoDocumento}/{documentoActivoFijo.IdDocumentoActivoFijo}{extensionFile}";
+                db.DocumentoActivoFijo.Update(seleccionado);
+                await db.SaveChangesAsync();
+                return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
             }
             catch (Exception ex)
             {
@@ -130,23 +126,20 @@ namespace bd.swrm.web.Controllers.API
                 if (!ModelState.IsValid)
                     return new Response { IsSuccess = false, Message = Mensaje.ModeloInvalido };
 
-                if (!await db.DocumentoActivoFijo.Where(c => c.Nombre.ToUpper().Trim() == documentoActivoFijo.Nombre.ToUpper().Trim()).AnyAsync(c => c.IdDocumentoActivoFijo != documentoActivoFijo.IdDocumentoActivoFijo))
+                var documentoActivoFijoActualizar = await db.DocumentoActivoFijo.FirstOrDefaultAsync(x => x.IdDocumentoActivoFijo == id);
+                if (documentoActivoFijoActualizar != null)
                 {
-                    var documentoActivoFijoActualizar = await db.DocumentoActivoFijo.FirstOrDefaultAsync(x => x.IdDocumentoActivoFijo == id);
-                    if (documentoActivoFijoActualizar != null)
+                    try
                     {
-                        try
-                        {
-                            documentoActivoFijoActualizar.Nombre = documentoActivoFijo.Nombre;
-                            db.DocumentoActivoFijo.Update(documentoActivoFijoActualizar);
-                            await db.SaveChangesAsync();
-                            return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
-                        }
-                        catch (Exception ex)
-                        {
-                            await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
-                            return new Response { IsSuccess = false, Message = Mensaje.Error };
-                        }
+                        documentoActivoFijoActualizar.Nombre = documentoActivoFijo.Nombre;
+                        db.DocumentoActivoFijo.Update(documentoActivoFijoActualizar);
+                        await db.SaveChangesAsync();
+                        return new Response { IsSuccess = true, Message = Mensaje.Satisfactorio };
+                    }
+                    catch (Exception ex)
+                    {
+                        await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
+                        return new Response { IsSuccess = false, Message = Mensaje.Error };
                     }
                 }
                 return new Response { IsSuccess = false, Message = Mensaje.ExisteRegistro };
