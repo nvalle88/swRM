@@ -17,30 +17,23 @@ using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Linq;
 using bd.swrm.entidades.Constantes;
+using bd.swrm.servicios.Interfaces;
 
-namespace bd.swrm.web.Temporizador
+namespace bd.swrm.servicios.Servicios
 {
-    public class Temporizador
+    public class TimedHostedService : IHostedService, IDisposable
     {
-        private static SwRMDbContext db;
-        public static Timer timerDepreciacion { get; set; }
+        private readonly SwRMDbContext db;
+        public Timer _timer { get; set; }
+        private readonly IEmailSender emailSender;
 
-        public static void InicializarTemporizador(Timer timer, Action accion, TimeSpan tiempoEsperaFuncionCallBack, TimeSpan periodoEsperaFuncionCallBack)
+        public TimedHostedService(SwRMDbContext db, IEmailSender emailSender)
         {
-            db = db ?? CreateDbContext();
-            timer = new Timer((c) => { accion(); }, accion, tiempoEsperaFuncionCallBack, periodoEsperaFuncionCallBack);
+            this.db = db;
+            this.emailSender = emailSender;
         }
 
-        private static SwRMDbContext CreateDbContext()
-        {
-            var builder = new DbContextOptionsBuilder<SwRMDbContext>();
-            builder.UseSqlServer(Startup.Configuration.GetConnectionString("SwRMConnection"));
-            builder.ConfigureWarnings(w => w.Throw(RelationalEventId.QueryClientEvaluationWarning));
-            return new SwRMDbContext(builder.Options);
-        }
-
-        #region Depreciación de Activos Fijos
-        public static void InicializarTemporizadorDepreciacion()
+        public Task StartAsync()
         {
             DateTime fechaEjecucionTimer = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, ConstantesTimerDepreciacion.Hora, ConstantesTimerDepreciacion.Minutos, ConstantesTimerDepreciacion.Segundos);
             TimeSpan tiempoEspera = new TimeSpan();
@@ -52,14 +45,36 @@ namespace bd.swrm.web.Temporizador
             }
             else
                 tiempoEspera = fechaEjecucionTimer - DateTime.Now;
-            
-            InicializarTemporizador(timerDepreciacion, async () =>
-            {
+
+            bool isEjecutarTiempoEspera = true;
+            _timer = new Timer(async (state) => {
                 await DepreciacionActivosFijosAlta();
                 await ExistenciaMaestroArticuloSucursal();
-            }, tiempoEspera, new TimeSpan(24, 0, 0));
+
+                if (isEjecutarTiempoEspera)
+                {
+                    _timer.Change(tiempoEspera, TimeSpan.Zero);
+                    isEjecutarTiempoEspera = false;
+                }
+                else
+                    _timer.Change(TimeSpan.FromDays(1), TimeSpan.Zero);
+            }, null, TimeSpan.Zero, TimeSpan.Zero);
+            return Task.CompletedTask;
         }
-        private static async Task<DepreciacionActivoFijo> InsertarDepreciacionActivoFijo(decimal valorCompra, decimal depreciacionAcumulada, decimal valorResidual, DateTime ultimaFechaDepreciacionAlta, int idRecepcionActivoFijoDetalle)
+
+        public Task StopAsync()
+        {
+            _timer?.Change(Timeout.Infinite, 0);
+            return Task.CompletedTask;
+        }
+
+        public void Dispose()
+        {
+            _timer?.Dispose();
+        }
+
+        #region Depreciación de Activos Fijos
+        private async Task<DepreciacionActivoFijo> InsertarDepreciacionActivoFijo(decimal valorCompra, decimal depreciacionAcumulada, decimal valorResidual, DateTime ultimaFechaDepreciacionAlta, int idRecepcionActivoFijoDetalle)
         {
             var nuevaDepreciacionActivoFijo = new DepreciacionActivoFijo
             {
@@ -72,14 +87,14 @@ namespace bd.swrm.web.Temporizador
 
             if (nuevaDepreciacionActivoFijo.ValorResidual <= 0)
                 nuevaDepreciacionActivoFijo.ValorResidual = 1;
-
+            
             db.DepreciacionActivoFijo.Add(nuevaDepreciacionActivoFijo);
             await db.SaveChangesAsync();
 
             nuevaDepreciacionActivoFijo.ValorResidual = valorResidual;
             return nuevaDepreciacionActivoFijo;
         }
-        private static async Task CalculoRecursivoDepreciacion(DepreciacionActivoFijo ultimaDepreciacion, decimal indiceDepreciacionMensual)
+        private async Task CalculoRecursivoDepreciacion(DepreciacionActivoFijo ultimaDepreciacion, decimal indiceDepreciacionMensual)
         {
             if (ultimaDepreciacion != null)
             {
@@ -93,13 +108,13 @@ namespace bd.swrm.web.Temporizador
                 }
             }
         }
-        public static async Task DepreciacionActivosFijosAlta()
+        public async Task DepreciacionActivosFijosAlta()
         {
             try
             {
                 var listaRecepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle
                     .Include(c => c.ActivoFijo).ThenInclude(c => c.SubClaseActivoFijo).ThenInclude(c => c.ClaseActivoFijo).ThenInclude(c => c.CategoriaActivoFijo)
-                    .Include(c=> c.ActivoFijo).ThenInclude(c=> c.RecepcionActivoFijoDetalle)
+                    .Include(c => c.ActivoFijo).ThenInclude(c => c.RecepcionActivoFijoDetalle)
                     .Where(c => c.Estado.Nombre == Estados.Alta && c.ActivoFijo.Depreciacion).Include(c => c.DepreciacionActivoFijo)
                     .ToListAsync();
                 foreach (var recepcionActivoFijoDetalle in listaRecepcionActivoFijoDetalle)
@@ -109,7 +124,7 @@ namespace bd.swrm.web.Temporizador
                     var porCientoDepreciacionAnual = recepcionActivoFijoDetalle.ActivoFijo.SubClaseActivoFijo.ClaseActivoFijo.CategoriaActivoFijo.PorCientoDepreciacionAnual;
                     var totalDepreciacionAnual = (valorCompraRevalorizacion * porCientoDepreciacionAnual) / 100;
                     var indiceDepreciacionMensual = totalDepreciacionAnual / 12;
-                    
+
                     if (ultimaDepreciacion != null)
                     {
                         ultimaDepreciacion.ValorResidual = ultimaDepreciacion.ValorCompra - ultimaDepreciacion.DepreciacionAcumulada;
@@ -138,12 +153,12 @@ namespace bd.swrm.web.Temporizador
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
             }
         }
-        public static decimal ObtenerValorCompraRealActivoFijo(RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
+        public decimal ObtenerValorCompraRealActivoFijo(RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
         {
             try
             {
                 var ultimaDepreciacionActivoFijo = db.DepreciacionActivoFijo.OrderByDescending(c => c.FechaDepreciacion).FirstOrDefault(c => c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
-                return ultimaDepreciacionActivoFijo != null ? (ultimaDepreciacionActivoFijo.ValorCompra - ultimaDepreciacionActivoFijo.DepreciacionAcumulada) : recepcionActivoFijoDetalle.ActivoFijo.ValorCompra / db.RecepcionActivoFijoDetalle.Count(c=> c.IdActivoFijo == recepcionActivoFijoDetalle.IdActivoFijo);
+                return ultimaDepreciacionActivoFijo != null ? (ultimaDepreciacionActivoFijo.ValorCompra - ultimaDepreciacionActivoFijo.DepreciacionAcumulada) : recepcionActivoFijoDetalle.ActivoFijo.ValorCompra / db.RecepcionActivoFijoDetalle.Count(c => c.IdActivoFijo == recepcionActivoFijoDetalle.IdActivoFijo);
             }
             catch (Exception)
             {
@@ -153,7 +168,7 @@ namespace bd.swrm.web.Temporizador
         #endregion
 
         #region Maestro de artículo de sucursal
-        private static async Task ExistenciaMaestroArticuloSucursal()
+        private async Task ExistenciaMaestroArticuloSucursal()
         {
             try
             {
@@ -164,8 +179,8 @@ namespace bd.swrm.web.Temporizador
                     {
                         if (item.FechaSinExistencia.Value.AddMonths(6) < DateTime.Now)
                         {
-                            var inventarioArticulo = await db.InventarioArticulos.Include(c=> c.Bodega).Where(c=> c.Bodega.IdSucursal == item.IdSucursal && c.IdMaestroArticuloSucursal == item.IdMaestroArticuloSucursal).ToListAsync();
-                            if (inventarioArticulo.Count == 0 || (inventarioArticulo.Sum(c=> c.Cantidad) == 0))
+                            var inventarioArticulo = await db.InventarioArticulos.Include(c => c.Bodega).Where(c => c.Bodega.IdSucursal == item.IdSucursal && c.IdMaestroArticuloSucursal == item.IdMaestroArticuloSucursal).ToListAsync();
+                            if (inventarioArticulo.Count == 0 || (inventarioArticulo.Sum(c => c.Cantidad) == 0))
                             {
                                 item.Habilitado = false;
                                 item.FechaSinExistencia = null;

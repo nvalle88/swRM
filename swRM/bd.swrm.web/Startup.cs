@@ -43,6 +43,7 @@ namespace bd.swrm.web
             services.AddSingleton<IPdfMethods, PdfMethodsService>();
             services.AddSingleton<IExcelMethods, ExcelMethodsService>();
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddScoped<TimedHostedService>();
 
             // Configuración del correo
             MailConfig.HostUri = Configuration.GetSection("Smtp").Value;
@@ -63,12 +64,10 @@ namespace bd.swrm.web
             ConstantesTimerDepreciacion.Hora = int.Parse(Configuration.GetSection("Hora").Value);
             ConstantesTimerDepreciacion.Minutos = int.Parse(Configuration.GetSection("Minutos").Value);
             ConstantesTimerDepreciacion.Segundos = int.Parse(Configuration.GetSection("Segundos").Value);
-
-            Temporizador.Temporizador.InicializarTemporizadorDepreciacion();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, TimedHostedService timedHostedService, IApplicationLifetime applicationLifetime)
         {
             app.UseMiddleware<ClaimsMiddleware>();
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
@@ -96,6 +95,11 @@ namespace bd.swrm.web
                 routes.MapRoute(
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
+            });
+            timedHostedService.StartAsync();
+
+            applicationLifetime.ApplicationStopping.Register(() => {
+                timedHostedService.StopAsync();
             });
         }
     }
