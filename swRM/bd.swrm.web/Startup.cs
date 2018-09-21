@@ -98,7 +98,8 @@ namespace bd.swrm.web
             });
             timedHostedService.StartAsync();
 
-            applicationLifetime.ApplicationStopping.Register(() => {
+            applicationLifetime.ApplicationStopping.Register(() =>
+            {
                 timedHostedService.StopAsync();
             });
         }
