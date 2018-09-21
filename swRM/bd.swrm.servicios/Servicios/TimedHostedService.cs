@@ -153,18 +153,6 @@ namespace bd.swrm.servicios.Servicios
                 await GuardarLogService.SaveLogEntry(new LogEntryTranfer { ApplicationName = Convert.ToString(Aplicacion.SwRm), ExceptionTrace = ex.Message, Message = Mensaje.Excepcion, LogCategoryParametre = Convert.ToString(LogCategoryParameter.Critical), LogLevelShortName = Convert.ToString(LogLevelParameter.ERR), UserName = "" });
             }
         }
-        public decimal ObtenerValorCompraRealActivoFijo(RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
-        {
-            try
-            {
-                var ultimaDepreciacionActivoFijo = db.DepreciacionActivoFijo.OrderByDescending(c => c.FechaDepreciacion).FirstOrDefault(c => c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
-                return ultimaDepreciacionActivoFijo != null ? (ultimaDepreciacionActivoFijo.ValorCompra - ultimaDepreciacionActivoFijo.DepreciacionAcumulada) : recepcionActivoFijoDetalle.ActivoFijo.ValorCompra / db.RecepcionActivoFijoDetalle.Count(c => c.IdActivoFijo == recepcionActivoFijoDetalle.IdActivoFijo);
-            }
-            catch (Exception)
-            {
-                return 0;
-            }
-        }
         #endregion
 
         #region Maestro de artículo de sucursal

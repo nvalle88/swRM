@@ -387,7 +387,20 @@ namespace bd.swrm.web.Controllers.API
             try
             {
                 var recepcionActivoFijoDetalle = await db.RecepcionActivoFijoDetalle.Include(c => c.ActivoFijo).FirstOrDefaultAsync(c => c.IdRecepcionActivoFijoDetalle == id);
-                return Temporizador.Temporizador.ObtenerValorCompraRealActivoFijo(recepcionActivoFijoDetalle);
+                return ObtenerValorCompraRealActivoFijo(recepcionActivoFijoDetalle);
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
+        }
+
+        private decimal ObtenerValorCompraRealActivoFijo(RecepcionActivoFijoDetalle recepcionActivoFijoDetalle)
+        {
+            try
+            {
+                var ultimaDepreciacionActivoFijo = db.DepreciacionActivoFijo.OrderByDescending(c => c.FechaDepreciacion).FirstOrDefault(c => c.IdRecepcionActivoFijoDetalle == recepcionActivoFijoDetalle.IdRecepcionActivoFijoDetalle);
+                return ultimaDepreciacionActivoFijo != null ? (ultimaDepreciacionActivoFijo.ValorCompra - ultimaDepreciacionActivoFijo.DepreciacionAcumulada) : recepcionActivoFijoDetalle.ActivoFijo.ValorCompra / db.RecepcionActivoFijoDetalle.Count(c => c.IdActivoFijo == recepcionActivoFijoDetalle.IdActivoFijo);
             }
             catch (Exception)
             {
@@ -2058,7 +2071,7 @@ namespace bd.swrm.web.Controllers.API
                     if ((bool)incluirActivoFijo)
                     {
                         item.ActivoFijo = clonacionService.ClonarActivoFijo(ObtenerDatosActivoFijo().FirstOrDefault(c => c.IdActivoFijo == item.IdActivoFijo), new List<RecepcionActivoFijoDetalle>());
-                        item.ActivoFijo.ValorCompraReal = Temporizador.Temporizador.ObtenerValorCompraRealActivoFijo(item);
+                        item.ActivoFijo.ValorCompraReal = ObtenerValorCompraRealActivoFijo(item);
                     }
                 }
             }
