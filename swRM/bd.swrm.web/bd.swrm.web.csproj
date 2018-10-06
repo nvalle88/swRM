@@ -24,6 +24,7 @@
     <None Remove="Properties\PublishProfiles\FolderProfile.pubxml" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Hangfire" Version="1.6.20" />
     <PackageReference Include="itext7" Version="7.1.0" />
     <PackageReference Include="itext7.pdfhtml" Version="2.0.0" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.0.0" />

@@ -13,6 +13,9 @@ using bd.swrm.servicios.Middlewares;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using EnviarCorreo;
+using Hangfire;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace bd.swrm.web
 {
@@ -36,6 +39,8 @@ namespace bd.swrm.web
             // Add framework services.
             services.AddMvc().AddJsonOptions(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
             services.AddDbContext<SwRMDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("SwRMConnection")));
+            services.AddHangfire(_ => _.UseSqlServerStorage(Configuration.GetConnectionString("SwRMConnection")));
+
             services.AddSingleton<IUploadFileService, UploadFileService>();
             services.AddSingleton<IClonacion, ClonacionService>();
             services.AddTransient<IEmailSender, AuthMessageSender>();
@@ -63,11 +68,10 @@ namespace bd.swrm.web
             //Constantes de función de depreciación
             ConstantesTimerDepreciacion.Hora = int.Parse(Configuration.GetSection("Hora").Value);
             ConstantesTimerDepreciacion.Minutos = int.Parse(Configuration.GetSection("Minutos").Value);
-            ConstantesTimerDepreciacion.Segundos = int.Parse(Configuration.GetSection("Segundos").Value);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, TimedHostedService timedHostedService, IApplicationLifetime applicationLifetime)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, TimedHostedService timedHostedService)
         {
             app.UseMiddleware<ClaimsMiddleware>();
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
@@ -96,12 +100,15 @@ namespace bd.swrm.web
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
-            timedHostedService.StartAsync();
 
-            applicationLifetime.ApplicationStopping.Register(() =>
-            {
-                timedHostedService.StopAsync();
-            });
+            app.UseHangfireDashboard();
+            app.UseHangfireServer();
+
+            BackgroundJob.Enqueue(() => timedHostedService.DepreciacionActivosFijosAlta());
+            RecurringJob.AddOrUpdate(() => timedHostedService.DepreciacionActivosFijosAlta(), $"{ConstantesTimerDepreciacion.Minutos} {ConstantesTimerDepreciacion.Hora} * * *");
+
+            BackgroundJob.Enqueue(() => timedHostedService.ExistenciaMaestroArticuloSucursal());
+            RecurringJob.AddOrUpdate(() => timedHostedService.ExistenciaMaestroArticuloSucursal(), $"{ConstantesTimerDepreciacion.Minutos} {ConstantesTimerDepreciacion.Hora} * * *");
         }
     }
 }
