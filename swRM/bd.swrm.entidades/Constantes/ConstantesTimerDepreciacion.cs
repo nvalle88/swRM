@@ -8,6 +8,5 @@ namespace bd.swrm.entidades.Constantes
     {
         public static int Hora;
         public static int Minutos;
-        public static int Segundos;
     }
 }

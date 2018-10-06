@@ -21,56 +21,15 @@ using bd.swrm.servicios.Interfaces;
 
 namespace bd.swrm.servicios.Servicios
 {
-    public class TimedHostedService : IHostedService, IDisposable
+    public class TimedHostedService
     {
         private readonly SwRMDbContext db;
-        public Timer _timer { get; set; }
         private readonly IEmailSender emailSender;
 
         public TimedHostedService(SwRMDbContext db, IEmailSender emailSender)
         {
             this.db = db;
             this.emailSender = emailSender;
-        }
-
-        public Task StartAsync()
-        {
-            DateTime fechaEjecucionTimer = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, ConstantesTimerDepreciacion.Hora, ConstantesTimerDepreciacion.Minutos, ConstantesTimerDepreciacion.Segundos);
-            TimeSpan tiempoEspera = new TimeSpan();
-
-            if (DateTime.Now > fechaEjecucionTimer)
-            {
-                var fechaMannana = fechaEjecucionTimer.AddDays(1);
-                tiempoEspera = fechaMannana - DateTime.Now;
-            }
-            else
-                tiempoEspera = fechaEjecucionTimer - DateTime.Now;
-
-            bool isEjecutarTiempoEspera = true;
-            _timer = new Timer(async (state) => {
-                await DepreciacionActivosFijosAlta();
-                await ExistenciaMaestroArticuloSucursal();
-
-                if (isEjecutarTiempoEspera)
-                {
-                    _timer.Change(tiempoEspera, TimeSpan.Zero);
-                    isEjecutarTiempoEspera = false;
-                }
-                else
-                    _timer.Change(TimeSpan.FromDays(1), TimeSpan.Zero);
-            }, null, TimeSpan.Zero, TimeSpan.Zero);
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync()
-        {
-            _timer?.Change(Timeout.Infinite, 0);
-            return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        {
-            _timer?.Dispose();
         }
 
         #region Depreciación de Activos Fijos
@@ -156,7 +115,7 @@ namespace bd.swrm.servicios.Servicios
         #endregion
 
         #region Maestro de artículo de sucursal
-        private async Task ExistenciaMaestroArticuloSucursal()
+        public async Task ExistenciaMaestroArticuloSucursal()
         {
             try
             {
